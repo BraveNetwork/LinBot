@@ -1054,7 +1054,7 @@
       "{0}pick"
     ]
   },
-  "drop": {
+  "plant": {
     "Cmd": "drop",
     "Desc": "Spend an amount of currency to drop it in this channel. Default is 1. (If bot is restarted or crashes, the currency will be lost)",
     "Usage": [
