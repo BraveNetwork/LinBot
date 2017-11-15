@@ -67,7 +67,7 @@ namespace NadekoBot.Modules.Games
                 if (amount < 1)
                     return;
 
-                var removed = await _cs.RemoveAsync((IGuildUser)Context.User, $"Planted a {_bc.BotConfig.CurrencyName}", amount, false).ConfigureAwait(false);
+                var removed = await _cs.RemoveAsync((IGuildUser)Context.User, $"Dropped a {_bc.BotConfig.CurrencyName}", amount, false).ConfigureAwait(false);
                 if (!removed)
                 {
                     await ReplyErrorLocalized("not_enough", _bc.BotConfig.CurrencySign).ConfigureAwait(false);
@@ -76,7 +76,7 @@ namespace NadekoBot.Modules.Games
 
                 var imgData = _games.GetRandomCurrencyImage();
                 
-                var msgToSend = GetText("planted",
+                var msgToSend = GetText("dropped",
                     Format.Bold(Context.User.ToString()),
                     amount + _bc.BotConfig.CurrencySign,
                     Prefix);

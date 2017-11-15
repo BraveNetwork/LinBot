@@ -167,7 +167,7 @@ namespace NadekoBot.Modules.Administration.Services
 
         public async Task<IRole> GetMuteRole(IGuild guild)
         {
-            const string defaultMuteRoleName = "nadeko-mute";
+            const string defaultMuteRoleName = "Silenced Summoner";
 
             var muteRoleName = GuildMuteRoles.GetOrAdd(guild.Id, defaultMuteRoleName);
 

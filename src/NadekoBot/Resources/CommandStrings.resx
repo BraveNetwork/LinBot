@@ -1408,19 +1408,19 @@
     <value>pick</value>
   </data>
   <data name="pick_desc" xml:space="preserve">
-    <value>Picks the currency planted in this channel. 60 seconds cooldown.</value>
+    <value>Picks the currency dropped in this channel. 60 seconds cooldown.</value>
   </data>
   <data name="pick_usage" xml:space="preserve">
     <value>`{0}pick`</value>
   </data>
   <data name="plant_cmd" xml:space="preserve">
-    <value>plant</value>
+    <value>drop</value>
   </data>
   <data name="plant_desc" xml:space="preserve">
-    <value>Spend an amount of currency to plant it in this channel. Default is 1. (If bot is restarted or crashes, the currency will be lost)</value>
+    <value>Spend an amount of currency to drop it in this channel. Default is 1. (If bot is restarted or crashes, the currency will be lost)</value>
   </data>
   <data name="plant_usage" xml:space="preserve">
-    <value>`{0}plant` or `{0}plant 5`</value>
+    <value>`{0}drop` or `{0}drop 5`</value>
   </data>
   <data name="gencurrency_cmd" xml:space="preserve">
     <value>gencurrency gc</value>

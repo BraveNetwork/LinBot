@@ -41,29 +41,29 @@ namespace NadekoBot.Services.Database.Models
             switch (itemName)
             {
                 case ItemName.Cookie:
-                    return new WaifuItem("🍪", 10, itemName);
+                    return new WaifuItem("🍪", 1, itemName);
                 case ItemName.Rose:
-                    return new WaifuItem("🌹", 50, itemName);
+                    return new WaifuItem("🌹", 5, itemName);
                 case ItemName.LoveLetter:
-                    return new WaifuItem("💌", 100, itemName);
+                    return new WaifuItem("💌", 10, itemName);
                 case ItemName.Chocolate:
-                    return new WaifuItem("🍫", 200, itemName);
+                    return new WaifuItem("🍫", 20, itemName);
                 case ItemName.Rice:
-                    return new WaifuItem("🍚", 400, itemName);
+                    return new WaifuItem("🍚", 40, itemName);
                 case ItemName.MovieTicket:
-                    return new WaifuItem("🎟", 800, itemName);
+                    return new WaifuItem("🎟", 80, itemName);
                 case ItemName.Book:
-                    return new WaifuItem("📔", 1500, itemName);
+                    return new WaifuItem("📔", 150, itemName);
                 case ItemName.Lipstick:
-                    return new WaifuItem("💄", 3000, itemName);
+                    return new WaifuItem("💄", 300, itemName);
                 case ItemName.Laptop:
-                    return new WaifuItem("💻", 5000, itemName);
+                    return new WaifuItem("💻", 500, itemName);
                 case ItemName.Violin:
-                    return new WaifuItem("🎻", 7500, itemName);
+                    return new WaifuItem("🎻", 750, itemName);
                 case ItemName.Ring:
-                    return new WaifuItem("💍", 10000, itemName);
+                    return new WaifuItem("💍", 1000, itemName);
                 case ItemName.Helicopter:
-                    return new WaifuItem("🚁", 20000, itemName);
+                    return new WaifuItem("🚁", 2000, itemName);
                 default:
                     throw new ArgumentException(nameof(itemName));
             }

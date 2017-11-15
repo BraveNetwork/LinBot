@@ -69,9 +69,9 @@ namespace NadekoBot.Modules.Gambling
             [RequireContext(ContextType.Guild)]
             public async Task WaifuClaim(int amount, [Remainder]IUser target)
             {
-                if (amount < 50)
+                if (amount < 5)
                 {
-                    await ReplyErrorLocalized("waifu_isnt_cheap", 50 + _bc.BotConfig.CurrencySign).ConfigureAwait(false);
+                    await ReplyErrorLocalized("waifu_isnt_cheap", 5 + _bc.BotConfig.CurrencySign).ConfigureAwait(false);
                     return;
                 }
 
