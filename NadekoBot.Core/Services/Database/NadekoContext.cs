@@ -166,7 +166,41 @@ namespace NadekoBot.Core.Services.Database
             //    .HasMany(c => c.ModulePrefixes)
             //    .WithOne(mp => mp.BotConfig)
             //    .HasForeignKey(mp => mp.BotConfigId);
+            #endregion
 
+            #region GlobalWhitelistSet Unique ListName
+            modelBuilder.Entity<GlobalWhitelistSet>()
+                .HasAlternateKey( x => x.ListName );
+            #endregion
+
+            #region Global WhiteList ItemInSet Join ManytoMany            
+            modelBuilder.Entity<GlobalWhitelistItemSet>()
+                .HasKey(x => new { x.ListPK, x.ItemPK });
+            
+            modelBuilder.Entity<GlobalWhitelistItemSet>()
+                .HasOne(x => x.List)
+                .WithMany(x => x.GlobalWhitelistItemSets)
+                .HasForeignKey(x => x.ListPK);
+
+            modelBuilder.Entity<GlobalWhitelistItemSet>()
+                .HasOne(x => x.Item)
+                .WithMany(x => x.GlobalWhitelistItemSets)
+                .HasForeignKey(x => x.ItemPK);
+            #endregion
+
+            #region Global UnblockedCmdOrMdl UnblockedInSet Join ManytoMany            
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasKey(x => new { x.ListPK, x.UnblockedPK });
+            
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasOne(x => x.List)
+                .WithMany(x => x.GlobalUnblockedSets)
+                .HasForeignKey(x => x.ListPK);
+
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasOne(x => x.CmdOrMdl)
+                .WithMany(x => x.GlobalUnblockedSets)
+                .HasForeignKey(x => x.UnblockedPK);
             #endregion
             
             #region Self Assignable Roles

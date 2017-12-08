@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace NadekoBot.Core.Services.Database.Models
 {
     public class BotConfig : DbEntity
     {
         public HashSet<BlacklistItem> Blacklist { get; set; }
+        public HashSet<GlobalWhitelistItem> GlobalWhitelistMembers { get; set; }
+        public HashSet<GlobalWhitelistSet> GlobalWhitelistGroups { get; set; }
         public ulong BufferSize { get; set; } = 4000000;
         public bool ForwardMessages { get; set; } = true;
         public bool ForwardToAllOwners { get; set; } = true;
@@ -65,6 +68,9 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         public List<StartupCommand> StartupCommands { get; set; }
         public HashSet<BlockedCmdOrMdl> BlockedCommands { get; set; }
         public HashSet<BlockedCmdOrMdl> BlockedModules { get; set; }
+
+        public HashSet<UnblockedCmdOrMdl> UnblockedCommands { get; set; }
+        public HashSet<UnblockedCmdOrMdl> UnblockedModules { get; set; }
         public int PermissionVersion { get; set; }
         public string DefaultPrefix { get; set; } = ".";
         public bool CustomReactionsStartWith { get; set; } = false;
@@ -85,6 +91,25 @@ Nadeko Support Server: https://discord.gg/nadekobot";
             }
 
             return ((BlockedCmdOrMdl)obj).Name.ToLowerInvariant() == Name.ToLowerInvariant();
+        }
+
+        public override int GetHashCode() => Name.GetHashCode();
+    }
+
+    public class UnblockedCmdOrMdl : DbEntity 
+    {
+        public string Name { get; set; }
+
+        public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            return ((UnblockedCmdOrMdl)obj).Name.ToLowerInvariant() == Name.ToLowerInvariant();
         }
 
         public override int GetHashCode() => Name.GetHashCode();
@@ -113,11 +138,63 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         public BlacklistType Type { get; set; }
     }
 
+    public class GlobalWhitelistItem : DbEntity
+    {
+        public ulong ItemId { get; set; }
+        public GlobalWhitelistType Type { get; set; }
+
+        public ICollection<GlobalWhitelistItemSet> GlobalWhitelistItemSets { get; set; }
+    }
+
     public enum BlacklistType
     {
         Server,
         Channel,
         User
+    }
+
+    public enum GlobalWhitelistType
+    {
+        Server,
+        Channel,
+        User
+    }
+
+    public class GlobalWhitelistSet : DbEntity {
+        [MaxLength(20)]
+        public string ListName { get; set; }
+
+        public ICollection<GlobalWhitelistItemSet> GlobalWhitelistItemSets { get; set; }
+
+        public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            return ((GlobalWhitelistSet)obj).ListName.ToLowerInvariant() == ListName.ToLowerInvariant();
+        }
+
+        public override int GetHashCode() => ListName.GetHashCode();
+    }
+
+    public class GlobalWhitelistItemSet
+    {
+        public int ListPK { get; set; }
+        public GlobalWhitelistSet List { get; set; }
+        public int ItemPK { get; set; }
+        public GlobalWhitelistItem Item { get; set; }
+    }
+
+    public class GlobalUnblockedSet
+    {
+        public int ListPK { get; set; }
+        public GlobalWhitelistSet List { get; set; }
+        public int UnblockedPK { get; set; }
+        public UnblockedCmdOrMdl CmdOrMdl { get; set; }
     }
 
     public class EightBallResponse : DbEntity
