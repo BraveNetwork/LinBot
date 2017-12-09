@@ -35,9 +35,13 @@ namespace NadekoBot.Modules.Permissions.Services
                 var gc = uow.BotConfig.GetOrCreate();
                 gc.BlockedCommands.Clear();
                 gc.BlockedModules.Clear();
+                gc.UnblockedCommands.Clear();
+                gc.UnblockedModules.Clear();
 
                 _globalPerms.BlockedCommands.Clear();
                 _globalPerms.BlockedModules.Clear();
+                _globalPerms.UnblockedCommands.Clear();
+                _globalPerms.UnblockedModules.Clear();
                 await uow.CompleteAsync().ConfigureAwait(false);
             }
         }
