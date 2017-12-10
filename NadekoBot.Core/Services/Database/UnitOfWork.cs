@@ -60,6 +60,10 @@ namespace NadekoBot.Core.Services.Database
         private IPollsRepository _polls;
         public IPollsRepository Polls => _polls ?? (_polls = new PollsRepository(_context));
 
+        private IGlobalWhitelistRepository _globalwhitelists;
+
+        public IGlobalWhitelistRepository GlobalWhitelists => _globalwhitelists ?? (_globalwhitelists = new GlobalWhitelistRepository(_context));
+
         public UnitOfWork(NadekoContext context)
         {
             _context = context;
