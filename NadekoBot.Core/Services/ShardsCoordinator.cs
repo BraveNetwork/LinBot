@@ -31,6 +31,14 @@ namespace NadekoBot.Core.Services
                 }
             }
 
+            public bool TryPeek(out int id)
+            {
+                lock (_locker)
+                {
+                    return _queue.TryPeek(out id);
+                }
+            }
+
             public bool TryDequeue(out int id)
             {
                 lock (_locker)
@@ -83,14 +91,13 @@ namespace NadekoBot.Core.Services
             };
             var db = _redis.GetDatabase();
             //clear previous statuses
-            db.KeyDelete(_key + "_shardstats"); 
+            db.KeyDelete(_key + "_shardstats");
 
             _shardProcesses = new Process[_creds.TotalShards];
             for (int i = 0; i < _creds.TotalShards; i++)
             {
                 //add it to the list of shards which should be started
 #if DEBUG
-
                 if (i > 0)
                     _shardStartQueue.Enqueue(i);
                 else
@@ -102,7 +109,7 @@ namespace NadekoBot.Core.Services
                 var msg = _defaultShardState.Clone();
                 msg.ShardId = i;
                 //this is to avoid the shard coordinator thinking that
-                //the shard is unresponsive while startup up
+                //the shard is unresponsive while starting up
                 var delay = 45;
 #if GLOBAL_NADEKO
                 delay = 180;
@@ -119,16 +126,11 @@ namespace NadekoBot.Core.Services
             var sub = _redis.GetSubscriber();
 
             //send is called when shard status is updated. Every 7.5 seconds atm
-            sub.Subscribe(_key + "_shardcoord_send", 
+            sub.Subscribe(_key + "_shardcoord_send",
                 OnDataReceived,
                 CommandFlags.FireAndForget);
 
-            //restart is called when shzard should be stopped and then started again
-            sub.Subscribe(_key + "_shardcoord_restart",
-                OnRestart,
-                CommandFlags.FireAndForget);
-
-            //called to kill the shard
+            //called to stop the shard, although the shard will start again when it finds out it's dead
             sub.Subscribe(_key + "_shardcoord_stop",
                 OnStop,
                 CommandFlags.FireAndForget);
@@ -155,16 +157,15 @@ namespace NadekoBot.Core.Services
                     JsonConvert.SerializeObject(msg),
                     CommandFlags.FireAndForget);
             var p = _shardProcesses[shardId];
+            if (p == null)
+                return; // ignore
             _shardProcesses[shardId] = null;
-            try { p?.Kill(); } catch { }
-            try { p?.Dispose(); } catch { }
-        }
-
-        private void OnRestart(RedisChannel ch, RedisValue data)
-        {
-            var shardId = JsonConvert.DeserializeObject<int>(data);
-            OnStop(shardId);
-            _shardProcesses[shardId] = StartShard(shardId);
+            try
+            {
+                p.KillTree();
+                p.Dispose();
+            }
+            catch { }
         }
 
         private void OnDataReceived(RedisChannel ch, RedisValue data)
@@ -220,7 +221,7 @@ namespace NadekoBot.Core.Services
                 do
                 {
                     //start a shard which is scheduled for start every 6 seconds 
-                    while (_shardStartQueue.TryDequeue(out var id))
+                    while (_shardStartQueue.TryPeek(out var id))
                     {
                         // if the shard is on the waiting list again
                         // remove it since it's starting up now
@@ -233,9 +234,18 @@ namespace NadekoBot.Core.Services
                         {
                             _log.Warn("Auto-restarting shard {0}", id);
                         }
-                        var p = StartShard(id);
-
-                        _shardProcesses[id] = p;
+                        var rem = _shardProcesses[id];
+                        if(rem != null)
+                        {
+                            try
+                            {
+                                rem.KillTree();
+                                rem.Dispose();
+                            }
+                            catch { }
+                        }
+                        _shardProcesses[id] = StartShard(id);
+                        _shardStartQueue.TryDequeue(out var __);
                         await Task.Delay(6000).ConfigureAwait(false);
                     }
                     tsc.TrySetResult(true);
@@ -321,8 +331,14 @@ namespace NadekoBot.Core.Services
                 _log.Error(ex);
                 foreach (var p in _shardProcesses)
                 {
-                    try { p.Kill(); } catch { }
-                    try { p.Dispose(); } catch { }
+                    if (p == null)
+                        continue;
+                    try
+                    {
+                        p.KillTree();
+                        p.Dispose();
+                    }
+                    catch { }
                 }
                 return;
             }

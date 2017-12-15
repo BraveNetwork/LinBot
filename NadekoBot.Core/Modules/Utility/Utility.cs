@@ -93,24 +93,29 @@ namespace NadekoBot.Modules.Utility
         {
             var rng = new NadekoRandom();
             var usrs = (await Context.Guild.GetUsersAsync()).ToArray();
-            var roleUsers = usrs.Where(u => u.RoleIds.Contains(role.Id)).Select(u => u.ToString())
+            var roleUsers = usrs
+                .Where(u => u.RoleIds.Contains(role.Id))
+                .Select(u => u.ToString())
                 .ToArray();
-            var inroleusers = string.Join(", ", roleUsers
-                    .OrderBy(x => rng.Next())
-                    .Take(50));
-            var embed = new EmbedBuilder().WithOkColor()
-                .WithTitle("ℹ️ " + Format.Bold(GetText("inrole_list", Format.Bold(role.Name))) + $" - {roleUsers.Length}")
-                .WithDescription($"```css\n[{role.Name}]\n{inroleusers}```");
-            await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+
+            await Context.Channel.SendPaginatedConfirmAsync(_client, 0, (cur) =>
+            {
+                return new EmbedBuilder().WithOkColor()
+                    .WithTitle(Format.Bold(GetText("inrole_list", Format.Bold(role.Name))) + $" - {roleUsers.Length}")
+                    .WithDescription(string.Join("\n", roleUsers.Skip(cur * 20).Take(20)));
+            }, roleUsers.Length, 20).ConfigureAwait(false);
         }
+
+        public enum MeOrBot { Me, Bot }
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
-        public async Task CheckMyPerms()
+        public async Task CheckPerms(MeOrBot who = MeOrBot.Me)
         {
-
             StringBuilder builder = new StringBuilder();
-            var user = (IGuildUser) Context.User;
+            var user = who == MeOrBot.Me
+                ? (IGuildUser)Context.User
+                : ((SocketGuild)Context.Guild).CurrentUser;
             var perms = user.GetPermissions((ITextChannel)Context.Channel);
             foreach (var p in perms.GetType().GetProperties().Where(p => !p.GetGetMethod().GetParameters().Any()))
             {

@@ -9,6 +9,10 @@ using NadekoBot.Common.Attributes;
 using NadekoBot.Common.ModuleBehaviors;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Impl;
+using NadekoBot.Common;
+using NLog;
+using CommandLine;
+using CommandLine.Text;
 
 namespace NadekoBot.Modules.Help.Services
 {
@@ -17,25 +21,33 @@ namespace NadekoBot.Modules.Help.Services
         private readonly IBotConfigProvider _bc;
         private readonly CommandHandler _ch;
         private readonly NadekoStrings _strings;
+        private readonly Logger _log;
 
         public HelpService(IBotConfigProvider bc, CommandHandler ch, NadekoStrings strings)
         {
             _bc = bc;
             _ch = ch;
             _strings = strings;
+            _log = LogManager.GetCurrentClassLogger();
         }
 
-        public async Task LateExecute(DiscordSocketClient client, IGuild guild, IUserMessage msg)
+        public Task LateExecute(DiscordSocketClient client, IGuild guild, IUserMessage msg)
         {
             try
             {
-                if(guild == null)
-                    await msg.Channel.SendMessageAsync(_bc.BotConfig.DMHelpString).ConfigureAwait(false);
+                if (guild == null)
+                {
+                    if (CREmbed.TryParse(_bc.BotConfig.DMHelpString, out var embed))
+                        return msg.Channel.EmbedAsync(embed.ToEmbed(), embed.PlainText?.SanitizeMentions() ?? "");
+
+                    return msg.Channel.SendMessageAsync(_bc.BotConfig.DMHelpString);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //ignore
+                _log.Warn(ex);
             }
+            return Task.CompletedTask;
         }
 
         public EmbedBuilder GetCommandHelp(CommandInfo com, IGuild guild)
@@ -46,11 +58,41 @@ namespace NadekoBot.Modules.Help.Services
             var alias = com.Aliases.Skip(1).FirstOrDefault();
             if (alias != null)
                 str += string.Format(" **/ `{0}`**", prefix + alias);
-            return new EmbedBuilder()
+            var em = new EmbedBuilder()
                 .AddField(fb => fb.WithName(str).WithValue($"{com.RealSummary(prefix)} {GetCommandRequirements(com, guild)}").WithIsInline(true))
                 .AddField(fb => fb.WithName(GetText("usage", guild)).WithValue(com.RealRemarks(prefix)).WithIsInline(false))
                 .WithFooter(efb => efb.WithText(GetText("module", guild, com.Module.GetTopLevelModule().Name)))
                 .WithColor(NadekoBot.OkColor);
+
+            var opt = ((NadekoOptions)com.Attributes.FirstOrDefault(x => x is NadekoOptions))?.OptionType;
+            if (opt != null)
+            {
+                var hs = GetCommandOptionHelp(opt);
+                if(!string.IsNullOrWhiteSpace(hs))
+                    em.AddField(GetText("options", guild), hs, false);
+            }
+
+            return em;
+        }
+
+        private string GetCommandOptionHelp(Type opt)
+        {
+            var strs = opt.GetProperties()
+                .Select(x => x.GetCustomAttributes(true).FirstOrDefault(a => a is OptionAttribute))
+                .Where(x => x != null)
+                .Cast<OptionAttribute>()
+                .Select(x =>
+                {
+                    var toReturn = $"--{x.LongName}";
+
+                    if (!string.IsNullOrWhiteSpace(x.ShortName))
+                        toReturn += $" (-{x.ShortName})";
+
+                    toReturn += $"   {x.HelpText}";
+                    return toReturn;
+                });
+
+            return string.Join("\n", strs);
         }
 
         public string GetCommandRequirements(CommandInfo cmd, IGuild guild) =>
