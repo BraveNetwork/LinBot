@@ -771,6 +771,62 @@
       "{0}arm [enable/disable] MyRole"
     ]
   },
+  "globalwhitelistset": {
+    "Cmd": "gwl",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}gwl option arg",
+      "{0}gwl altoption altarg"
+    ]
+  },
+  "globalwhitelist": {
+    "Cmd": "abbr",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}gwlu option arg",
+      "{0}gwlc altoption altarg",
+      "{0}gwls altoption altarg"
+    ]
+  },
+  "unblock": {
+    "Cmd": "abbr",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}ubm option arg",
+      "{0}ubc altoption altarg"
+    ]
+  },
+  "listwhitelistnames": {
+    "Cmd": "lwl",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}lwl option arg",
+      "{0}lwl altoption altarg"
+    ]
+  },
+  "listwhitelistmembers": {
+    "Cmd": "lwlm",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}lwlm option arg",
+      "{0}lwlm altoption altarg"
+    ]
+  },
+  "listunblocked": {
+    "Cmd": "lub",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}lub option arg"
+    ]
+  },
+  "checkmemberwhitelist": {
+    "Cmd": "cmwl",
+    "Desc": "Description.",
+    "Usage": [
+      "{0}cmwl option arg",
+      "{0}cmwl altoption altarg"
+    ]
+  },
   "userblacklist": {
     "Cmd": "ubl",
     "Desc": "Either [add]s or [rem]oves a user specified by a Mention or an ID from a blacklist.",
