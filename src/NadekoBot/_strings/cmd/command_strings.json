@@ -3183,5 +3183,89 @@
     "usage": [
       "{0}masskill BadPerson#1234 Toxic person"
     ]
+  },
+  "globalwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "listwhitelistnames": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "listwhitelistmembers": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "usercheckmemberwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "channelcheckmemberwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "servercheckmemberwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "userglobalwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "channelglobalwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "serverglobalwhitelist": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
+  },
+  "": {
+    "cmd": "",
+    "desc": "",
+    "usage": [
+      ""
+    ]
   }
 }
