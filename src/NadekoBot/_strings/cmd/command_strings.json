@@ -771,62 +771,6 @@
       "{0}arm [enable/disable] MyRole"
     ]
   },
-  "globalwhitelistset": {
-    "Cmd": "gwl",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}gwl option arg",
-      "{0}gwl altoption altarg"
-    ]
-  },
-  "globalwhitelist": {
-    "Cmd": "abbr",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}gwlu option arg",
-      "{0}gwlc altoption altarg",
-      "{0}gwls altoption altarg"
-    ]
-  },
-  "unblock": {
-    "Cmd": "abbr",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}ubm option arg",
-      "{0}ubc altoption altarg"
-    ]
-  },
-  "listwhitelistnames": {
-    "Cmd": "lwl",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}lwl option arg",
-      "{0}lwl altoption altarg"
-    ]
-  },
-  "listwhitelistmembers": {
-    "Cmd": "lwlm",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}lwlm option arg",
-      "{0}lwlm altoption altarg"
-    ]
-  },
-  "listunblocked": {
-    "Cmd": "lub",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}lub option arg"
-    ]
-  },
-  "checkmemberwhitelist": {
-    "Cmd": "cmwl",
-    "Desc": "Description.",
-    "Usage": [
-      "{0}cmwl option arg",
-      "{0}cmwl altoption altarg"
-    ]
-  },
   "userblacklist": {
     "Cmd": "ubl",
     "Desc": "Either [add]s or [rem]oves a user specified by a Mention or an ID from a blacklist.",
@@ -3185,87 +3129,94 @@
     ]
   },
   "globalwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwl",
+    "desc": "Create a new global whitelist. Provide a name that you'll later use for adding/removing members and globally unblocking specific commands or modules",
     "usage": [
-      ""
+      "{0}gwl MyAwesomeWhitelistName"
     ]
   },
   "listwhitelistnames": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlname",
+    "desc": "A list of all created whitelists, by name.",
     "usage": [
-      ""
+      "{0}gwlname"
     ]
   },
   "listwhitelistmembers": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlmem",
+    "desc": "A list of all members belonging to a given whitelist.",
     "usage": [
-      ""
+      "{0}gwlmem MyAwesomeWhitelistName"
     ]
   },
   "usercheckmemberwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlcu",
+    "desc": "A list of all whitelists for which the user is a member",
     "usage": [
-      ""
+      "{0}gwlcu @SomeUser",
+      "{0}gwlcu 123123123"
     ]
   },
   "channelcheckmemberwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlcc",
+    "desc": "A list of all whitelists for which the channel is a member",
     "usage": [
-      ""
+      "{0}gwlcc 123123123"
     ]
   },
   "servercheckmemberwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlcs",
+    "desc": "A list of all whitelists for which the server is a member",
     "usage": [
-      ""
+      "{0}gwlcs SomeServer",
+      "{0}gwlcs 123123123"
     ]
   },
   "userglobalwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlu",
+    "desc": "Add or remove a user from a whitelist",
     "usage": [
-      ""
+      "{0}gwlu add MyAwesomeWhitelist SomeServer",
+      "{0}gwlu rem MyAwesomeWhitelist 123123123"
     ]
   },
   "channelglobalwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwlc",
+    "desc": "Add or remove a channel from a whitelist",
     "usage": [
-      ""
+      "{0}gwlc add MyAwesomeWhitelist 123123123",
+      "{0}gwlc rem MyAwesomeWhitelist 123123123"
     ]
   },
   "serverglobalwhitelist": {
-    "cmd": "",
-    "desc": "",
+    "cmd": "gwls",
+    "desc": "Add or remove a server from a whitelist",
     "usage": [
-      ""
+      "{0}gwls add MyAwesomeWhitelist SomeServer",
+      "{0}gwls rem MyAwesomeWhitelist 123123123"
     ]
   },
-  "": {
-    "cmd": "",
-    "desc": "",
+  "lgu": {
+    "cmd": "listglobalunblock lgu",
+    "desc": "List all unblocked commands and modules WIP ",
     "usage": [
-      ""
+      "{0}lgu"
     ]
   },
-  "": {
-    "cmd": "",
-    "desc": "",
+  "ubm": {
+    "cmd": "unblockmdl ubm",
+    "desc": "Add or remove a module from the unblocked list WIP ",
     "usage": [
-      ""
+      "{0}ubm add SomeModule",
+      "{0}ubm rem SomeModule"
     ]
   },
-  "": {
-    "cmd": "",
-    "desc": "",
+  "ubc": {
+    "cmd": "unblockcmd ubc",
+    "desc": "Add or remove a command from the unblocked list WIP",
     "usage": [
-      ""
+      "{0}ubc add SomeCommand",
+      "{0}ubc rem SomeCommand"
     ]
   }
 }
