@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Microsoft.EntityFrameworkCore;
 using NadekoBot.Extensions;
@@ -79,7 +79,7 @@ namespace NadekoBot.Modules.Games
                 {
                     var imgData = _service.GetRandomCurrencyImage();
 
-                    var msgToSend = GetText("dropped",
+                    var msgToSend = GetText("planted",
                         Format.Bold(Context.User.ToString()),
                         amount + _bc.BotConfig.CurrencySign,
                         Prefix);

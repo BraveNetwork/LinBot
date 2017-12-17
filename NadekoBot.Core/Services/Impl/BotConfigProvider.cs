@@ -118,7 +118,7 @@ namespace NadekoBot.Core.Services.Impl
                             return false;
                         break;
                     case BotConfigEditType.BetflipMultiplier:
-                        if (int.TryParse(newValue, out var bf) && bf > 0)
+                        if (float.TryParse(newValue, out var bf) && bf > 0)
                             bc.BetflipMultiplier = bf;
                         else
                             return false;
@@ -132,6 +132,12 @@ namespace NadekoBot.Core.Services.Impl
                     case BotConfigEditType.XpMinutesTimeout:
                         if (int.TryParse(newValue, out var min) && min > 0)
                             bc.XpMinutesTimeout = min;
+                        else
+                            return false;
+                        break;
+                    case BotConfigEditType.PatreonCurrencyPerCent:
+                        if (float.TryParse(newValue, out var cents) && cents > 0)
+                            bc.PatreonCurrencyPerCent = cents;
                         else
                             return false;
                         break;
