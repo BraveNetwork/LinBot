@@ -3208,45 +3208,48 @@
   },
   "globalwhitelist": {
     "cmd": "gwl",
-    "desc": "Create a new global whitelist. Provide a name that you'll later use for adding/removing members and globally unblocking specific commands or modules",
+    "desc": "Create a new global whitelist. Provide a name (20 characters max) that you'll later use for adding/removing members and globally unblocking specific commands or modules",
     "usage": [
       "{0}gwl MyAwesomeWhitelistName"
     ]
   },
   "listwhitelistnames": {
     "cmd": "gwlname",
-    "desc": "A list of all created whitelists, by name.",
+    "desc": "A list of all created whitelists, by name. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
-      "{0}gwlname"
+      "{0}gwlname",
+      "{0}gwlname 5"
     ]
   },
   "listwhitelistmembers": {
     "cmd": "gwlmem",
-    "desc": "A list of all members belonging to a given whitelist.",
+    "desc": "A list of all members belonging to a given whitelist, sorted by type (Server/ Channel/ User). Returns 9 IDs per type per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
-      "{0}gwlmem MyAwesomeWhitelistName"
+      "{0}gwlmem MyAwesomeWhitelistName",
+      "{0}gwlmem MyAwesomeWhitelistName 5"
     ]
   },
   "usercheckmemberwhitelist": {
     "cmd": "gwlcu",
-    "desc": "A list of all whitelists for which the user is a member",
+    "desc": "A list of all whitelists for which the user is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
-      "{0}gwlcu @SomeUser",
+      "{0}gwlcu @SomeUser 5",
       "{0}gwlcu 123123123"
     ]
   },
   "channelcheckmemberwhitelist": {
     "cmd": "gwlcc",
-    "desc": "A list of all whitelists for which the channel is a member",
+    "desc": "A list of all whitelists for which the channel is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
+      "{0}gwlcc 123123123 5",
       "{0}gwlcc 123123123"
     ]
   },
   "servercheckmemberwhitelist": {
     "cmd": "gwlcs",
-    "desc": "A list of all whitelists for which the server is a member",
+    "desc": "A list of all whitelists for which the server is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
-      "{0}gwlcs SomeServer",
+      "{0}gwlcs SomeServer 5",
       "{0}gwlcs 123123123"
     ]
   },

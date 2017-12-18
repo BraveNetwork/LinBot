@@ -11,24 +11,20 @@ namespace NadekoBot.Core.Services.Database.Repositories.Impl
         {
         }
 
-        public GlobalWhitelistSet GetByName(string name, Func<DbSet<GlobalWhitelistSet>, IQueryable<GlobalWhitelistSet>> func = null)
+        public GlobalWhitelistSet GetByName(string name)
         {
-            if (func == null)
-                return _set
-                    .Where(x => x.ListName == name)
-                    .Include(x => x.GlobalUnblockedSets)
-                    .Include(x => x.GlobalWhitelistItemSets)
-                    .FirstOrDefault();
-            // Otherwise
-            return func(_set).FirstOrDefault(x => x.ListName == name);
+            return _set
+                .Where(x => x.ListName.ToLowerInvariant() == name.ToLowerInvariant())
+                .Include(x => x.GlobalWhitelistItemSets)
+                .FirstOrDefault();
         }
 
         public GlobalWhitelistSet[] GetWhitelistGroups(int page)
         {
             return _set
                 .OrderByDescending(x => x.ListName)
-                .Skip(page * 9)
-                .Take(9)
+                //.Skip(page * 9)
+                //.Take(9)
                 .ToArray();
         }
 
@@ -38,8 +34,8 @@ namespace NadekoBot.Core.Services.Database.Repositories.Impl
                 .Include(x => x.GlobalWhitelistItemSets)
                 .Where(x => x.GlobalWhitelistItemSets.Any(y => y.ItemPK == itemPK))
                 .OrderByDescending(x => x.ListName)
-                .Skip(page * 9)
-                .Take(9)
+                //.Skip(page * 9)
+                //.Take(9)
                 .ToArray();
         }
     }

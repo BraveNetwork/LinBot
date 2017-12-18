@@ -7,7 +7,7 @@ namespace NadekoBot.Core.Services.Database.Repositories
 {
     public interface IGlobalWhitelistRepository : IRepository<GlobalWhitelistSet>
     {
-        GlobalWhitelistSet GetByName(string v, Func<DbSet<GlobalWhitelistSet>, IQueryable<GlobalWhitelistSet>> func = null);
+        GlobalWhitelistSet GetByName(string name);
         GlobalWhitelistSet[] GetWhitelistGroups(int page);
         GlobalWhitelistSet[] GetWhitelistGroupsByMember(int itemPK, int page);
     }

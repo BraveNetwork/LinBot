@@ -30,7 +30,7 @@ namespace NadekoBot.Modules.Permissions
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
                 if (!_service.CreateWhitelist(listName))
                 {
-                    await ReplyErrorLocalized("gwl_create_error").ConfigureAwait(false);
+                    await ReplyErrorLocalized("gwl_create_error", Format.Bold(listName)).ConfigureAwait(false);
                     return;
                 }
 
@@ -42,12 +42,12 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ListWhitelistNames(int page=1)
             {
-                if(--page < 0) return;
+                if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
                 var names = _service.GetAllNames(page);
-                var desc = string.Join("\n", names);
+                var desc = System.String.Join("\n", names);
 
-                if (names.Length < 0) desc = GetText("gwl_empty");
+                if (names.Length <= 0) desc = GetText("gwl_empty");
 
                 var embed = new EmbedBuilder()
                     .WithTitle(GetText("gwl_list", page +1))
@@ -59,38 +59,39 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task ListWhitelistMembers(string listName)
+            public async Task ListWhitelistMembers(string listName, int page=1)
             {
-                if (_service.GetGroupMembers(listName, 
-                    out IGrouping<GlobalWhitelistType,GlobalWhitelistItem>[] members))
+                if(--page < 0) return; // ensures page is 0-indexed and non-negative
+                if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))
                 {
-                    var servers = members
-                        .Single(x => x.Key == GlobalWhitelistType.Server)
-                        .OrderBy(x => x.DateAdded)
-                        .Select(x => x.ItemId)
-                        .ToArray();
-                    var channels = members
-                        .Single(x => x.Key == GlobalWhitelistType.Channel)
-                        .OrderBy(x => x.DateAdded)
-                        .Select(x => x.ItemId)
-                        .ToArray();
-                    var users = members
-                        .Single(x => x.Key == GlobalWhitelistType.User)
-                        .OrderBy(x => x.DateAdded)
-                        .Select(x => x.ItemId)
-                        .ToArray();
-                        
-                    var embed = new EmbedBuilder()
-                        .WithOkColor()
-                        .WithTitle(GetText("gwl_members",listName.ToLowerInvariant()))
-                        .AddField("Servers", string.Join("\n",servers), true)
-                        .AddField("Channels", string.Join("\n",channels), true)
-                        .AddField("Users", string.Join("\n",users), true);
+                    if (group.GlobalWhitelistItemSets.Count() < 1) {
+                        await ReplyErrorLocalized("gwl_no_members", Format.Bold(listName), listName).ConfigureAwait(false);    
+                        return;
+                    } else {
+                        ulong[] servers = _service.GetGroupMembers(group, GlobalWhitelistType.Server, page);
+                        ulong[] channels = _service.GetGroupMembers(group, GlobalWhitelistType.Channel, page);
+                        ulong[] users = _service.GetGroupMembers(group, GlobalWhitelistType.User, page);
 
-                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                        string serverStr = "*none*";
+                        string channelStr = "*none*";
+                        string userStr = "*none*";
 
+                        if (servers.Length > 0) { serverStr = string.Join("\n",servers); }
+                        if (channels.Length > 0) { channelStr = "<#"+string.Join(">\n<#",channels)+">"; }
+                        if (users != null) { userStr = "<@"+string.Join(">\n<#",users)+">"; }
+                            
+                        var embed = new EmbedBuilder()
+                            .WithOkColor()
+                            .WithTitle(GetText("gwl_members", Format.Bold(listName)))
+                            .AddField("Servers", serverStr, true)
+                            .AddField("Channels", channelStr, true)
+                            .AddField("Users", userStr, true);
+
+                        await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    }
+                    
                 } else {
-                    await ReplyErrorLocalized("gwl_not_exists").ConfigureAwait(false);    
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
                     return;
                 }
             }
@@ -129,10 +130,10 @@ namespace NadekoBot.Modules.Permissions
 
                 var desc = string.Join("\n", names);
 
-                if (names.Length < 0) desc = GetText("gwl_empty_member", id);
+                if (names.Length < 0) desc = GetText("gwl_empty_member", Format.Bold(id.ToString()), id);
 
                 var embed = new EmbedBuilder()
-                    .WithTitle(GetText("gwl_listbymember", page +1))
+                    .WithTitle(GetText("gwl_listbymember", Format.Bold(id.ToString()), page +1))
                     .WithDescription(desc)
                     .WithOkColor();
 
@@ -172,31 +173,31 @@ namespace NadekoBot.Modules.Permissions
                 // If the listName doesn't exist, return an error message
                 if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
                 {
-                    await ReplyErrorLocalized("gwl_not_exists").ConfigureAwait(false);
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
                 }
 
                 // Process Add ID to Whitelist of ListName
                 if (action == AddRemove.Add) 
                 {
-                    if(_service.AddItemToGroup(id,type,listName))
+                    if(_service.AddItemToGroup(id,type,group))
                     {
-                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), Format.Code(id.ToString())).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_not_exists").ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }
                 // Process Remove ID from Whitelist of ListName
                 else
                 {
-                    if(_service.RemoveItemFromGroup(id,type,listName))
+                    if(_service.RemoveItemFromGroup(id,type,group))
                     {
-                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), Format.Code(id.ToString())).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_not_exists").ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }                   

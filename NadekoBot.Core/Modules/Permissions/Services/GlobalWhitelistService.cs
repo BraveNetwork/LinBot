@@ -1,6 +1,8 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using System.Collections.Generic;
 using NadekoBot.Common.Collections;
 using NadekoBot.Common.ModuleBehaviors;
 using NadekoBot.Core.Services;
@@ -42,7 +44,7 @@ namespace NadekoBot.Modules.Permissions.Services
         }
         public string[] GetAllNames(int page)
         {
-            var names = new string[0];
+            var names = new List<string>();
 
             using (var uow = _db.UnitOfWork)
             {
@@ -51,21 +53,21 @@ namespace NadekoBot.Modules.Permissions.Services
 
                 // First, Collect all lists
                 var groups = uow.GlobalWhitelists.GetWhitelistGroups(page);
-
-                // Third, Take just the names
+                
+                // Then, Take just the names
                 for ( var i=0; i<groups.Length; i++ ) 
                 {
-                    names[i] = groups[i].ListName;
+                    names.Add(groups[i].ListName);
                 }
 
                 uow.Complete();
             }
-            return names;
+            return names.ToArray();
         }
 
         public string[] GetNamesByMember(ulong id, GlobalWhitelistType type, int page)
         {
-            var names = new string[0];
+            var names = new List<string>();
 
             using (var uow = _db.UnitOfWork)
             {
@@ -78,7 +80,7 @@ namespace NadekoBot.Modules.Permissions.Services
                         .Where( x => x.Type.Equals(type) )
                         .FirstOrDefault();
 
-                if (item == null) return names;
+                if (item == null) return names.ToArray();
 
                 // Second, Collect all lists related to item
                 var groups = uow.GlobalWhitelists.GetWhitelistGroupsByMember(item.Id,page);
@@ -86,12 +88,12 @@ namespace NadekoBot.Modules.Permissions.Services
                 // Third, Take just the names
                 for ( var i=0; i<groups.Length; i++ ) 
                 {
-                    names[i] = groups[i].ListName;
+                    names.Add(groups[i].ListName);
                 }
 
                 uow.Complete();
             }
-            return names;
+            return names.ToArray();
         }
 
         public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
@@ -108,34 +110,31 @@ namespace NadekoBot.Modules.Permissions.Services
                 else { return true; }
             }
         }
-
-        public bool GetGroupMembers(string listName, out IGrouping<GlobalWhitelistType,GlobalWhitelistItem>[] members)
+        public ulong[] GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page)
         {
-            members = null;
+            ulong[] results = null;
 
             using (var uow = _db.UnitOfWork)
             {
                 var bc = uow.BotConfig.GetOrCreate();
                 uow._context.SaveChanges();
 
-                // First, Get the group
-                GetGroupByName(listName, out GlobalWhitelistSet group);
-
-                if (group == null) return false;
-
-                // Second, Get the members
-                var results = group.GlobalWhitelistItemSets
-                    .Select(x => x.Item)
-                    .GroupBy( x => x.Type )
-                    .ToArray();
+                results = group.GlobalWhitelistItemSets
+                  .Join(bc.GlobalWhitelistMembers.Where(i => i.Type == type), 
+                      p => p.ItemPK, 
+                      m => m.Id, 
+                      (pair,member) => member.ItemId)
+                  .ToArray();
 
                 uow.Complete();
             }
 
-            return false;
+            System.Console.WriteLine("Type {0} Results: {1}", type, results.Length);
+
+            return results;
         }
 
-        public bool AddItemToGroup(ulong id, GlobalWhitelistType type, string listName)
+        public bool AddItemToGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
         {
             using (var uow = _db.UnitOfWork)
             {
@@ -147,7 +146,7 @@ namespace NadekoBot.Modules.Permissions.Services
                         .Where( x => x.ItemId.Equals(id) )
                         .Where( x => x.Type.Equals(type) )
                         .FirstOrDefault();
-
+                
                 if (item == null) {
                     item = new GlobalWhitelistItem
                     {
@@ -155,47 +154,42 @@ namespace NadekoBot.Modules.Permissions.Services
                         Type = type
                     };
                     bc.GlobalWhitelistMembers.Add(item);
+                    //uow._context.Set<GlobalWhitelistItem>().Add(item); // don't do this as it sets BotConfigId to null!
+                    uow._context.SaveChanges();
+                    uow._context.Set<GlobalWhitelistItemSet>().Add(new GlobalWhitelistItemSet
+                    {
+                        ListPK = group.Id,
+                        ItemPK = item.Id
+                    });
+                } else {
+                    // Second Check that id is not already in the group
+                    var itemInGroup = group.GlobalWhitelistItemSets
+                        .FirstOrDefault(x => x.ItemPK == item.Id);
+
+                    if (itemInGroup != null) return false; // already exists!
+                    
+                    // Third Create a new WhitelistItemSet
+                    itemInGroup = new GlobalWhitelistItemSet
+                    {
+                        ListPK = group.Id,
+                        ItemPK = item.Id
+                    };
+
+                    // Finally add the WhitelistItemSet
+                    uow._context.Set<GlobalWhitelistItemSet>().Add(itemInGroup);
                 }
-
-                // Second Retrieve the WhitelistSet given name
-                GetGroupByName(listName, out GlobalWhitelistSet group);
-
-                if (group == null) return false;
-
-                // Third, Check that id is not already in the group
-                var itemInGroup = group.GlobalWhitelistItemSets
-                    .FirstOrDefault(x => x.ItemPK == item.Id);
-
-                if (itemInGroup != null) return false;
-
-                // Fourth Create a new WhitelistItemSet
-                itemInGroup = new GlobalWhitelistItemSet
-                {
-                    //ListPK = group.Id,
-                    //ItemPK = item.Id
-                    List = group,
-                    Item = item
-                };
-
-                // Finally add the WhitelistItemSet
-                //uow._context.Set<GlobalWhitelistItemSet>().Add(itemInGroup);
-                group.GlobalWhitelistItemSets.Add(itemInGroup);
-
                 uow.Complete();
             }
             return true;
         }
-        public bool RemoveItemFromGroup(ulong id, GlobalWhitelistType type, string listName)
+        public bool RemoveItemFromGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
         {
             using (var uow = _db.UnitOfWork)
             {
                 var bc = uow.BotConfig.GetOrCreate();
                 uow._context.SaveChanges();
 
-                // First Retrieve the WhitelistSet given name
-                GetGroupByName(listName, out GlobalWhitelistSet group);
-
-                // Second, Retrieve the WhitelistItem given id,type
+                // First, Retrieve the WhitelistItem given id,type
                 var item = bc.GlobalWhitelistMembers
                         .Where( x => x.ItemId.Equals(id) )
                         .Where( x => x.Type.Equals(type) )
@@ -203,12 +197,12 @@ namespace NadekoBot.Modules.Permissions.Services
 
                 if (item == null) return false;
 
-                // Third, Find the ItemInSet record
+                // Second, Find the ItemInSet record
                 var itemInSet = group.GlobalWhitelistItemSets
                     .FirstOrDefault(x => x.ItemPK == item.Id);
 
                 // Finally remove the Item from the Set
-                group.GlobalWhitelistItemSets.Remove(itemInSet);
+                uow._context.Set<GlobalWhitelistItemSet>().Remove(itemInSet);
 
                 uow.Complete();
             }
