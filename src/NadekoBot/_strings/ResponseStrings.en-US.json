@@ -1,4 +1,6 @@
 {
+  "example_mynewfeature_success": "You gave me some text {0} and a number {1}",
+  "example_mynewfeature_emptystring": "You didn't provide any text!",
   "customreactions_all_stats_cleared": "All custom reaction stats cleared.",
   "customreactions_deleted": "Custom Reaction deleted",
   "customreactions_insuff_perms": "Insufficient permissions. Requires Bot ownership for global custom reactions, and Administrator for server custom reactions.",

@@ -1,4 +1,30 @@
 {
+  "mynewcommand": {
+    "Cmd": "mynewcommand mnc",
+    "Desc": "Example command that accepts some text and a number. Returns an Error Message if text is empty. Fails if no arguments provided.",
+    "Usage": [
+      "{0}mnc \"Some Text\"",
+      "{0}mnc \"Some Text\" 3",
+      "{0}mnc SomeText",
+      "{0}mnc SomeText 3"
+    ]
+  },
+  "mentionuser": {
+    "Cmd": "mentionuser mu",
+    "Desc": "Example command that returns a message mentioning a user",
+    "Usage": [
+      "{0}mu @User",
+      "{0}mu 123123123"
+    ]
+  },
+  "mentionchannel": {
+    "Cmd": "mentionchannel mc",
+    "Desc": "Example command that returns a message mentioning a channel",
+    "Usage": [
+      "{0}mc #channel",
+      "{0}mc 123123123"
+    ]
+  },
   "h": {
     "Cmd": "help h",
     "Desc": "Either shows a help for a single command, or DMs you help link if no arguments are specified.",
