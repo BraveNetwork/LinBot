@@ -13,9 +13,10 @@ using System;
 namespace NadekoBot.Migrations
 {
     [DbContext(typeof(NadekoContext))]
-    partial class NadekoSqliteContextModelSnapshot : ModelSnapshot
+    [Migration("20171220071403_reactionroles")]
+    partial class reactionroles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,8 +245,6 @@ namespace NadekoBot.Migrations
 
                     b.Property<DateTime?>("DateAdded");
 
-                    b.Property<string>("Description");
-
                     b.Property<int>("Discrim");
 
                     b.Property<string>("ImageUrl");
@@ -333,6 +332,25 @@ namespace NadekoBot.Migrations
                     b.ToTable("CommandPrice");
                 });
 
+            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.Currency", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("Amount");
+
+                    b.Property<DateTime?>("DateAdded");
+
+                    b.Property<ulong>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Currency");
+                });
+
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.CurrencyTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -407,8 +425,6 @@ namespace NadekoBot.Migrations
                     b.Property<string>("AvatarId");
 
                     b.Property<int?>("ClubId");
-
-                    b.Property<long>("CurrencyAmount");
 
                     b.Property<DateTime?>("DateAdded");
 
