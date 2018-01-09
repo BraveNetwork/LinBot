@@ -1,4 +1,113 @@
 {
+  "globalwhitelist": {
+    "cmd": "gwl",
+    "desc": "Create a new global whitelist. Provide a name (20 characters max) that you'll later use for adding/removing members and globally unblocking specific commands or modules",
+    "usage": [
+      "{0}gwl MyAwesomeWhitelistName"
+    ]
+  },
+  "listwhitelistnames": {
+    "cmd": "gwlname",
+    "desc": "A list of all created whitelists, by name. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+    "usage": [
+      "{0}gwlname",
+      "{0}gwlname 5"
+    ]
+  },
+  "listwhitelistmembers": {
+    "cmd": "gwlmem",
+    "desc": "A list of all members belonging to a given whitelist, sorted by type (Server/ Channel/ User). Returns 9 IDs per type per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+    "usage": [
+      "{0}gwlmem MyAwesomeWhitelistName",
+      "{0}gwlmem MyAwesomeWhitelistName 5"
+    ]
+  },
+  "usercheckmemberwhitelist": {
+    "cmd": "gwlcu",
+    "desc": "A list of all whitelists for which the user is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+    "usage": [
+      "{0}gwlcu @SomeUser 5",
+      "{0}gwlcu 123123123"
+    ]
+  },
+  "channelcheckmemberwhitelist": {
+    "cmd": "gwlcc",
+    "desc": "A list of all whitelists for which the channel is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+    "usage": [
+      "{0}gwlcc #SomeChannel 5",
+      "{0}gwlcc 123123123"
+    ]
+  },
+  "servercheckmemberwhitelist": {
+    "cmd": "gwlcs",
+    "desc": "A list of all whitelists for which the server is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+    "usage": [
+      "{0}gwlcs SomeServer 5",
+      "{0}gwlcs 123123123"
+    ]
+  },
+  "userglobalwhitelist": {
+    "cmd": "gwlu",
+    "desc": "Add or remove a user from a whitelist",
+    "usage": [
+      "{0}gwlu add MyAwesomeWhitelist SomeServer",
+      "{0}gwlu rem MyAwesomeWhitelist 123123123"
+    ]
+  },
+  "channelglobalwhitelist": {
+    "cmd": "gwlc",
+    "desc": "Add or remove a channel from a whitelist",
+    "usage": [
+      "{0}gwlc add MyAwesomeWhitelist #SomeChannel",
+      "{0}gwlc rem MyAwesomeWhitelist 123123123"
+    ]
+  },
+  "serverglobalwhitelist": {
+    "cmd": "gwls",
+    "desc": "Add or remove a server from a whitelist",
+    "usage": [
+      "{0}gwls add MyAwesomeWhitelist SomeServer",
+      "{0}gwls rem MyAwesomeWhitelist 123123123"
+    ]
+  },
+  "lgu": {
+    "cmd": "listglobalunblock lgu",
+    "desc": "List all unblocked commands and modules WIP ",
+    "usage": [
+      "{0}lgu WLNAME"
+    ]
+  },
+  "ubmod": {
+    "cmd": "unblockmdl ubmdl",
+    "desc": "[Add] or [rem]ove a module from the specified global whitelist.",
+    "usage": [
+      "{0}ubmdl add SomeModule WLNAME",
+      "{0}ubmdl rem SomeModule WLNAME"
+    ]
+  },
+  "ubcmd": {
+    "cmd": "unblockcmd ubcmd",
+    "desc": "[Add] or [rem]ove a command or customreaction from the specified global whitelist.",
+    "usage": [
+      "{0}ubcmd add {0}SomeCommand WLNAME",
+      "{0}ubcmd rem SomeCustomReaction WLNAME"
+    ]
+  },
+  "ubmodrm": {
+    "cmd": "blockmdl ubmdlrm",
+    "desc": "Remove the module from ALL whitelists.",
+    "usage": [
+      "{0}ubmdlrm SomeModul"
+    ]
+  },
+  "ubcmdrm": {
+    "cmd": "blockcmd ubcmdrm",
+    "desc": "Remove the command or custom reaction from ALL whitelists.",
+    "usage": [
+      "{0}ubcmdrm {0}SomeCommand",
+      "{0}ubcmdrm SomeCustomReaction"
+    ]
+  },
   "h": {
     "Cmd": "help h",
     "Desc": "Either shows a help for a single command, or DMs you help link if no arguments are specified.",
@@ -510,7 +619,7 @@
   },
   "mentionrole": {
     "Cmd": "mentionrole menro",
-    "Desc": "Mentions every person from the provided role or roles (separated by a ',') on this server.",
+    "Desc": "Mentions a role. If the role is not mentionable, bot will make it mentionable for a moment.",
     "Usage": [
       "{0}menro RoleName"
     ]
@@ -549,6 +658,20 @@
     "Usage": [
       "{0}remind me 1d5h Do something",
       "{0}remind #general 1m Start now!"
+    ]
+  },
+  "reminddelete": {
+    "Cmd": "reminddel remindrm",
+    "Desc": "Deletes a reminder on the specified index.",
+    "Usage": [
+      "{0}remindrm 3"
+    ]
+  },
+  "remindlist": {
+    "Cmd": "remindlist remindl remindlst",
+    "Desc": "Lists all reminders you created. Paginated.",
+    "Usage": [
+      "{0}remindlist 1"
     ]
   },
   "remindtemplate": {
@@ -963,14 +1086,15 @@
   },
   "give": {
     "Cmd": "give",
-    "Desc": "Give someone a certain amount of currency.",
+    "Desc": "Give someone a certain amount of currency. You can specify the reason after the mention.",
     "Usage": [
-      "{0}give 1 @SomeGuy"
+      "{0}give 1 @SomeGuy",
+      "{0}give 5 @CootGurl Ur so pwetty"
     ]
   },
   "award": {
     "Cmd": "award",
-    "Desc": "Awards someone a certain amount of currency.  You can also specify a role name to award currency to all users in a role.",
+    "Desc": "Awards someone a certain amount of currency. You can specify the reason after the Username. You can also specify a role name to award currency to all users in a role.",
     "Usage": [
       "{0}award 100 @person",
       "{0}award 5 Role Of Gamblers"
@@ -1771,6 +1895,14 @@
     "Usage": [
       "{0}$",
       "{0}$ @SomeGuy"
+    ]
+  },
+  "currencytransactions": {
+    "Cmd": "curtrs",
+    "Desc": "Shows your currency transactions on the specified page. Bot owner can see other people's transactions too.",
+    "Usage": [
+      "{0}curtrs 2",
+      "{0}curtrs @SomeUser 2"
     ]
   },
   "listperms": {
@@ -2969,6 +3101,13 @@
       "{0}clublevelreq 7"
     ]
   },
+  "clubdescription": {
+    "Cmd": "clubdesc",
+    "Desc": "Sets the club description. Maximum 150 characters. Club owner only.",
+    "Usage": [
+      "{0}clubdesc This is the best club please join."
+    ]
+  },
   "clubicon": {
     "Cmd": "clubicon",
     "Desc": "Sets the club icon.",
@@ -3206,113 +3345,26 @@
       "{0}rollduel @Challenger"
     ]
   },
-  "globalwhitelist": {
-    "cmd": "gwl",
-    "desc": "Create a new global whitelist. Provide a name (20 characters max) that you'll later use for adding/removing members and globally unblocking specific commands or modules",
+  "reactionroles": {
+    "cmd": "reactionroles rero",
+    "desc": "Specify role names and server emojis with which they're represented, the bot will then add those emojis to the previous message in the channel, and users will be able to get the roles by clicking on the emoji. You can set 'excl' as the first argument to make them exclusive. You can have up to 5 of these enabled on one server at a time.",
     "usage": [
-      "{0}gwl MyAwesomeWhitelistName"
+      "{0}reactionroles Gamer :SomeServerEmoji: Streamer :Other: Watcher :Other2:",
+      "{0}reactionroles excl Horde :Horde: Alliance :Alliance:"
     ]
   },
-  "listwhitelistnames": {
-    "cmd": "gwlname",
-    "desc": "A list of all created whitelists, by name. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+  "reactionroleslist": {
+    "cmd": "reactionroleslist reroli",
+    "desc": "Lists all ReactionRole messages on this channel and their indexes.",
     "usage": [
-      "{0}gwlname",
-      "{0}gwlname 5"
+      "{0}reactionroleslist"
     ]
   },
-  "listwhitelistmembers": {
-    "cmd": "gwlmem",
-    "desc": "A list of all members belonging to a given whitelist, sorted by type (Server/ Channel/ User). Returns 9 IDs per type per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
+  "reactionrolesremove": {
+    "cmd": "reactionrolesremove rerorm",
+    "desc": "Removed a ReactionRole message on the specified index.",
     "usage": [
-      "{0}gwlmem MyAwesomeWhitelistName",
-      "{0}gwlmem MyAwesomeWhitelistName 5"
-    ]
-  },
-  "usercheckmemberwhitelist": {
-    "cmd": "gwlcu",
-    "desc": "A list of all whitelists for which the user is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
-    "usage": [
-      "{0}gwlcu @SomeUser 5",
-      "{0}gwlcu 123123123"
-    ]
-  },
-  "channelcheckmemberwhitelist": {
-    "cmd": "gwlcc",
-    "desc": "A list of all whitelists for which the channel is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
-    "usage": [
-      "{0}gwlcc #SomeChannel 5",
-      "{0}gwlcc 123123123"
-    ]
-  },
-  "servercheckmemberwhitelist": {
-    "cmd": "gwlcs",
-    "desc": "A list of all whitelists for which the server is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
-    "usage": [
-      "{0}gwlcs SomeServer 5",
-      "{0}gwlcs 123123123"
-    ]
-  },
-  "userglobalwhitelist": {
-    "cmd": "gwlu",
-    "desc": "Add or remove a user from a whitelist",
-    "usage": [
-      "{0}gwlu add MyAwesomeWhitelist SomeServer",
-      "{0}gwlu rem MyAwesomeWhitelist 123123123"
-    ]
-  },
-  "channelglobalwhitelist": {
-    "cmd": "gwlc",
-    "desc": "Add or remove a channel from a whitelist",
-    "usage": [
-      "{0}gwlc add MyAwesomeWhitelist #SomeChannel",
-      "{0}gwlc rem MyAwesomeWhitelist 123123123"
-    ]
-  },
-  "serverglobalwhitelist": {
-    "cmd": "gwls",
-    "desc": "Add or remove a server from a whitelist",
-    "usage": [
-      "{0}gwls add MyAwesomeWhitelist SomeServer",
-      "{0}gwls rem MyAwesomeWhitelist 123123123"
-    ]
-  },
-  "lgu": {
-    "cmd": "listglobalunblock lgu",
-    "desc": "List all unblocked commands and modules WIP ",
-    "usage": [
-      "{0}lgu WLNAME"
-    ]
-  },
-  "ubmod": {
-    "cmd": "unblockmdl ubmdl",
-    "desc": "[Add] or [rem]ove a module from the specified global whitelist.",
-    "usage": [
-      "{0}ubmdl add SomeModule WLNAME",
-      "{0}ubmdl rem SomeModule WLNAME"
-    ]
-  },
-  "ubcmd": {
-    "cmd": "unblockcmd ubcmd",
-    "desc": "[Add] or [rem]ove a command or customreaction from the specified global whitelist.",
-    "usage": [
-      "{0}ubcmd add {0}SomeCommand WLNAME",
-      "{0}ubcmd rem SomeCustomReaction WLNAME"
-    ]
-  },
-  "ubmodrm": {
-    "cmd": "blockmdl ubmdlrm",
-    "desc": "Remove the module from ALL whitelists.",
-    "usage": [
-      "{0}ubmdlrm SomeModul"
-    ]
-  },
-  "ubcmdrm": {
-    "cmd": "blockcmd ubcmdrm",
-    "desc": "Remove the command or custom reaction from ALL whitelists.",
-    "usage": [
-      "{0}ubcmdrm {0}SomeCommand",
-      "{0}ubcmdrm SomeCustomReaction"
+      "{0}reactionrolesrm 1"
     ]
   }
 }
