@@ -1,5 +1,5 @@
 {
-  "permissions_gwl_title": "GlobalWhitelist Utility (`.cmds permissions`)",
+  "permissions_gwl_title": "GlobalWhitelist Utility (`.cmds perms`)",
   "permissions_gwl_titlefield": "GlobalWhitelist Names",
   "permissions_gwl_create_error": "Error creating whitelist: {0}",
   "permissions_gwl_created": "Successfully created the whitelist named {0}",
