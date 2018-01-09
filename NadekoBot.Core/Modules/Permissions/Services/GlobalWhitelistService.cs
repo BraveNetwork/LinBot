@@ -7,6 +7,7 @@ using NadekoBot.Common.Collections;
 using NadekoBot.Common.ModuleBehaviors;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace NadekoBot.Modules.Permissions.Services
 {
@@ -90,11 +91,14 @@ namespace NadekoBot.Modules.Permissions.Services
         {
             using (var uow = _db.UnitOfWork)
             {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.GlobalWhitelistGroups));
+
                 var group = new GlobalWhitelistSet()
                 {
                     ListName = name
                 };
-                uow.GlobalWhitelists.Add(group);
+                bc.GlobalWhitelistGroups.Add(group);
 
                 uow.Complete();
             }
@@ -266,6 +270,130 @@ namespace NadekoBot.Modules.Permissions.Services
                 uow.Complete();
             }
             return true;
+        }
+
+        public bool AddItemToGroup(string name, string type, GlobalWhitelistSet group)
+        {   
+            GlobalUnblockedSet itemInGroup;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.UnblockedModules)
+                      .ThenInclude(x => x.GlobalUnblockedSets)
+                    .Include(x => x.UnblockedCommands)
+                      .ThenInclude(x => x.GlobalUnblockedSets));
+
+                bool exists;
+                UnblockedCmdOrMdl item;
+
+                // Get the item
+                if (type == "command") {
+                    exists = GetUbCmdByName(name, out item);
+                } else {
+                    exists = GetUbMdlByName(name, out item);
+                }
+
+                // Check if item already exists
+                if (!exists) {
+                    // Add new item to DB
+                    item = new UnblockedCmdOrMdl
+                    {
+                        Name = name,
+                    };                        
+                    if (type == "command") {
+                      bc.UnblockedCommands.Add(item);
+                    } else {
+                      bc.UnblockedModules.Add(item);
+                    }
+                    uow.Complete();
+                }
+
+                // Check if relationship already exists
+                itemInGroup = group.GlobalUnblockedSets
+                    .FirstOrDefault(x => x.UnblockedPK == item.Id);
+
+                if (itemInGroup != null) return false; // already exists!
+                
+                // Add relationship to DB
+                itemInGroup = new GlobalUnblockedSet
+                {
+                    ListPK = group.Id,
+                    UnblockedPK = item.Id
+                };
+                uow._context.Set<GlobalUnblockedSet>().Add(itemInGroup);
+                uow.Complete();
+            }
+            return true;
+        }
+        public bool RemoveItemFromGroup(string name, string type, GlobalWhitelistSet group)
+        {
+            using (var uow = _db.UnitOfWork)
+            {
+                bool exists;
+                UnblockedCmdOrMdl item;
+
+                // Get the item
+                if (type == "command") {
+                    exists = GetUbCmdByName(name, out item);
+                } else {
+                    exists = GetUbMdlByName(name, out item);
+                }
+
+                if (item == null) return false;
+
+                // Second, Find the relationship record
+                var itemInSet = group.GlobalUnblockedSets
+                    .FirstOrDefault(x => x.UnblockedPK == item.Id);
+
+                // Finally remove the Item from the Set
+                uow._context.Set<GlobalUnblockedSet>().Remove(itemInSet);
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+        public bool GetUbCmdByName(string name, out UnblockedCmdOrMdl item)
+        {
+            item = null;
+
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.UnblockedCommands));
+
+                // Retrieve the UnblockedCmdOrMdl item given name
+                item = bc.UnblockedCommands
+                    .Where( x => x.Name.Equals(name) )
+                    .FirstOrDefault();
+
+                if (item == null) { return false; }
+                else { return true; }
+            }
+        }
+
+        public bool GetUbMdlByName(string name, out UnblockedCmdOrMdl item)
+        {
+            item = null;
+
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.UnblockedModules));
+
+                // Retrieve the UnblockedCmdOrMdl item given name
+                item = bc.UnblockedModules
+                    .Where( x => x.Name.Equals(name) )
+                    .FirstOrDefault();
+
+                if (item == null) { return false; }
+                else { return true; }
+            }
         }
     }
 }

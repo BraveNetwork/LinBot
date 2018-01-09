@@ -3281,23 +3281,38 @@
     "cmd": "listglobalunblock lgu",
     "desc": "List all unblocked commands and modules WIP ",
     "usage": [
-      "{0}lgu"
+      "{0}lgu WLNAME"
     ]
   },
-  "ubm": {
-    "cmd": "unblockmdl ubm",
-    "desc": "Add or remove a module from the unblocked list WIP ",
+  "ubmod": {
+    "cmd": "unblockmdl ubmdl",
+    "desc": "[Add] or [rem]ove a module from the specified global whitelist.",
     "usage": [
-      "{0}ubm add SomeModule",
-      "{0}ubm rem SomeModule"
+      "{0}ubmdl add SomeModule WLNAME",
+      "{0}ubmdl rem SomeModule WLNAME"
     ]
   },
-  "ubc": {
-    "cmd": "unblockcmd ubc",
-    "desc": "Add or remove a command from the unblocked list WIP",
+  "ubcmd": {
+    "cmd": "unblockcmd ubcmd",
+    "desc": "[Add] or [rem]ove a command or customreaction from the specified global whitelist.",
     "usage": [
-      "{0}ubc add SomeCommand",
-      "{0}ubc rem SomeCommand"
+      "{0}ubcmd add {0}SomeCommand WLNAME",
+      "{0}ubcmd rem SomeCustomReaction WLNAME"
+    ]
+  },
+  "ubmodrm": {
+    "cmd": "blockmdl ubmdlrm",
+    "desc": "Remove the module from ALL whitelists.",
+    "usage": [
+      "{0}ubmdlrm SomeModul"
+    ]
+  },
+  "ubcmdrm": {
+    "cmd": "blockcmd ubcmdrm",
+    "desc": "Remove the command or custom reaction from ALL whitelists.",
+    "usage": [
+      "{0}ubcmdrm {0}SomeCommand",
+      "{0}ubcmdrm SomeCustomReaction"
     ]
   }
 }

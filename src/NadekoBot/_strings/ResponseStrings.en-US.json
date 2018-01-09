@@ -966,12 +966,14 @@
   "permissions_gwl_add_failed": "Failed to add {0} {1} to the whitelist named {2}",
   "permissions_gwl_remove": "Successfully removed {0} {1} from the whitelist named {2}",
   "permissions_gwl_remove_failed": "Failed to remove {0} {1} from the whitelist named {2}",
-  "permissions_lgu_invalidname": "Invalid name",
-  "permissions_lgu_none": "None",
+  "permissions_lgu_invalidname": "Invalid whitelist name. Do `.gwl \"{0}\"` to create a whitelist.",
+  "permissions_lgu_none": "No commands or modules have been globally unblocked yet! Do `.ubmod add mdl \"{0}\"` or `.ubcmd add .cmd \"{0}\"` to add a command or module to a whitelist.",
   "permissions_unblocked_modules": "Unblocked Modules",
   "permissions_unblocked_commands": "Unblocked Commands",
-  "permissions_ubm_add": "Added Module",
-  "permissions_ubm_remove": "Removed Module",
-  "permissions_ubc_add": "Added Command",
-  "permissions_ubc_remove": "Removed Command"
+  "permissions_ubm_add": "Added module {0} to global whitelist named {1}.",
+  "permissions_ubm_remove": "Removed module {0} from global whitelist named {1}.",
+  "permissions_ubm_remove_all": "Removed module {0} from all global whitelists.",
+  "permissions_ubc_add": "Added command {0} to global whitelist named {1}.",
+  "permissions_ubc_remove": "Removed command {0} from global whitelist named {1}.",
+  "permissions_ubc_remove_all": "Removed command {0} from all global whitelists."
 }
