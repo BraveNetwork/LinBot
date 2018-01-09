@@ -3,7 +3,16 @@
     "cmd": "globalwhitelist gwl",
     "desc": "Create a new global whitelist. Provide a name (20 characters max) that you'll later use for adding/removing members and globally unblocking specific commands or modules",
     "usage": [
-      "{0}gwl MyAwesomeWhitelistName"
+      "{0}gwl MyAwesomeWhitelistName",
+      "{0}gwl \"My Awesome Whitelist\""
+    ]
+  },
+  "globalwhitelistdelete": {
+    "cmd": "globalwhitelistdelete gwldel",
+    "desc": "Delete a global whitelist and unlink all its related data (members and unblocked commands/modules).",
+    "usage": [
+      "{0}gwldel MyAwesomeWhitelistName",
+      "{0}gwldel \"My Awesome Whitelist\""
     ]
   },
   "listwhitelistnames": {

@@ -3,6 +3,8 @@
   "permissions_gwl_titlefield": "GlobalWhitelist Names",
   "permissions_gwl_create_error": "Error creating whitelist: {0}",
   "permissions_gwl_created": "Successfully created the whitelist named {0}",
+  "permissions_gwl_delete_error": "Error deleting whitelist: {0}",
+  "permissions_gwl_deleted": "Successfully deleted the whitelist named {0}",
   "permissions_gwl_empty": "No whitelists found! Do `.gwl MyWhitelistName` to make a new whitelist.",
   "permissions_gwl_no_members": "Whitelist named {0} doesn't have any members yet. Do `.gwlu add \"{1}\" @Username` to add a user to the whitelist.",
   "permissions_gwl_list": "Here are the whitelists that I'm managing:",
