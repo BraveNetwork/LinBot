@@ -1,13 +1,13 @@
 {
   "globalwhitelist": {
-    "cmd": "gwl",
+    "cmd": "globalwhitelist gwl",
     "desc": "Create a new global whitelist. Provide a name (20 characters max) that you'll later use for adding/removing members and globally unblocking specific commands or modules",
     "usage": [
       "{0}gwl MyAwesomeWhitelistName"
     ]
   },
   "listwhitelistnames": {
-    "cmd": "gwlname",
+    "cmd": "listwhitelistnames gwlname",
     "desc": "A list of all created whitelists, by name. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
       "{0}gwlname",
@@ -15,7 +15,7 @@
     ]
   },
   "listwhitelistmembers": {
-    "cmd": "gwlmem",
+    "cmd": "listwhitelistmembers gwlmem",
     "desc": "A list of all members belonging to a given whitelist, sorted by type (Server/ Channel/ User). Returns 9 IDs per type per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
       "{0}gwlmem MyAwesomeWhitelistName",
@@ -23,7 +23,7 @@
     ]
   },
   "usercheckmemberwhitelist": {
-    "cmd": "gwlcu",
+    "cmd": "usercheckmemberwhitelist gwlcu",
     "desc": "A list of all whitelists for which the user is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
       "{0}gwlcu @SomeUser 5",
@@ -31,7 +31,7 @@
     ]
   },
   "channelcheckmemberwhitelist": {
-    "cmd": "gwlcc",
+    "cmd": "channelcheckmemberwhitelist gwlcc",
     "desc": "A list of all whitelists for which the channel is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
       "{0}gwlcc #SomeChannel 5",
@@ -39,7 +39,7 @@
     ]
   },
   "servercheckmemberwhitelist": {
-    "cmd": "gwlcs",
+    "cmd": "servercheckmemberwhitelist gwlcs",
     "desc": "A list of all whitelists for which the server is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
       "{0}gwlcs SomeServer 5",
@@ -47,7 +47,7 @@
     ]
   },
   "userglobalwhitelist": {
-    "cmd": "gwlu",
+    "cmd": "userglobalwhitelist gwlu",
     "desc": "Add or remove a user from a whitelist",
     "usage": [
       "{0}gwlu add MyAwesomeWhitelist SomeServer",
@@ -55,7 +55,7 @@
     ]
   },
   "channelglobalwhitelist": {
-    "cmd": "gwlc",
+    "cmd": "channelglobalwhitelist gwlc",
     "desc": "Add or remove a channel from a whitelist",
     "usage": [
       "{0}gwlc add MyAwesomeWhitelist #SomeChannel",
@@ -63,7 +63,7 @@
     ]
   },
   "serverglobalwhitelist": {
-    "cmd": "gwls",
+    "cmd": "serverglobalwhitelist gwls",
     "desc": "Add or remove a server from a whitelist",
     "usage": [
       "{0}gwls add MyAwesomeWhitelist SomeServer",
