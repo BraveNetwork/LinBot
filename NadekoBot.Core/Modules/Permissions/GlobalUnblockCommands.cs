@@ -14,7 +14,7 @@ namespace NadekoBot.Modules.Permissions
 {
     public partial class Permissions
     {
-        [Group("GlobalWhitelist")]
+        [Group]
         public class GlobalUnblockCommands : NadekoSubmodule
         {
             private GlobalPermissionService _service;

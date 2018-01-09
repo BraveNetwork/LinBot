@@ -105,6 +105,21 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return true;
         }
+        public bool DeleteWhitelist(string name)
+        {
+            using (var uow = _db.UnitOfWork)
+            {
+                // NOTE: using bc to remove will only set the BotConfigId FK to null
+
+                // Delete the whitelist record and all relation records
+                uow._context.Set<GlobalWhitelistSet>().Remove( 
+                    uow._context.Set<GlobalWhitelistSet>()
+                    .Where( x => x.ListName == name ).FirstOrDefault()
+                );
+                uow.Complete();
+            }
+            return true;
+        }
         public string[] GetAllNames(int page)
         {
             var names = new List<string>();

@@ -14,7 +14,7 @@ namespace NadekoBot.Modules.Permissions
 {
     public partial class Permissions
     {
-        [Group("GlobalWhitelist")]
+        [Group]
         public class GlobalWhitelistCommands : NadekoSubmodule<GlobalWhitelistService>
         {
             private readonly IBotCredentials _creds;
@@ -35,6 +35,21 @@ namespace NadekoBot.Modules.Permissions
                 }
 
                 await ReplyConfirmLocalized("gwl_created", Format.Bold(listName)).ConfigureAwait(false);
+                return;
+            }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task GlobalWhiteListDelete(string listName)
+            {
+                if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
+                if (!_service.DeleteWhitelist(listName))
+                {
+                    await ReplyErrorLocalized("gwl_delete_error", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+                }
+
+                await ReplyConfirmLocalized("gwl_deleted", Format.Bold(listName)).ConfigureAwait(false);
                 return;
             }
 
