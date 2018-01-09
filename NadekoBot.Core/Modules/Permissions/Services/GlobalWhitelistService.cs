@@ -207,7 +207,7 @@ namespace NadekoBot.Modules.Permissions.Services
                 uow.Complete();
             }
 
-            System.Console.WriteLine("Type {0} Results: {1}", type, results.Length);
+            //System.Console.WriteLine("Type {0} Results: {1}", type, results.Length);
 
             return results;
         }
