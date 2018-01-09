@@ -14,7 +14,7 @@ namespace NadekoBot.Modules.Permissions
 {
     public partial class Permissions
     {
-        [Group]
+        [Group("GlobalWhitelist")]
         public class GlobalWhitelistCommands : NadekoSubmodule<GlobalWhitelistService>
         {
             private readonly IBotCredentials _creds;
