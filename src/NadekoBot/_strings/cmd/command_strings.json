@@ -3241,7 +3241,7 @@
     "cmd": "gwlcc",
     "desc": "A list of all whitelists for which the channel is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
     "usage": [
-      "{0}gwlcc 123123123 5",
+      "{0}gwlcc #SomeChannel 5",
       "{0}gwlcc 123123123"
     ]
   },
@@ -3265,7 +3265,7 @@
     "cmd": "gwlc",
     "desc": "Add or remove a channel from a whitelist",
     "usage": [
-      "{0}gwlc add MyAwesomeWhitelist 123123123",
+      "{0}gwlc add MyAwesomeWhitelist #SomeChannel",
       "{0}gwlc rem MyAwesomeWhitelist 123123123"
     ]
   },

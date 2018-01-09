@@ -45,16 +45,20 @@ namespace NadekoBot.Modules.Permissions
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
                 var names = _service.GetAllNames(page);
-                var desc = System.String.Join("\n", names);
 
-                if (names.Length <= 0) desc = GetText("gwl_empty");
-
-                var embed = new EmbedBuilder()
-                    .WithTitle(GetText("gwl_list", page +1))
-                    .WithDescription(desc)
-                    .WithOkColor();
-
-                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                if (names.Length <= 0) {
+                    await ReplyErrorLocalized("gwl_empty").ConfigureAwait(false);
+                    return;
+                } else {
+                    var embed = new EmbedBuilder()
+                      .WithTitle(GetText("gwl_title"))
+                      .WithDescription(GetText("gwl_list"))
+                      .AddField(GetText("gwl_titlefield"), string.Join("\n", names))
+                      .WithFooter("Page " + (page+1))
+                      .WithOkColor();
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    return;
+                }
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -76,16 +80,18 @@ namespace NadekoBot.Modules.Permissions
                         string channelStr = "*none*";
                         string userStr = "*none*";
 
-                        if (servers.Length > 0) { serverStr = string.Join("\n",servers); }
-                        if (channels.Length > 0) { channelStr = "<#"+string.Join(">\n<#",channels)+">"; }
-                        if (users != null) { userStr = "<@"+string.Join(">\n<#",users)+">"; }
+                        if (servers.Length > 0) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Server, servers)); }
+                        if (channels.Length > 0) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Channel, channels)); }
+                        if (users != null) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.User, users)); }
                             
                         var embed = new EmbedBuilder()
                             .WithOkColor()
-                            .WithTitle(GetText("gwl_members", Format.Bold(listName)))
+                            .WithTitle(GetText("gwl_title"))
+                            .WithDescription(GetText("gwl_members", Format.Bold(listName)))
                             .AddField("Servers", serverStr, true)
                             .AddField("Channels", channelStr, true)
-                            .AddField("Users", userStr, true);
+                            .AddField("Users", userStr, true)
+                            .WithFooter("Page " + (page+1));
 
                         await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                     }
@@ -113,6 +119,11 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+            public Task ChannelCheckMemberWhitelist(ITextChannel channel, int page=1)
+                => CheckMemberWhitelist(channel.Id,GlobalWhitelistType.Channel,page);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
             public Task ServerCheckMemberWhitelist(ulong id, int page=1)
                 => CheckMemberWhitelist(id,GlobalWhitelistType.Server,page);
 
@@ -127,17 +138,20 @@ namespace NadekoBot.Modules.Permissions
                 if(_creds.OwnerIds.Contains(id) || --page < 0) return;
 
                 var names = _service.GetNamesByMember(id, type, page);
-
-                var desc = string.Join("\n", names);
-
-                if (names.Length < 0) desc = GetText("gwl_empty_member", Format.Bold(id.ToString()), id);
-
-                var embed = new EmbedBuilder()
-                    .WithTitle(GetText("gwl_listbymember", Format.Bold(id.ToString()), page +1))
-                    .WithDescription(desc)
-                    .WithOkColor();
-
-                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                
+                if (names.Length <= 0) {
+                    await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)).ConfigureAwait(false);
+                    return;
+                } else {
+                    EmbedBuilder embed = new EmbedBuilder()
+                      .WithTitle(GetText("gwl_title"))
+                      .WithDescription(GetText("gwl_listbymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)))
+                      .AddField(GetText("gwl_titlefield"), string.Join("\n", names))
+                      .WithFooter("Page " + (page+1))
+                      .WithOkColor();
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    return;
+                }
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -154,6 +168,11 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public Task ChannelGlobalWhitelist(AddRemove action, string listName, ulong id)
                 => GlobalWhitelistAddRm(action, id, listName, GlobalWhitelistType.Channel);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task ChannelGlobalWhitelist(AddRemove action, string listName, ITextChannel channel)
+                => GlobalWhitelistAddRm(action, channel.Id, listName, GlobalWhitelistType.Channel);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -182,10 +201,10 @@ namespace NadekoBot.Modules.Permissions
                 {
                     if(_service.AddItemToGroup(id,type,group))
                     {
-                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }
@@ -194,10 +213,10 @@ namespace NadekoBot.Modules.Permissions
                 {
                     if(_service.RemoveItemFromGroup(id,type,group))
                     {
-                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), Format.Code(id.ToString()), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }                   

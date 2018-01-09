@@ -27,6 +27,65 @@ namespace NadekoBot.Modules.Permissions.Services
             GlobalWhitelistedChannels = new ConcurrentHashSet<ulong>(GlobalWhitelist.Where(bi => bi.Type == GlobalWhitelistType.Channel).Select(c => c.ItemId));
         }
 
+        public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
+        {
+            string[] str = new string[ids.Length];
+
+            switch (type) {
+                case GlobalWhitelistType.User:
+                    for (var i = 0; i < ids.Length; i++) {
+                      str[i] = MentionUtils.MentionUser(ids[i]);
+                    }
+                    break;
+
+                case GlobalWhitelistType.Channel:
+                    for (var i = 0; i < ids.Length; i++) {
+                      str[i] = MentionUtils.MentionChannel(ids[i]);
+                    }
+                    break;
+
+                case GlobalWhitelistType.Server:
+                    // TODO: uow to get name from _client.guilds using IGuild type reader
+                    for (var i = 0; i < ids.Length; i++) {
+                      str[i] = ids[i].ToString();
+                    }
+                    break;
+
+                default:
+                    for (var i = 0; i < ids.Length; i++) {
+                      str[i] = ids[i].ToString();
+                    }
+                    break;
+            }
+
+            return str;
+        }
+        public string GetNameOrMentionFromId(GlobalWhitelistType type, ulong id)
+        {
+            string str = "";
+
+            switch (type) {
+                case GlobalWhitelistType.User:
+                    str = MentionUtils.MentionUser(id);
+                    break;
+
+                case GlobalWhitelistType.Channel:
+                    str = MentionUtils.MentionChannel(id);
+                    break;
+
+                case GlobalWhitelistType.Server:
+                    // TODO: uow to get name from _client.guilds using IGuild type reader
+                    str = id.ToString();
+                    break;
+
+                default:
+                    str = id.ToString();
+                    break;
+            }
+
+            return str;
+        }
+
         public bool CreateWhitelist(string name)
         {
             using (var uow = _db.UnitOfWork)
