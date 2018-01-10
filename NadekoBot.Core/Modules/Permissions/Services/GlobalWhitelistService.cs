@@ -212,6 +212,40 @@ namespace NadekoBot.Modules.Permissions.Services
             return results;
         }
 
+        public bool IsMemberInGroup(ulong id, GlobalWhitelistSet group)
+        {
+            var result = true;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.GlobalWhitelistMembers));
+                
+                var temp = bc.GlobalWhitelistMembers
+                .Where( x => x.ItemId == id ) // GWLItem.Id for which id is the GWLItem.ItemId
+                .Join(
+                    uow._context.Set<GlobalWhitelistItemSet>(), 
+                    m => m.Id, i => i.ItemPK,
+                    (m,i) => new {
+                        m.ItemId,
+                        i.ListPK
+                    })
+                .Where( y => y.ListPK == group.Id ) // Temporary table for which list matches group
+                .FirstOrDefault();
+
+                uow.Complete();
+                
+                if (temp != null) {
+                  System.Console.WriteLine("Item {0}, List {0}", temp.ItemId,temp.ListPK);
+                  result = true;
+                } else {
+                  System.Console.WriteLine("Null!");
+                  result = false;
+                }
+            }
+            return result;
+        }
+
         public bool AddItemToGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
         {
             using (var uow = _db.UnitOfWork)

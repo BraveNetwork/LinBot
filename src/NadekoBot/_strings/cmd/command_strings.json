@@ -31,6 +31,30 @@
       "{0}gwlmem MyAwesomeWhitelistName 5"
     ]
   },
+  "isuserinwhitelist": {
+    "cmd": "iswhitelistuser gwlisu",
+    "desc": "Returns TRUE if user belongs to the specified whitelist. FALSE otherwise.",
+    "usage": [
+      "{0}gwlin @SomeUser MyAwesomeWhitelistName",
+      "{0}gwlin 123123123 MyAwesomeWhitelistName"
+    ]
+  },
+  "ischannelinwhitelist": {
+    "cmd": "iswhitelistchannel gwlisc",
+    "desc": "Returns TRUE if channel belongs to the specified whitelist. FALSE otherwise.",
+    "usage": [
+      "{0}gwlin #SomeChannel MyAwesomeWhitelistName",
+      "{0}gwlin 123123123 MyAwesomeWhitelistName"
+    ]
+  },
+  "isserverinwhitelist": {
+    "cmd": "iswhitelistserver gwliss",
+    "desc": "Returns TRUE if server belongs to the specified whitelist. FALSE otherwise.",
+    "usage": [
+      "{0}gwlin 123123123 MyAwesomeWhitelistName",
+      "{0}gwlin SomeServer MyAwesomeWhitelistName"
+    ]
+  },
   "usercheckmemberwhitelist": {
     "cmd": "usercheckmemberwhitelist gwlcu",
     "desc": "A list of all whitelists for which the user is a member. Returns 9 names per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",

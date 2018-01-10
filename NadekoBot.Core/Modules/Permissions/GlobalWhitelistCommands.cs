@@ -171,6 +171,57 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+            public Task IsUserInWhitelist(ulong id, string listName)
+                => IsMemberInWhitelist(id,GlobalWhitelistType.User, listName);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task IsUserInWhitelist(IUser user, string listName)
+                => IsMemberInWhitelist(user.Id,GlobalWhitelistType.User, listName);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task IsChannelInWhitelist(ulong id, string listName)
+                => IsMemberInWhitelist(id,GlobalWhitelistType.Channel, listName);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task IsChannelInWhitelist(ITextChannel channel, string listName)
+                => IsMemberInWhitelist(channel.Id,GlobalWhitelistType.Channel, listName);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task IsServerInWhitelist(ulong id, string listName)
+                => IsMemberInWhitelist(id,GlobalWhitelistType.Server, listName);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task IsServerInWhitelist(IGuild guild, string listName)
+                => IsMemberInWhitelist(guild.Id,GlobalWhitelistType.Server, listName);
+
+
+            private async Task IsMemberInWhitelist(ulong id, GlobalWhitelistType type, string listName)
+            {
+                // Return error if whitelist doesn't exist
+                if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                {
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
+                    return;
+                } else {
+                    // Return result of IsMemberInList()
+                    if(_creds.OwnerIds.Contains(id) || !_service.IsMemberInGroup(id,group)) {
+                        string helpCmd = GetText("gwl_help_add_"+type.ToString().ToLowerInvariant(), Prefix, listName, id);
+                        await ReplyErrorLocalized("gwl_not_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName), helpCmd).ConfigureAwait(false);
+                        return;
+                    } else {
+                        await ReplyConfirmLocalized("gwl_is_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
+                        return;
+                    }
+                }                
+            }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
             public Task UserGlobalWhitelist(AddRemove action, string listName, ulong id)
                 => GlobalWhitelistAddRm(action, id, listName, GlobalWhitelistType.User);
 

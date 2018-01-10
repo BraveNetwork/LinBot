@@ -35,9 +35,25 @@ namespace NadekoBot.Modules.Permissions.Services
                 BlockedModules.Contains(moduleName.ToLowerInvariant())))
             {
                 // Check for unblocked command/module
-                if (UnblockedCommands.Contains(commandName) || UnblockedModules.Contains(moduleName.ToLowerInvariant())) 
+                if (UnblockedCommands.Contains(commandName))
                 {
-                    // TODO: Check if user/channel/guild matches the associated whitelist item
+                    System.Console.WriteLine("Detected unblocked cmd {0}", commandName);
+                    // TODO: Check if user/channel/guild exists in any whitelist that has this command unblocked
+                    // 1. get whitelists for which command is unblocked
+                    // New Method: list WLNAME containing unblocked command
+
+                    // 2A. check if server is in whitelist's servers
+                    // 3. check if channel is in whitelist's channels
+                    // 4. check if user is in whitelist's users
+
+                    // 2B. check if whitelist members includes serverID, channelID or userID (doesn't matter which)
+                    // New Method: check if ID is member in whitelist
+                    return false; 
+                }
+                else if (UnblockedModules.Contains(moduleName.ToLowerInvariant())) 
+                {
+                    System.Console.WriteLine("Detected unblocked mdl {0}", moduleName);
+                    // TODO: Check if user/channel/guild exists in any whitelist that has this module unblocked
                     return false; 
                 }
                 else { return true; }
