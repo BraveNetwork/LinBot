@@ -174,6 +174,81 @@ namespace NadekoBot.Modules.Permissions.Services
             return names.ToArray();
         }
 
+        public string[] GetNamesByUnblocked(string name, string type)
+        {
+            string[] names = null;
+            bool exists;
+            UnblockedCmdOrMdl item;
+            // Get the item
+            if (type == "command") {
+                exists = GetUbCmdByName(name, out item);
+            } else {
+                exists = GetUbMdlByName(name, out item);
+            }
+
+            if (exists) {
+                using (var uow = _db.UnitOfWork)
+                {
+                    var bc = uow.BotConfig.GetOrCreate(set => set
+                        .Include(x => x.GlobalWhitelistGroups)
+                        .Include(x => x.UnblockedModules)
+                          .ThenInclude(x => x.GlobalUnblockedSets)
+                        .Include(x => x.UnblockedCommands)
+                          .ThenInclude(x => x.GlobalUnblockedSets));
+                    
+                    names = uow._context.Set<GlobalUnblockedSet>()
+                    .Where( x => x.UnblockedPK == item.Id )
+                    .Join(
+                        bc.GlobalWhitelistGroups, 
+                        u => u.ListPK, g => g.Id,
+                        (u,g) => new {
+                            g.ListName
+                        })
+                    .Select(g => g.ListName)
+                    .ToArray();
+
+                    uow.Complete();
+                }
+            }            
+            return names;
+        }
+
+        public GlobalWhitelistSet[] GetGroupsByUnblocked(string name, string type)
+        {
+            GlobalWhitelistSet[] groups = null;
+            bool exists;
+            UnblockedCmdOrMdl item;
+            // Get the item
+            if (type == "command") {
+                exists = GetUbCmdByName(name, out item);
+            } else {
+                exists = GetUbMdlByName(name, out item);
+            }
+
+            if (exists) {
+                using (var uow = _db.UnitOfWork)
+                {
+                    var bc = uow.BotConfig.GetOrCreate(set => set
+                        .Include(x => x.GlobalWhitelistGroups)
+                        .Include(x => x.UnblockedModules)
+                          .ThenInclude(x => x.GlobalUnblockedSets)
+                        .Include(x => x.UnblockedCommands)
+                          .ThenInclude(x => x.GlobalUnblockedSets));
+                    
+                    groups = uow._context.Set<GlobalUnblockedSet>()
+                    .Where( x => x.UnblockedPK == item.Id )
+                    .Join(
+                        bc.GlobalWhitelistGroups, 
+                        u => u.ListPK, g => g.Id,
+                        (u,g) => g)
+                    .ToArray();
+
+                    uow.Complete();
+                }
+            }            
+            return groups;
+        }
+
         public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
         {
             group = null;
@@ -236,10 +311,10 @@ namespace NadekoBot.Modules.Permissions.Services
                 uow.Complete();
                 
                 if (temp != null) {
-                  System.Console.WriteLine("Item {0}, List {0}", temp.ItemId,temp.ListPK);
+                  //System.Console.WriteLine("Item {0}, List {0}", temp.ItemId,temp.ListPK);
                   result = true;
                 } else {
-                  System.Console.WriteLine("Null!");
+                  //System.Console.WriteLine("Null!");
                   result = false;
                 }
             }
@@ -298,14 +373,14 @@ namespace NadekoBot.Modules.Permissions.Services
         {
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate();
-                uow._context.SaveChanges();
+                bool exists;
+                GlobalWhitelistItem item;
 
-                // First, Retrieve the WhitelistItem given id,type
-                var item = bc.GlobalWhitelistMembers
-                        .Where( x => x.ItemId.Equals(id) )
-                        .Where( x => x.Type.Equals(type) )
-                        .FirstOrDefault();
+                // Get the item
+                exists = GetMemberByIdType(id, type, out item);
+
+                System.Console.WriteLine("Item id {0}, type {1}, dId {2}", item.Id, item.Type, item.ItemId );
+                System.Console.WriteLine("Group id {0}, name {1}", group.Id, group.ListName);
 
                 if (item == null) return false;
 
@@ -319,6 +394,26 @@ namespace NadekoBot.Modules.Permissions.Services
                 uow.Complete();
             }
             return true;
+        }
+
+        public bool GetMemberByIdType(ulong id, GlobalWhitelistType type, out GlobalWhitelistItem item)
+        {
+            item = null;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var bc = uow.BotConfig.GetOrCreate(set => set
+                    .Include(x => x.GlobalWhitelistMembers));
+
+                // Retrieve the member item given name
+                item = bc.GlobalWhitelistMembers
+                    .Where( x => x.Type.Equals(type) )
+                    .Where( x => x.ItemId.Equals(id) )
+                    .FirstOrDefault();
+
+                if (item == null) { return false; }
+                else { return true; }
+            }
         }
 
         public bool AddItemToGroup(string name, string type, GlobalWhitelistSet group)
