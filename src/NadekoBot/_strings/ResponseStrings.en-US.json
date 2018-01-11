@@ -31,6 +31,8 @@
   "permissions_ubc_add": "Added command {0} to global whitelist named {1}.",
   "permissions_ubc_remove": "Removed command {0} from global whitelist named {1}.",
   "permissions_ubc_remove_all": "Removed command {0} from all global whitelists.",
+  "permissions_gwl_reset": "Cleared all whitelists from the database.",
+  "permissions_gwl_ub_reset": "Cleared all unblocked commands and modules from the database.",
   "customreactions_all_stats_cleared": "All custom reaction stats cleared.",
   "customreactions_deleted": "Custom Reaction deleted",
   "customreactions_insuff_perms": "Insufficient permissions. Requires Bot ownership for global custom reactions, and Administrator for server custom reactions.",

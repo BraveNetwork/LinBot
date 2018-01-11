@@ -34,6 +34,23 @@ namespace NadekoBot.Modules.Permissions
                 await _service.ResetGlobalPermissions().ConfigureAwait(false);
                 await ReplyConfirmLocalized("global_perms_reset").ConfigureAwait(false);
             }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task ResetGlobalWhitelists(string flag="")
+            {
+                bool purge = (flag.ToLowerInvariant() == "--purge") ? true : false;
+                await _service.ResetGlobalWhitelists(purge).ConfigureAwait(false);
+                await ReplyConfirmLocalized("gwl_reset").ConfigureAwait(false);
+            }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task ResetGlobalUnblocked()
+            {
+                await _service.ResetGlobalUnblocked().ConfigureAwait(false);
+                await ReplyConfirmLocalized("gwl_ub_reset").ConfigureAwait(false);
+            }
         }
     }
 }

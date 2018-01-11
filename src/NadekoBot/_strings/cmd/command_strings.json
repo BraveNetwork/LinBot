@@ -83,7 +83,7 @@
     "cmd": "userglobalwhitelist gwlu",
     "desc": "Add or remove a user from a whitelist",
     "usage": [
-      "{0}gwlu add MyAwesomeWhitelist SomeServer",
+      "{0}gwlu add MyAwesomeWhitelist @SomeUser",
       "{0}gwlu rem MyAwesomeWhitelist 123123123"
     ]
   },
@@ -141,6 +141,22 @@
       "{0}ubcmdrm SomeCustomReaction"
     ]
   },
+  "resetglobalwhitelists": {
+    "cmd": "resetglobalwhitelists, gwlreset",
+    "desc": "Delete all global whitelist data: records storing whitelist names, records linkng whitelists to users/channels/servers, and records linking whitelists to unblocked commands/modules. This leaves behind records that you may try to add to a whitelist again in the future, unless you add the `--purge` flag.",
+    "usage": [
+      "{0}gwlreset",
+      "{0}gwlreset --purge"
+    ]
+  },
+  "resetglobalunblocked": {
+    "cmd": "resetglobalunblocked ubreset",
+    "desc": "Delete all global unblocked data: records storing unblocked commands/modules and records linking unblocked commands/modules to a whitelist. DOES NOT CLEAR WHITELIST MEMBER DATA. Use `.gwlreset` to clear all whitelist data.",
+    "usage": [
+      "{0}ubreset"
+    ]
+  },
+
   "h": {
     "Cmd": "help h",
     "Desc": "Either shows a help for a single command, or DMs you help link if no arguments are specified.",

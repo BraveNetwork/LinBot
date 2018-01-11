@@ -35,11 +35,38 @@ namespace NadekoBot.Modules.Permissions.Services
                 var gc = uow.BotConfig.GetOrCreate();
                 gc.BlockedCommands.Clear();
                 gc.BlockedModules.Clear();
-                gc.UnblockedCommands.Clear();
-                gc.UnblockedModules.Clear();
 
                 _globalPerms.BlockedCommands.Clear();
                 _globalPerms.BlockedModules.Clear();
+                await uow.CompleteAsync().ConfigureAwait(false);
+            }
+        }
+
+        public async Task ResetGlobalWhitelists(bool purge)
+        {
+            using (var uow = _db.UnitOfWork)
+            {
+                // TODO: delete all records for GlobalWhitelistSet
+                // TODO: if purge == true, delete all records for GlobalWhitelistItem and UnblockedCmdOrMdl
+                var gc = uow.BotConfig.GetOrCreate();
+                gc.UnblockedCommands.Clear();
+                gc.UnblockedModules.Clear();
+
+                _globalPerms.UnblockedCommands.Clear();
+                _globalPerms.UnblockedModules.Clear();
+                await uow.CompleteAsync().ConfigureAwait(false);
+            }
+        }
+
+        public async Task ResetGlobalUnblocked()
+        {
+            using (var uow = _db.UnitOfWork)
+            {
+                // TODO: delete all records for UnblockedCmdOrMdl
+                var gc = uow.BotConfig.GetOrCreate();
+                gc.UnblockedCommands.Clear();
+                gc.UnblockedModules.Clear();
+
                 _globalPerms.UnblockedCommands.Clear();
                 _globalPerms.UnblockedModules.Clear();
                 await uow.CompleteAsync().ConfigureAwait(false);
