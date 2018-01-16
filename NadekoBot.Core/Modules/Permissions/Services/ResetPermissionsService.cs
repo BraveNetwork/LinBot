@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace NadekoBot.Modules.Permissions.Services
 {
@@ -62,13 +63,30 @@ namespace NadekoBot.Modules.Permissions.Services
         {
             using (var uow = _db.UnitOfWork)
             {
-                // TODO: delete all records for UnblockedCmdOrMdl
-                var gc = uow.BotConfig.GetOrCreate();
+                var gc = uow.BotConfig.GetOrCreate(set => set
+					.Include(x => x.UnblockedModules)
+					.Include(x => x.UnblockedCommands));
+
+				// Unlinks the data in the UnblockedCmdOrMdl table from BotConfig
                 gc.UnblockedCommands.Clear();
                 gc.UnblockedModules.Clear();
 
+				// Clear the readonly hash sets from GlobalPermissionService
                 _globalPerms.UnblockedCommands.Clear();
                 _globalPerms.UnblockedModules.Clear();
+
+				//var count = await uow._context.Set<UnblockedCmdOrMdl>().CountAsync();
+				//System.Console.WriteLine("Database record count {0}", count);
+
+				// Ensure the database table is ready to be cleared
+				uow._context.SaveChanges();
+
+				// Delete all records from UnblockedCmdOrMdl table
+				uow._context.Database.ExecuteSqlCommand("DELETE from UnblockedCmdOrMdl;");
+
+				//count = await uow._context.Set<UnblockedCmdOrMdl>().CountAsync();
+				//System.Console.WriteLine("Database record count after DELETE: {0}", count);
+
                 await uow.CompleteAsync().ConfigureAwait(false);
             }
         }
