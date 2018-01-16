@@ -39,17 +39,30 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ResetGlobalWhitelists(string flag="")
             {
-                bool purge = (flag.ToLowerInvariant() == "--purge") ? true : false;
-                await _service.ResetGlobalWhitelists(purge).ConfigureAwait(false);
-                await ReplyConfirmLocalized("gwl_reset").ConfigureAwait(false);
+                bool purge = false;
+				string reply = "gwl_reset";
+				if (flag.ToLowerInvariant() == "--purge") {
+					purge = true;
+					reply = "gwl_reset_purge";
+				}
+                bool result = await _service.ResetGlobalWhitelists(purge).ConfigureAwait(false);
+				if (result) {
+					await ReplyConfirmLocalized(reply).ConfigureAwait(false);
+				} else {
+					await ReplyErrorLocalized("gwl_reset_fail").ConfigureAwait(false);
+				}
             }
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task ResetGlobalUnblocked()
             {
-                await _service.ResetGlobalUnblocked().ConfigureAwait(false);
-                await ReplyConfirmLocalized("gwl_ub_reset").ConfigureAwait(false);
+                bool result = await _service.ResetGlobalUnblocked().ConfigureAwait(false);
+				if (result) {
+					await ReplyConfirmLocalized("gwl_ub_reset").ConfigureAwait(false);
+				} else {
+					await ReplyConfirmLocalized("gwl_ub_reset_fail").ConfigureAwait(false);
+				}
             }
         }
     }
