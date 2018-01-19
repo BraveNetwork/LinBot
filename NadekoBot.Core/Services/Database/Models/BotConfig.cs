@@ -102,6 +102,7 @@ Nadeko Support Server: https://discord.gg/nadekobot";
     public class UnblockedCmdOrMdl : DbEntity 
     {
         public string Name { get; set; }
+		public UnblockedType Type { get; set; }
 
         public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
 
@@ -163,6 +164,12 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         Channel,
         User
     }
+
+	public enum UnblockedType
+	{
+		Command,
+		Module
+	}
 
     public class GlobalWhitelistSet : DbEntity {
         [MaxLength(20)]
