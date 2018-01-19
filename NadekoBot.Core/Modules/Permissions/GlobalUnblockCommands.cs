@@ -88,148 +88,111 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName)
-            {
-                var moduleName = module.Name.ToLowerInvariant();
-
-                // If the listName doesn't exist, return an error message
-                if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group))
-                {
-                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
-                    return;
-                }
-
-                // Process Add module
-                if (action == AddRemove.Add) 
-                {
-                    if (_service.UnblockedModules.Add(moduleName))
-                    {
-                        System.Console.WriteLine("Adding module to repo");
-                    }
-                    if(_gwl.AddItemToGroup(moduleName,"module",group))
-                    {
-                        await ReplyConfirmLocalized("ubm_add", Format.Bold(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                        //await ReplyConfirmLocalized("gwl_add", Format.Code("module"), Format.Code(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_add_failed", Format.Code("module"), Format.Code(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                    }
-                }
-                // Process Remove module
-                else
-                {
-                    if(_gwl.RemoveItemFromGroup(moduleName,"module",group))
-                    {
-                        await ReplyConfirmLocalized("ubm_remove", Format.Bold(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                        //await ReplyConfirmLocalized("gwl_remove", Format.Code("module"), Format.Code(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code("module"), Format.Code(moduleName), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                    }
-                }
-            }
+            public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName)
+				=> UnblockAddRemove(action, UnblockedType.Module, module.Name.ToLowerInvariant(), listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task UbCmd(AddRemove action, CommandOrCrInfo cmd, string listName)
-            {
-                var commandName = cmd.Name.ToLowerInvariant();
+            public Task UbCmd(AddRemove action, CommandOrCrInfo cmd, string listName)
+				=> UnblockAddRemove(action, UnblockedType.Command, cmd.Name.ToLowerInvariant(), listName);
 
-                // If the listName doesn't exist, return an error message
+			private async Task UnblockAddRemove(AddRemove action, UnblockedType type, string itemName, string listName)
+			{
+				// If the listName doesn't exist, return an error message
                 if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
                 }
 
-                // Process Add Command
+                // Process Add Command/Module
                 if (action == AddRemove.Add) 
                 {   
-                    if (_service.UnblockedCommands.Add(commandName))
+					// Add to hashset in GlobalPermissionService
+					if (type == UnblockedType.Command)
                     {
-                        System.Console.WriteLine("Adding command to repo");
+                        if (_service.UnblockedCommands.Add(itemName)) System.Console.WriteLine("Adding command to GlobalPermissionService.UnblockedCommands");
                     }
-                    if(_gwl.AddItemToGroup(commandName,"command",group))
+					else {
+						if (_service.UnblockedModules.Add(itemName)) System.Console.WriteLine("Adding module to GlobalPermissionService.UnblockedModules");
+					}
+
+					// Add to a whitelist
+                    if(_gwl.AddUbItemToGroup(itemName,type,group))
                     {
-                        await ReplyConfirmLocalized("ubc_add", Format.Bold(commandName), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
                         return;
-                        //await ReplyConfirmLocalized("gwl_add", Format.Code("command"), Format.Code(commandName), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_add_failed", Format.Code("command"), Format.Code(commandName), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }
-                // Process Remove Command
+                // Process Remove Command/Module
                 else
                 {
-                    if(_gwl.RemoveItemFromGroup(commandName,"command",group))
+					// Remove from whitelist
+                    if(_gwl.RemoveUbItemFromGroup(itemName,type,group))
                     {
-                        await ReplyConfirmLocalized("ubc_remove", Format.Bold(commandName), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
                         return;
-                        //await ReplyConfirmLocalized("gwl_remove", Format.Code("command"), Format.Code(commandName), Format.Bold(listName)).ConfigureAwait(false);
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code("command"), Format.Code(commandName), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
                         return;
                     }
                 }
-            }
+			}
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task UbModRm(ModuleOrCrInfo module)
-            {
-                var moduleName = module.Name.ToLowerInvariant();
-                if (_service.UnblockedModules.TryRemove(moduleName))
-                {
-                    using (var uow = _db.UnitOfWork)
-                    {
-                        /*var bc = uow.BotConfig.GetOrCreate(set => set.Include(x => x.UnblockedModules));
-                        bc.UnblockedModules.RemoveWhere(x => x.Name == moduleName);
-                        uow.Complete();*/ // this only sets the BotConfigId FK to null
-
-                        // Delete the unblockedcmd record and all relation records
-                        uow._context.Set<UnblockedCmdOrMdl>().Remove( 
-                            uow._context.Set<UnblockedCmdOrMdl>()
-                            .Where( x => x.Name == moduleName ).FirstOrDefault()
-                        );
-                        uow.Complete();
-                    }
-                    await ReplyConfirmLocalized("ubm_remove_all", Format.Bold(moduleName)).ConfigureAwait(false);
-                    return;
-                }
-            }
+            public Task UbModRm(ModuleOrCrInfo module)
+				=> BlockForAll(UnblockedType.Module, module.Name.ToLowerInvariant());
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task UbCmdRm(CommandOrCrInfo cmd)
-            {
-                var commandName = cmd.Name.ToLowerInvariant();
-                if (_service.UnblockedCommands.TryRemove(commandName))
+            public Task UbCmdRm(CommandOrCrInfo cmd)
+				=> BlockForAll(UnblockedType.Command, cmd.Name.ToLowerInvariant());
+
+			private async Task BlockForAll(UnblockedType type, string itemName)
+			{
+				// Try to remove from GlobalPermissionService
+				bool removedFromHashset;
+				if (type == UnblockedType.Command)
+				{
+					removedFromHashset = _service.UnblockedCommands.TryRemove(itemName);
+				}
+				else
+				{
+					removedFromHashset = _service.UnblockedModules.TryRemove(itemName);
+				}
+
+				// Try to remove from all whitelists
+                if (removedFromHashset)
                 {
                     using (var uow = _db.UnitOfWork)
                     {
                         /*var bc = uow.BotConfig.GetOrCreate(set => set.Include(x => x.UnblockedCommands));
-                        bc.UnblockedCommands.RemoveWhere(x => x.Name == commandName);
+                        bc.UnblockedCommands.RemoveWhere(x => x.Name == itemName);
                         uow.Complete();*/ // this only sets the BotConfigId FK to null
 
                         // Delete the unblockedcmd record and all relation records
                         uow._context.Set<UnblockedCmdOrMdl>().Remove( 
                             uow._context.Set<UnblockedCmdOrMdl>()
-                            .Where( x => x.Name == commandName ).FirstOrDefault()
+                            .Where( x => x.Name.Equals(itemName) )
+							.Where( x => x.Type.Equals(type) )
+							.FirstOrDefault()
                         );
                         uow.Complete();
-                        
                     }
-                    await ReplyConfirmLocalized("ubc_remove_all", Format.Bold(commandName)).ConfigureAwait(false);
+                    await ReplyConfirmLocalized("ub_remove_all", Format.Code(type.ToString()), Format.Bold(itemName)).ConfigureAwait(false);
                     return;
                 }
-            }
+				else {
+					await ReplyErrorLocalized("ub_remove_all_failed", Format.Code(type.ToString()), Format.Bold(itemName)).ConfigureAwait(false);
+                    return;
+				}
+			}
         }
     }
 }

@@ -52,8 +52,8 @@ namespace NadekoBot.Modules.Permissions.Services
 
                     // 2B. check if whitelist members includes serverID, channelID or userID (doesn't matter which)
                     // New Method: check if ID is member in whitelist
-                    string[] lists = _gwl.GetNamesByUnblocked(commandName, "command");
-                    GlobalWhitelistSet[] groups = _gwl.GetGroupsByUnblocked(commandName, "command");
+                    string[] lists = _gwl.GetNamesByUnblocked(commandName, UnblockedType.Command);
+                    GlobalWhitelistSet[] groups = _gwl.GetGroupsByUnblocked(commandName, UnblockedType.Command);
                     bool result = false;
                     for (int i = 0; i<groups.Length; i++) {
                         //System.Console.WriteLine(groups[i].ListName);
@@ -69,8 +69,8 @@ namespace NadekoBot.Modules.Permissions.Services
                 {
                     System.Console.WriteLine("Detected unblocked mdl {0}", moduleName);
                     // TODO: Check if user/channel/guild exists in any whitelist that has this module unblocked
-                    string[] lists = _gwl.GetNamesByUnblocked(moduleName.ToLowerInvariant(), "module");
-                    GlobalWhitelistSet[] groups = _gwl.GetGroupsByUnblocked(moduleName.ToLowerInvariant(), "module");
+                    string[] lists = _gwl.GetNamesByUnblocked(moduleName.ToLowerInvariant(), UnblockedType.Module);
+                    GlobalWhitelistSet[] groups = _gwl.GetGroupsByUnblocked(moduleName.ToLowerInvariant(), UnblockedType.Module);
                     bool result = false;
                     for (int i = 0; i<groups.Length; i++) {
                         //System.Console.WriteLine(groups[i].ListName);

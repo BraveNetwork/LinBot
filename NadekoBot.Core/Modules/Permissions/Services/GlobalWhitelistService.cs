@@ -174,17 +174,13 @@ namespace NadekoBot.Modules.Permissions.Services
             return names.ToArray();
         }
 
-        public string[] GetNamesByUnblocked(string name, string type)
+        public string[] GetNamesByUnblocked(string name, UnblockedType type)
         {
             string[] names = null;
-            bool exists;
-            UnblockedCmdOrMdl item;
+			
             // Get the item
-            if (type == "command") {
-                exists = GetUbCmdByName(name, out item);
-            } else {
-                exists = GetUbMdlByName(name, out item);
-            }
+            UnblockedCmdOrMdl item;
+        	bool exists = GetUbItemByNameType(name, type, out item);
 
             if (exists) {
                 using (var uow = _db.UnitOfWork)
@@ -213,17 +209,13 @@ namespace NadekoBot.Modules.Permissions.Services
             return names;
         }
 
-        public GlobalWhitelistSet[] GetGroupsByUnblocked(string name, string type)
+        public GlobalWhitelistSet[] GetGroupsByUnblocked(string name, UnblockedType type)
         {
             GlobalWhitelistSet[] groups = null;
-            bool exists;
-            UnblockedCmdOrMdl item;
+            
             // Get the item
-            if (type == "command") {
-                exists = GetUbCmdByName(name, out item);
-            } else {
-                exists = GetUbMdlByName(name, out item);
-            }
+			UnblockedCmdOrMdl item;
+        	bool exists = GetUbItemByNameType(name, type, out item);
 
             if (exists) {
                 using (var uow = _db.UnitOfWork)
@@ -416,7 +408,7 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
-        public bool AddItemToGroup(string name, string type, GlobalWhitelistSet group)
+        public bool AddUbItemToGroup(string name, UnblockedType type, GlobalWhitelistSet group)
         {   
             GlobalUnblockedSet itemInGroup;
 
@@ -428,15 +420,9 @@ namespace NadekoBot.Modules.Permissions.Services
                     .Include(x => x.UnblockedCommands)
                       .ThenInclude(x => x.GlobalUnblockedSets));
 
-                bool exists;
-                UnblockedCmdOrMdl item;
-
                 // Get the item
-                if (type == "command") {
-                    exists = GetUbCmdByName(name, out item);
-                } else {
-                    exists = GetUbMdlByName(name, out item);
-                }
+                UnblockedCmdOrMdl item;
+				bool exists = GetUbItemByNameType(name, type, out item);
 
                 // Check if item already exists
                 if (!exists) {
@@ -445,7 +431,7 @@ namespace NadekoBot.Modules.Permissions.Services
                     {
                         Name = name,
                     };                        
-                    if (type == "command") {
+                    if (type == UnblockedType.Command) {
                       bc.UnblockedCommands.Add(item);
                     } else {
                       bc.UnblockedModules.Add(item);
@@ -470,21 +456,15 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return true;
         }
-        public bool RemoveItemFromGroup(string name, string type, GlobalWhitelistSet group)
+        public bool RemoveUbItemFromGroup(string name, UnblockedType type, GlobalWhitelistSet group)
         {
             using (var uow = _db.UnitOfWork)
             {
-                bool exists;
+				// Get the item
                 UnblockedCmdOrMdl item;
+				bool exists = GetUbItemByNameType(name, type, out item);
 
-                // Get the item
-                if (type == "command") {
-                    exists = GetUbCmdByName(name, out item);
-                } else {
-                    exists = GetUbMdlByName(name, out item);
-                }
-
-                if (item == null) return false;
+                if (!exists) return false;
 
                 // Second, Find the relationship record
                 var itemInSet = group.GlobalUnblockedSets
@@ -498,7 +478,7 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-        public bool GetUbCmdByName(string name, out UnblockedCmdOrMdl item)
+        public bool GetUbItemByNameType(string name, UnblockedType type, out UnblockedCmdOrMdl item)
         {
             item = null;
 
@@ -506,36 +486,11 @@ namespace NadekoBot.Modules.Permissions.Services
 
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.UnblockedCommands));
-
                 // Retrieve the UnblockedCmdOrMdl item given name
-                item = bc.UnblockedCommands
-                    .Where( x => x.Name.Equals(name) )
-                    .FirstOrDefault();
-
-				uow.Complete();
-
-                if (item == null) { return false; }
-                else { return true; }
-            }
-        }
-
-        public bool GetUbMdlByName(string name, out UnblockedCmdOrMdl item)
-        {
-            item = null;
-
-            if (string.IsNullOrWhiteSpace(name)) return false;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.UnblockedModules));
-
-                // Retrieve the UnblockedCmdOrMdl item given name
-                item = bc.UnblockedModules
-                    .Where( x => x.Name.Equals(name) )
-                    .FirstOrDefault();
+                item = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where( x => x.Name.Equals(name) )
+					.Where( x => x.Type.Equals(type) )
+					.FirstOrDefault();
 
 				uow.Complete();
 
