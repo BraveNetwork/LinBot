@@ -30,30 +30,60 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task Lgu(string listName)
+            public async Task Lgu(string listName=null)
             {
-                if (listName == "") // TODO: Check if name is in whitelistgroups
-                {
-                    await ReplyErrorLocalized("lgu_invalidname", "MyList").ConfigureAwait(false);
-                    return;
-                }
-                // TODO: Attempt to find related modules/commands
-
-                if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
+				// Error if nothing to show
+				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
                 {
                     await ReplyErrorLocalized("lgu_none", listName).ConfigureAwait(false);
                     return;
                 }
 
-                var embed = new EmbedBuilder().WithOkColor().WithTitle(GetText("gwl_title"));
+				var embed = new EmbedBuilder().WithOkColor().WithTitle(GetText("gwl_title"));
 
-                if (_service.UnblockedModules.Any())
-                    embed.AddField(efb => efb.WithName(GetText("unblocked_modules")).WithValue(string.Join("\n", _service.UnblockedModules)).WithIsInline(true));
+				// Case when no listname provided
+                if (listName == null)
+                {
+					// Send list of all unblocked modules/commands
+					if (_service.UnblockedModules.Any())
+                    embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_modules"))
+						.WithValue(string.Join("\n", _service.UnblockedModules))
+						.WithIsInline(true));
 
-                if (_service.UnblockedCommands.Any())
-                    embed.AddField(efb => efb.WithName(GetText("unblocked_commands")).WithValue(string.Join("\n", _service.UnblockedCommands)).WithIsInline(true));
+ 	               if (_service.UnblockedCommands.Any())
+                    embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_commands"))
+						.WithValue(string.Join("\n", _service.UnblockedCommands))
+						.WithIsInline(true));
+                }
+				// Case when listname is provided
+				else if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				{
+					// If valid whitelist, get its related modules/commands
+					string[] cmds = _gwl.GetGroupUnblockedNames(group, UnblockedType.Command);
+					string[] mdls = _gwl.GetGroupUnblockedNames(group, UnblockedType.Module);
+
+					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
+					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+
+					embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_commands"))
+						.WithValue(strCmd)
+						.WithIsInline(true));
+					embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_commands"))
+						.WithValue(strMdl)
+						.WithIsInline(true));
+				} 
+				else {
+					// Let the user know they might have typed it wrong
+					await ReplyErrorLocalized("lgu_invalidname", "MyList").ConfigureAwait(false);
+                    return;
+				}
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
             }
 
             [NadekoCommand, Usage, Description, Aliases]

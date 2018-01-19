@@ -105,8 +105,9 @@
   },
   "lgu": {
     "cmd": "listglobalunblock lgu",
-    "desc": "List all unblocked commands and modules WIP ",
+    "desc": "List all globally unblocked commands and modules, or if specified, only those unblocked for a given whitelist",
     "usage": [
+      "{0}lgu",
       "{0}lgu WLNAME"
     ]
   },
