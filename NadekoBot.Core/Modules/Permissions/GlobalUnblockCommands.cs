@@ -44,8 +44,23 @@ namespace NadekoBot.Modules.Permissions
 				// Case when no listname provided
                 if (listName == null)
                 {
-					// Send list of all unblocked modules/commands
-					if (_service.UnblockedCommands.Any())
+					// Send list of all unblocked modules/commands and number of lists for each
+					string[] cmds = _gwl.GetUnblockedNames(UnblockedType.Command);
+					string[] mdls = _gwl.GetUnblockedNames(UnblockedType.Module);
+
+					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
+					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+
+					embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_commands"))
+						.WithValue(strCmd)
+						.WithIsInline(true));
+					embed.AddField(efb => 
+						efb.WithName(GetText("unblocked_modules"))
+						.WithValue(strMdl)
+						.WithIsInline(true));
+
+					/*if (_service.UnblockedCommands.Any())
                     embed.AddField(efb => 
 						efb.WithName(GetText("unblocked_commands"))
 						.WithValue(string.Join("\n", _service.UnblockedCommands))
@@ -55,7 +70,7 @@ namespace NadekoBot.Modules.Permissions
                     embed.AddField(efb => 
 						efb.WithName(GetText("unblocked_modules"))
 						.WithValue(string.Join("\n", _service.UnblockedModules))
-						.WithIsInline(true));
+						.WithIsInline(true));*/
                 }
 				// Case when listname is provided
 				else if (_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 

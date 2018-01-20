@@ -105,7 +105,7 @@
   },
   "lgu": {
     "cmd": "listglobalunblock lgu",
-    "desc": "List all globally unblocked commands and modules, or if specified, only those unblocked for a given whitelist",
+    "desc": "List all globally unblocked commands and modules (and how many lists can use them), or if a whitelist is specified, lists all unblocked commands and modules for a given whitelist",
     "usage": [
       "{0}lgu",
       "{0}lgu WLNAME"
@@ -129,14 +129,14 @@
   },
   "ubmodrm": {
     "cmd": "blockmdl ubmdlrm",
-    "desc": "Remove the module from ALL whitelists.",
+    "desc": "Remove the module from ALL whitelists. Also helpful for clearing ListGlobalUnblocked of any unassigned modules.",
     "usage": [
       "{0}ubmdlrm SomeModul"
     ]
   },
   "ubcmdrm": {
     "cmd": "blockcmd ubcmdrm",
-    "desc": "Remove the command or custom reaction from ALL whitelists.",
+    "desc": "Remove the command or custom reaction from ALL whitelists. Also helpful for clearing ListGlobalUnblocked of any unassigned commands.",
     "usage": [
       "{0}ubcmdrm {0}SomeCommand",
       "{0}ubcmdrm SomeCustomReaction"

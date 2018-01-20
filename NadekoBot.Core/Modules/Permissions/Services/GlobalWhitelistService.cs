@@ -535,5 +535,39 @@ namespace NadekoBot.Modules.Permissions.Services
             }
 			return names;
 		}
+
+		public string[] GetUnblockedNames(UnblockedType type)
+		{
+			string[] nameCounts;
+			using (var uow = _db.UnitOfWork)
+            {
+                // Retrieve a list of unblocked names with at least one relationship record
+                var anon = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(u => u.Type.Equals(type))
+					.GroupJoin(
+						uow._context.Set<GlobalUnblockedSet>(), 
+						u => u.Id, gu => gu.UnblockedPK,
+						(unblocked, relations) => new {
+							Name = unblocked.Name,
+							NumRelations = relations.Count()
+						})
+					.ToArray();
+
+				uow.Complete();
+
+				nameCounts = new string[anon.Length];
+				for (int i=0; i<anon.Length; i++)
+				{
+					if (anon[i].NumRelations > 0) 
+					{
+						string lists = (anon[i].NumRelations > 1) ? " lists)" : " list)";
+						nameCounts[i] = anon[i].Name + " (in " + anon[i].NumRelations + lists;
+					} else {
+						nameCounts[i] = anon[i].Name + " (unassigned)";
+					}
+				}                
+            }
+			return nameCounts;
+		}
     }
 }
