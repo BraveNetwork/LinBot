@@ -147,7 +147,7 @@
     "cmd": "blockmdl ubmdlrm",
     "desc": "Remove the module from ALL whitelists. Also helpful for clearing ListGlobalUnblocked of any unassigned modules.",
     "usage": [
-      "{0}ubmdlrm SomeModul"
+      "{0}ubmdlrm SomeModule"
     ]
   },
   "ubcmdrm": {
@@ -156,6 +156,21 @@
     "usage": [
       "{0}ubcmdrm {0}SomeCommand",
       "{0}ubcmdrm SomeCustomReaction"
+    ]
+  },
+  "listgwlcmd": {
+    "cmd": "listgwlcmd",
+    "desc": "List all whitelists allowed to use this command.",
+    "usage": [
+      "{0}listgwlcmd {0}SomeCommand",
+      "{0}listgwlcmd SomeCustomReaction"
+    ]
+  },
+  "listgwlmdl": {
+    "cmd": "listgwlmdl",
+    "desc": "List all whitelists allowed to use this module.",
+    "usage": [
+      "{0}listgwlmdl {0}SomeModule"
     ]
   },
   "resetglobalwhitelists": {

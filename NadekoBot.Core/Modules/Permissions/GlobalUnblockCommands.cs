@@ -89,6 +89,35 @@ namespace NadekoBot.Modules.Permissions
 				return;
             }
 
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListGwlCmd(CommandOrCrInfo cmd)
+				=>ListGwl(cmd.Name.ToLowerInvariant(), UnblockedType.Command);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListGwlMdl(ModuleOrCrInfo module)
+				=>ListGwl(module.Name.ToLowerInvariant(), UnblockedType.Module);
+
+			private async Task ListGwl(string name, UnblockedType type)
+			{
+				string[] listnames = _gwl.GetGroupNamesFromUbItem(name,type);
+				if (listnames == null) {
+					await ReplyErrorLocalized("ub_list_gwl_failed", Format.Code(type.ToString()), Format.Bold(name)).ConfigureAwait(false);
+                    return;
+				}
+				string lists = (listnames.Length > 0) ? string.Join("\n", listnames) : "*none*";
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("ub_list_gwl", Format.Code(type.ToString()), Format.Bold(name)))
+					.AddField(GetText("gwl_titlefield"), lists, true);
+
+				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName)

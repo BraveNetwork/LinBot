@@ -427,6 +427,31 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
+		public string[] GetGroupNamesFromUbItem(string name, UnblockedType type)
+		{
+			string[] names;
+
+			// Get the item
+			UnblockedCmdOrMdl item;
+			bool exists = GetUbItemByNameType(name, type, out item);
+
+			if (!exists) return null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+                // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
+                names = uow._context.Set<GlobalWhitelistSet>()
+					.Join(
+						uow._context.Set<GlobalUnblockedSet>().Where(u => u.UnblockedPK.Equals(item.Id)), 
+						g => g.Id, gu => gu.ListPK,
+						(group, relation) => group.ListName
+						)
+					.ToArray();
+                uow.Complete();
+            }
+			return names;
+		}
+
         public bool AddUbItemToGroup(string name, UnblockedType type, GlobalWhitelistSet group)
         {   
             GlobalUnblockedSet itemInGroup;
