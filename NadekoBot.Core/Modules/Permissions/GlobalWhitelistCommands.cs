@@ -38,6 +38,28 @@ namespace NadekoBot.Modules.Permissions
                 return;
             }
 
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task RenameGlobalWhiteList(string listName="", string newName="")
+            {
+				if (string.IsNullOrWhiteSpace(newName) || newName.Length > 20) return;
+				if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
+				if (_service.GetGroupByName(listName, out GlobalWhitelistSet group)) {
+					bool success = _service.RenameWhitelist(listName, newName);
+					if (success) {
+						await ReplyConfirmLocalized("gwl_renamed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+                		return;
+					} else {
+						await ReplyErrorLocalized("gwl_renamed_failed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+                    	return;
+					}
+				} else 
+				{
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+				}
+			}
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task GlobalWhiteListDelete(string listName)
@@ -78,7 +100,7 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task ListWhitelistMembers(string listName, int page=1)
+            public async Task ListWhitelistMembers(string listName=null, int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
                 if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))
@@ -119,7 +141,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GlobalWhitelistInfo(string listName, int page=1)
+            public async Task GlobalWhitelistInfo(string listName=null, int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
                 if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))

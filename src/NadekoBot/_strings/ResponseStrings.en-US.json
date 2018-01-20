@@ -6,6 +6,8 @@
   "permissions_gwl_help_add_server": "{0}gwls add \"{1}\" {2}`",
   "permissions_gwl_create_error": "Error creating whitelist: {0}",
   "permissions_gwl_created": "Successfully created the whitelist named {0}",
+  "permissions_gwl_renamed": "Successfully renamed the whitelist {0} to {1}!",
+  "permissions_gwl_renamed_failed": "Failed to rename the whitelist {0} to {1}...",
   "permissions_gwl_delete_error": "Error deleting whitelist: {0}",
   "permissions_gwl_deleted": "Successfully deleted the whitelist named {0}",
   "permissions_gwl_empty": "No whitelists found! Do `.gwl MyWhitelistName` to make a new whitelist.",

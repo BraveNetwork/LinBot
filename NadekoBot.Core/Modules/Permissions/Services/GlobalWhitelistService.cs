@@ -105,6 +105,25 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return true;
         }
+
+		public bool RenameWhitelist(string oldName, string name)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+                GlobalWhitelistSet group = uow._context.Set<GlobalWhitelistSet>()
+					.Where(g => g.ListName == oldName)
+					.SingleOrDefault();
+
+				if (group == null) return false;
+
+				group.ListName = name;
+				uow._context.SaveChanges();
+				
+                uow.Complete();
+            }
+			return true;
+		}
+
         public bool DeleteWhitelist(string name)
         {
             using (var uow = _db.UnitOfWork)

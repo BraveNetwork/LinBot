@@ -15,6 +15,14 @@
       "{0}gwlinfo \"My Awesome Whitelist\""
     ]
   },
+  "renameglobalwhitelist": {
+    "cmd": "renameglobalwhitelist gwlrename",
+    "desc": "Rename a given whitelist.",
+    "usage": [
+      "{0}gwlrename OriginalName NewName",
+      "{0}gwlrename \"Original Name\" \"New Name\""
+    ]
+  },
   "globalwhitelistdelete": {
     "cmd": "globalwhitelistdelete gwldel",
     "desc": "Delete a global whitelist and unlink all its related data (members and unblocked commands/modules).",
