@@ -430,6 +430,7 @@ namespace NadekoBot.Modules.Permissions.Services
                     item = new UnblockedCmdOrMdl
                     {
                         Name = name,
+						Type = type
                     };                        
                     if (type == UnblockedType.Command) {
                       bc.UnblockedCommands.Add(item);

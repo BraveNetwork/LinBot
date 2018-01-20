@@ -78,7 +78,7 @@ namespace NadekoBot.Modules.Permissions.Services
                             || _gwl.IsMemberInGroup(channel.Id, groups[i])
                             || _gwl.IsMemberInGroup(user.Id, groups[i]);
                     }
-                    System.Console.WriteLine("List Count {0}, Group count {1}", lists.Length);
+                    System.Console.WriteLine("List Count {0}, Group count {1}", lists.Length, groups.Length);
                     return !result; 
                 }
                 else { return true; }
