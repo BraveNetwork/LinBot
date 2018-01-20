@@ -7,6 +7,14 @@
       "{0}gwl \"My Awesome Whitelist\""
     ]
   },
+  "globalwhitelistinfo": {
+    "cmd": "globalwhitelistinfo gwlinfo",
+    "desc": "Get a list of all members and all unblocked commands and modules for a whitelist.",
+    "usage": [
+      "{0}gwlinfo MyAwesomeWhitelistName",
+      "{0}gwlinfo \"My Awesome Whitelist\""
+    ]
+  },
   "globalwhitelistdelete": {
     "cmd": "globalwhitelistdelete gwldel",
     "desc": "Delete a global whitelist and unlink all its related data (members and unblocked commands/modules).",

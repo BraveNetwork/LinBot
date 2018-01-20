@@ -117,6 +117,52 @@ namespace NadekoBot.Modules.Permissions
                 }
             }
 
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task GlobalWhitelistInfo(string listName, int page=1)
+            {
+                if(--page < 0) return; // ensures page is 0-indexed and non-negative
+                if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                {
+					// If valid whitelist, get its related modules/commands
+					string[] cmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command);
+					string[] mdls = _service.GetGroupUnblockedNames(group, UnblockedType.Module);
+
+					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
+					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+					
+					// Get member lists
+					ulong[] servers = _service.GetGroupMembers(group, GlobalWhitelistType.Server, page);
+					ulong[] channels = _service.GetGroupMembers(group, GlobalWhitelistType.Channel, page);
+					ulong[] users = _service.GetGroupMembers(group, GlobalWhitelistType.User, page);
+
+					string serverStr = "*none*";
+					string channelStr = "*none*";
+					string userStr = "*none*";
+
+					if (servers.Length > 0) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Server, servers)); }
+					if (channels.Length > 0) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Channel, channels)); }
+					if (users.Length > 0) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.User, users)); }
+						
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gwl_info", Format.Bold(listName)))
+						.AddField(GetText("unblocked_commands") + "("+cmds.Length+")", strCmd, true)
+						.AddField(GetText("unblocked_modules") + "("+mdls.Length+")", strMdl, true)
+						.AddField("Servers " + "("+servers.Length+")", serverStr, true)
+						.AddField("Channels " + "("+channels.Length+")", channelStr, true)
+						.AddField("Users " + "("+users.Length+")", userStr, true)
+						.WithFooter("Page " + (page+1));
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    
+                } else {
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
+                    return;
+                }
+            }
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task UserCheckMemberWhitelist(ulong id, int page=1)
