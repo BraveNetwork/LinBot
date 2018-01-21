@@ -178,6 +178,84 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+            public Task UbModBulk(AddRemove action, string listName, params ModuleOrCrInfo[] mdls)
+			{
+				string[] names = new string[mdls.Length];
+				System.Console.WriteLine("Module Count: ", mdls.Length);
+				for (int i=0; i<mdls.Length; i++) {
+					names[i] = mdls[i].Name.ToLowerInvariant();
+					System.Console.WriteLine(names[i]);
+				}
+				return UnblockAddRemoveBulk(action, UnblockedType.Module, listName, names);
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task UbCmdBulk(AddRemove action, string listName, params CommandOrCrInfo[] cmds)
+			{
+				string[] names = new string[cmds.Length];
+				System.Console.WriteLine("Command Count: ", cmds.Length);
+				for (int i=0; i<cmds.Length; i++) {
+					names[i] = cmds[i].Name.ToLowerInvariant();
+					System.Console.WriteLine(names[i]);
+				}
+				return UnblockAddRemoveBulk(action, UnblockedType.Command, listName, names);
+			}
+
+			private async Task UnblockAddRemoveBulk(AddRemove action, UnblockedType type, string listName, params string[] itemNames)
+			{
+				// If the listName doesn't exist, return an error message
+                if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group))
+                {
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+                }
+
+                // Process Add Command/Module
+                if (action == AddRemove.Add) 
+                {   
+					// Add to hashset in GlobalPermissionService
+					if (type == UnblockedType.Command)
+                    {
+						System.Console.WriteLine(_service.UnblockedCommands.Count);
+						_service.UnblockedCommands.AddRange(itemNames);
+						System.Console.WriteLine(_service.UnblockedCommands.Count);
+                    }
+					else {
+						System.Console.WriteLine(_service.UnblockedModules.Count);
+						_service.UnblockedModules.AddRange(itemNames);
+						System.Console.WriteLine(_service.UnblockedModules.Count);
+					}
+
+					// Add to a whitelist
+                    if(_gwl.AddUbItemToGroupBulk(itemNames,type,group))
+                    {
+                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        return;
+                    }
+                    else {
+                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        return;
+                    }
+                }
+                // Process Remove Command/Module
+                else
+                {
+					// Remove from whitelist
+                    if(_gwl.RemoveUbItemFromGroupBulk(itemNames,type,group))
+                    {
+                        await ReplyConfirmLocalized("gwl_remove_bulk", Format.Code(type.ToString()), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        return;
+                    }
+                    else {
+                        await ReplyErrorLocalized("gwl_remove_bulk_failed", Format.Code(type.ToString()), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        return;
+                    }
+                }
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
             public async Task ClearGwlUb(string listName="")
 			{
 				if (_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 

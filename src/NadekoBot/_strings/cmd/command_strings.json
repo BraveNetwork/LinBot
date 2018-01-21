@@ -143,6 +143,22 @@
       "{0}ubcmd rem SomeCustomReaction WLNAME"
     ]
   },
+  "ubmodbulk": {
+    "cmd": "unblockmdlbulk ubmdlbulk",
+    "desc": "[Add] or [rem]ove several modules from the specified global whitelist.",
+    "usage": [
+      "{0}ubmdlbulk add WLNAME ModuleA ModuleB ModuleC",
+      "{0}ubmdlbulk rem WLNAME ModuleA ModuleB ModuleC"
+    ]
+  },
+  "ubcmdbulk": {
+    "cmd": "unblockcmdbulk ubcmdbulk",
+    "desc": "[Add] or [rem]ove several commands or customreactions from the specified global whitelist.",
+    "usage": [
+      "{0}ubcmdbulk add WLNAME {0}CommandA {0}CommandB {0}CommandC",
+      "{0}ubcmdbulk rem WLNAME CustomReactionA CustomReactionB CustomReactionC"
+    ]
+  },
   "ubmodrm": {
     "cmd": "blockmdl ubmdlrm",
     "desc": "Remove the module from ALL whitelists. Also helpful for clearing ListGlobalUnblocked of any unassigned modules.",

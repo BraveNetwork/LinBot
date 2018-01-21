@@ -572,6 +572,15 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
+		public bool AddUbItemToGroupBulk(string[] name, UnblockedType type, GlobalWhitelistSet group)
+		{
+			return true;
+		}
+
+		public bool RemoveUbItemFromGroupBulk(string[] name, UnblockedType type, GlobalWhitelistSet group)
+		{
+			return true;
+		}
 		public UnblockedCmdOrMdl[] GetGroupUnblocked(GlobalWhitelistSet group)
 		{
 			UnblockedCmdOrMdl[] items;
