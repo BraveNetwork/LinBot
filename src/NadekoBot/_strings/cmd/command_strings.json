@@ -119,6 +119,30 @@
       "{0}gwls rem MyAwesomeWhitelist 123123123"
     ]
   },
+  "userglobalwhitelistbulk": {
+    "cmd": "userglobalwhitelistbulk gwlbulku",
+    "desc": "Add or remove several users from a whitelist",
+    "usage": [
+      "{0}gwlbulku add MyAwesomeWhitelist @UserA @UserB @UserC",
+      "{0}gwlbulku rem MyAwesomeWhitelist 123123123 456456456 789789789"
+    ]
+  },
+  "channelglobalwhitelistbulk": {
+    "cmd": "channelglobalwhitelistbulk gwlbulkc",
+    "desc": "Add or remove several channels from a whitelist",
+    "usage": [
+      "{0}gwlbulkc add MyAwesomeWhitelist #ChannelA #ChannelB #ChannelC",
+      "{0}gwlbulkc rem MyAwesomeWhitelist 123123123 456456456 789789789"
+    ]
+  },
+  "serverglobalwhitelistbulk": {
+    "cmd": "serverglobalwhitelistbulk gwlbulks",
+    "desc": "Add or remove several servers from a whitelist",
+    "usage": [
+      "{0}gwlbulks add MyAwesomeWhitelist ServerA ServerB ServerC",
+      "{0}gwlbulks rem MyAwesomeWhitelist 123123123 456456456 789789789"
+    ]
+  },
   "lgu": {
     "cmd": "listglobalunblock lgu",
     "desc": "List all globally unblocked commands and modules (and how many lists can use them), or if a whitelist is specified, lists all unblocked commands and modules for a given whitelist",

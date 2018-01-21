@@ -28,6 +28,8 @@ namespace NadekoBot.Modules.Permissions
                 _gwl = gwl;
             }
 
+			#region List Info
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task Lgu(string listName=null)
@@ -118,6 +120,10 @@ namespace NadekoBot.Modules.Permissions
 				return;
 			}
 
+			#endregion List Info
+
+			#region Add/Remove UnblockedCmdOrMdl
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName)
@@ -176,15 +182,17 @@ namespace NadekoBot.Modules.Permissions
                 }
 			}
 
+			#endregion Add/Remove UnblockedCmdOrMdl
+
+			#region Bulk Add/Remove
+
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task UbModBulk(AddRemove action, string listName, params ModuleOrCrInfo[] mdls)
 			{
 				string[] names = new string[mdls.Length];
-				System.Console.WriteLine("Module Count: ", mdls.Length);
 				for (int i=0; i<mdls.Length; i++) {
 					names[i] = mdls[i].Name.ToLowerInvariant();
-					System.Console.WriteLine(names[i]);
 				}
 				return UnblockAddRemoveBulk(action, UnblockedType.Module, listName, names);
 			}
@@ -194,10 +202,8 @@ namespace NadekoBot.Modules.Permissions
             public Task UbCmdBulk(AddRemove action, string listName, params CommandOrCrInfo[] cmds)
 			{
 				string[] names = new string[cmds.Length];
-				System.Console.WriteLine("Command Count: ", cmds.Length);
 				for (int i=0; i<cmds.Length; i++) {
 					names[i] = cmds[i].Name.ToLowerInvariant();
-					System.Console.WriteLine(names[i]);
 				}
 				return UnblockAddRemoveBulk(action, UnblockedType.Command, listName, names);
 			}
@@ -227,14 +233,23 @@ namespace NadekoBot.Modules.Permissions
 						System.Console.WriteLine(_service.UnblockedModules.Count);
 					}
 
+					// Get itemlist
+					string itemlist = "{"+string.Join(", ",itemNames)+"}";
+
 					// Add to a whitelist
                     if(_gwl.AddUbItemToGroupBulk(itemNames,type,group))
                     {
-                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
+                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), 
+							Format.Bold(itemlist), 
+							Format.Bold(listName))
+							.ConfigureAwait(false);
+						return;
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), 
+							Format.Bold(itemlist), 
+							Format.Bold(listName))
+							.ConfigureAwait(false);
                         return;
                     }
                 }
@@ -253,6 +268,10 @@ namespace NadekoBot.Modules.Permissions
                     }
                 }
 			}
+
+			#endregion Bulk Add/Remove
+
+			#region Clear
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -327,6 +346,8 @@ namespace NadekoBot.Modules.Permissions
                     return;
 				}
 			}
+
+			#endregion Clear
         }
     }
 }

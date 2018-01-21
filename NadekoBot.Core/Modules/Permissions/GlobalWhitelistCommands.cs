@@ -23,6 +23,8 @@ namespace NadekoBot.Modules.Permissions
                 _creds = creds;
             }
 
+			#region Whitelist Utilities
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task GlobalWhiteList(string listName)
@@ -98,6 +100,10 @@ namespace NadekoBot.Modules.Permissions
                 await ReplyConfirmLocalized("gwl_deleted", Format.Bold(listName)).ConfigureAwait(false);
                 return;
             }
+
+			#endregion Whitelist Utilities
+
+			#region Whitelist Info
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -209,6 +215,10 @@ namespace NadekoBot.Modules.Permissions
                 }
             }
 
+			#endregion Whitelist Info
+
+			#region List Member's Whitelists
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task UserCheckMemberWhitelist(ulong id, int page=1)
@@ -261,6 +271,10 @@ namespace NadekoBot.Modules.Permissions
                 }
             }
 
+			#endregion List Member's Whitelists
+
+			#region IsMemberInWhitelist
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task IsUserInWhitelist(ulong id, string listName)
@@ -311,6 +325,10 @@ namespace NadekoBot.Modules.Permissions
                     }
                 }                
             }
+
+			#endregion IsMemberInWhitelist
+
+			#region Add/Remove Member
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -379,6 +397,111 @@ namespace NadekoBot.Modules.Permissions
                     }
                 }                   
             }
+
+			#endregion Add/Remove
+
+			#region Bulk Add/Remove
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task UserGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+                => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.User, listName, ids);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task UserGlobalWhitelistBulk(AddRemove action, string listName, params IUser[] usrs)
+            {
+				ulong[] ids = new ulong[usrs.Length];
+				for (int i=0; i<usrs.Length; i++) {
+					ids[i] = usrs[i].Id;
+				}
+				return GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.User, listName, ids);
+			}
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+                => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Channel, listName, ids);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName, params ITextChannel[] channels)
+            {
+				ulong[] ids = new ulong[channels.Length];
+				for (int i=0; i<channels.Length; i++) {
+					ids[i] = channels[i].Id;
+				}
+				return GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Channel, listName, ids);
+			}
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+                => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Server, listName, ids);
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName, params IGuild[] guilds)
+			{
+				ulong[] ids = new ulong[guilds.Length];
+				for (int i=0; i<guilds.Length; i++) {
+					ids[i] = guilds[i].Id;
+				}
+				return GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Server, listName, ids);
+			}
+			
+			private async Task GlobalWhitelistAddRmBulk(AddRemove action, GlobalWhitelistType type, string listName, params ulong[] ids)
+			{
+                // If the listName doesn't exist, return an error message
+                if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                {
+                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+                }
+
+				// Get string list of name/mention from ids
+				string idlist = "{"+string.Join(", ",_service.GetNameOrMentionFromId(type,ids))+"}";
+
+                // Process Add ID to Whitelist of ListName
+                if (action == AddRemove.Add) 
+                {
+                    if(_service.AddItemToGroupBulk(ids,type,group))
+                    {
+                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), 
+							idlist,
+							Format.Bold(listName))
+							.ConfigureAwait(false);
+						return;
+                    }
+                    else {
+                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), 
+							idlist,
+							Format.Bold(listName))
+							.ConfigureAwait(false);
+                        return;
+                    }
+                }
+                // Process Remove ID from Whitelist of ListName
+                else
+                {
+                    if(_service.RemoveItemFromGroupBulk(ids,type,group))
+                    {
+                        await ReplyConfirmLocalized("gwl_remove_bulk", Format.Code(type.ToString()+"s"), 
+							idlist,
+							Format.Bold(listName))
+							.ConfigureAwait(false);
+						return;
+                    }
+                    else {
+                        await ReplyErrorLocalized("gwl_remove_bulk_failed", Format.Code(type.ToString()+"s"), 
+							idlist,
+							Format.Bold(listName))
+							.ConfigureAwait(false);
+                        return;
+                    }
+                }
+			}
+
+			#endregion Bulk Add/Remove
         }
     }
 }

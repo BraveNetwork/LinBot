@@ -28,6 +28,7 @@ namespace NadekoBot.Modules.Permissions.Services
             GlobalWhitelistedChannels = new ConcurrentHashSet<ulong>(GlobalWhitelist.Where(bi => bi.Type == GlobalWhitelistType.Channel).Select(c => c.ItemId));
         }
 
+		#region Resolve ulong IDs
         public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
         {
             string[] str = new string[ids.Length];
@@ -86,6 +87,10 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return str;
         }
+
+		#endregion Resolve ulong IDs
+
+		#region General Whitelist Actions
 
         public bool CreateWhitelist(string name)
         {
@@ -288,6 +293,11 @@ namespace NadekoBot.Modules.Permissions.Services
                 else { return true; }
             }
         }
+
+		#endregion General Whitelist Actions
+
+		#region GlobalWhitelist Member Actions
+
         public ulong[] GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page)
         {
             ulong[] results = null;
@@ -440,6 +450,20 @@ namespace NadekoBot.Modules.Permissions.Services
                 else { return true; }
             }
         }
+
+		public bool AddItemToGroupBulk(ulong[] ids, GlobalWhitelistType type, GlobalWhitelistSet group)
+		{
+			return true;
+		}
+
+		public bool RemoveItemFromGroupBulk(ulong[] ids, GlobalWhitelistType type, GlobalWhitelistSet group)
+		{
+			return true;
+		}
+
+		#endregion GlobalWhitelist Member Actions
+
+		#region UnblockedCmdOrMdl Actions
 
 		public string[] GetGroupNamesFromUbItem(string name, UnblockedType type)
 		{
@@ -650,5 +674,7 @@ namespace NadekoBot.Modules.Permissions.Services
             }
 			return nameCounts;
 		}
+
+		#endregion UnblockedCmdOrMdl Actions
     }
 }
