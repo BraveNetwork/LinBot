@@ -170,7 +170,21 @@
     "cmd": "listgwlmdl",
     "desc": "List all whitelists allowed to use this module.",
     "usage": [
-      "{0}listgwlmdl {0}SomeModule"
+      "{0}listgwlmdl SomeModule"
+    ]
+  },
+  "cleargwlub": {
+    "cmd": "cleargwlub gwlubclear",
+    "desc": "Clear all unblocked commands and modules from a given whitelist.",
+    "usage": [
+      "{0}cleargwlub WLName"
+    ]
+  },
+  "cleargwlmembers": {
+    "cmd": "cleargwlmembers gwlmemclear",
+    "desc": "Clear all members from a given whitelist.",
+    "usage": [
+      "{0}cleargwlmem WLName"
     ]
   },
   "resetglobalwhitelists": {

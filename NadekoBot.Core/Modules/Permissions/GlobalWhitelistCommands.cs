@@ -60,6 +60,30 @@ namespace NadekoBot.Modules.Permissions
 				}
 			}
 
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task ClearGwlMembers(string listName="")
+			{
+				if (_service.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				{
+					if (_service.ClearGroupMembers(group))
+					{
+						await ReplyConfirmLocalized("gwl_member_remove_all", Format.Bold(listName)).ConfigureAwait(false);
+                    	return;
+					}
+					else{
+						await ReplyErrorLocalized("gwl_member_remove_all_failed", Format.Bold(listName)).ConfigureAwait(false);
+                    	return;
+					}
+				}
+				else
+				{
+					// Let the user know they might have typed it wrong
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+				}
+			}
+
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task GlobalWhiteListDelete(string listName)

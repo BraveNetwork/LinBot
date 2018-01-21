@@ -81,7 +81,7 @@ namespace NadekoBot.Modules.Permissions
 				} 
 				else {
 					// Let the user know they might have typed it wrong
-					await ReplyErrorLocalized("lgu_invalidname", "MyList").ConfigureAwait(false);
+					await ReplyErrorLocalized("lgu_invalidname", listName).ConfigureAwait(false);
                     return;
 				}
 
@@ -174,6 +174,30 @@ namespace NadekoBot.Modules.Permissions
                         return;
                     }
                 }
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task ClearGwlUb(string listName="")
+			{
+				if (_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				{
+					if (_gwl.ClearGroupUbItems(group))
+					{
+						await ReplyConfirmLocalized("gwl_ub_remove_all", Format.Bold(listName)).ConfigureAwait(false);
+                    	return;
+					}
+					else{
+						await ReplyErrorLocalized("gwl_ub_remove_all_failed", Format.Bold(listName)).ConfigureAwait(false);
+                    	return;
+					}
+				}
+				else
+				{
+					// Let the user know they might have typed it wrong
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+				}
 			}
 
             [NadekoCommand, Usage, Description, Aliases]

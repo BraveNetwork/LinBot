@@ -124,6 +124,20 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
+		public bool ClearGroupMembers(GlobalWhitelistSet group)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = " + group.Id + ";";
+				result = uow._context.Database.ExecuteSqlCommand(sql);
+				uow._context.SaveChanges();
+				uow.Complete();
+			}
+			//System.Console.WriteLine("Query Result: ",result);
+			return true;
+		}
+
         public bool DeleteWhitelist(string name)
         {
             using (var uow = _db.UnitOfWork)
@@ -450,6 +464,20 @@ namespace NadekoBot.Modules.Permissions.Services
                 uow.Complete();
             }
 			return names;
+		}
+
+		public bool ClearGroupUbItems(GlobalWhitelistSet group)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = " + group.Id + ";";
+				result = uow._context.Database.ExecuteSqlCommand(sql);
+				uow._context.SaveChanges();
+				uow.Complete();
+			}
+			//System.Console.WriteLine("Query Result: ",result);
+			return true;
 		}
 
         public bool AddUbItemToGroup(string name, UnblockedType type, GlobalWhitelistSet group)
