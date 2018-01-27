@@ -290,73 +290,6 @@ namespace NadekoBot.Modules.Permissions.Services
             return names.ToArray();
         }
 
-        public string[] GetNamesByUnblocked(string name, UnblockedType type)
-        {
-            string[] names = null;
-			
-            // Get the item
-            UnblockedCmdOrMdl item;
-        	bool exists = GetUbItemByNameType(name, type, out item);
-
-            if (exists) {
-                using (var uow = _db.UnitOfWork)
-                {
-                    var bc = uow.BotConfig.GetOrCreate(set => set
-                        .Include(x => x.GlobalWhitelistGroups)
-                        .Include(x => x.UnblockedModules)
-                          .ThenInclude(x => x.GlobalUnblockedSets)
-                        .Include(x => x.UnblockedCommands)
-                          .ThenInclude(x => x.GlobalUnblockedSets));
-                    
-                    names = uow._context.Set<GlobalUnblockedSet>()
-                    .Where( x => x.UnblockedPK == item.Id )
-                    .Join(
-                        bc.GlobalWhitelistGroups, 
-                        u => u.ListPK, g => g.Id,
-                        (u,g) => new {
-                            g.ListName
-                        })
-                    .Select(g => g.ListName)
-                    .ToArray();
-
-                    uow.Complete();
-                }
-            }            
-            return names;
-        }
-
-        public GlobalWhitelistSet[] GetGroupsByUnblocked(string name, UnblockedType type)
-        {
-            GlobalWhitelistSet[] groups = null;
-            
-            // Get the item
-			UnblockedCmdOrMdl item;
-        	bool exists = GetUbItemByNameType(name, type, out item);
-
-            if (exists) {
-                using (var uow = _db.UnitOfWork)
-                {
-                    var bc = uow.BotConfig.GetOrCreate(set => set
-                        .Include(x => x.GlobalWhitelistGroups)
-                        .Include(x => x.UnblockedModules)
-                          .ThenInclude(x => x.GlobalUnblockedSets)
-                        .Include(x => x.UnblockedCommands)
-                          .ThenInclude(x => x.GlobalUnblockedSets));
-                    
-                    groups = uow._context.Set<GlobalUnblockedSet>()
-                    .Where( x => x.UnblockedPK == item.Id )
-                    .Join(
-                        bc.GlobalWhitelistGroups, 
-                        u => u.ListPK, g => g.Id,
-                        (u,g) => g)
-                    .ToArray();
-
-                    uow.Complete();
-                }
-            }            
-            return groups;
-        }
-
         public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
         {
             group = null;
@@ -889,23 +822,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (successList.Count() > 0) return true;
 				return false;
 			}
-		}
-		public UnblockedCmdOrMdl[] GetGroupUnblocked(GlobalWhitelistSet group)
-		{
-			UnblockedCmdOrMdl[] items;
-			using (var uow = _db.UnitOfWork)
-            {
-                // Retrieve a list of unblocked names linked to group on GlobalUnblockedSets.UnblockedPK
-                items = group.GlobalUnblockedSets
-					.Join(
-						uow._context.Set<UnblockedCmdOrMdl>(), 
-						gu => gu.UnblockedPK, u => u.Id,
-						(relation, unblocked) => unblocked
-						)
-					.ToArray();
-                uow.Complete();
-            }
-			return items;
 		}
 
 		public string[] GetGroupUnblockedNames(GlobalWhitelistSet group, UnblockedType type)
