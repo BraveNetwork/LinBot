@@ -213,6 +213,54 @@
       "{0}listgwlmdl SomeModule"
     ]
   },
+  "checkcommanduser": {
+    "cmd": "gwlubcmdu",
+    "desc": "Check if a command is unblocked for a user.",
+    "usage": [
+      "{0}gwlubcmdu {0}SomeCommand @SomeUser",
+      "{0}gwlubcmdu {0}SomeCommand 123123123"
+    ]
+  },
+  "checkmoduleuser": {
+    "cmd": "gwlubmdlu",
+    "desc": "Check if a module is unblocked for a user.",
+    "usage": [
+      "{0}gwlubmdlu SomeModule @SomeUser",
+      "{0}gwlubmdlu SomeModule 123123123"
+    ]
+  },
+  "checkcommandchannel": {
+    "cmd": "gwlubcmdc",
+    "desc": "Check if a command is unblocked for a channel.",
+    "usage": [
+      "{0}gwlubcmdc {0}SomeCommand #SomeChannel",
+      "{0}gwlubcmdc {0}SomeCommand 123123123"
+    ]
+  },
+  "checkmodulechannel": {
+    "cmd": "gwlubmdlc",
+    "desc": "Check if a module is unblocked for a channel.",
+    "usage": [
+      "{0}gwlubmdlc SomeModule #SomeChannel",
+      "{0}gwlubmdlc SomeModule 123123123"
+    ]
+  },
+  "checkcommandserver": {
+    "cmd": "gwlubcmds",
+    "desc": "Check if a command is unblocked for a user.",
+    "usage": [
+      "{0}gwlubcmds {0}SomeCommand SomeServer",
+      "{0}gwlubcmds {0}SomeCommand 123123123"
+    ]
+  },
+  "checkmoduleserver": {
+    "cmd": "gwlubmdls",
+    "desc": "Check if a module is unblocked for a user.",
+    "usage": [
+      "{0}gwlubmdls SomeModule SomeServer",
+      "{0}gwlubmdls SomeModule 123123123"
+    ]
+  },
   "cleargwlub": {
     "cmd": "cleargwlub gwlubclear",
     "desc": "Clear all unblocked commands and modules from a given whitelist.",

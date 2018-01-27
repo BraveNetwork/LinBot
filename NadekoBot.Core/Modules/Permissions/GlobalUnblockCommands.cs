@@ -122,6 +122,133 @@ namespace NadekoBot.Modules.Permissions
 
 			#endregion List Info
 
+			#region Check If Unblocked For Member
+
+			#region User
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandUser(CommandOrCrInfo command, IUser user)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				user.Id, GlobalWhitelistType.User);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandUser(CommandOrCrInfo command, ulong userID)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				userID, GlobalWhitelistType.User);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleUser(ModuleOrCrInfo module, IUser user)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				user.Id, GlobalWhitelistType.User);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleUser(ModuleOrCrInfo module, ulong userID)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				userID, GlobalWhitelistType.User);
+			#endregion User
+
+			#region Channel
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandChannel(CommandOrCrInfo command, ITextChannel channel)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				channel.Id, GlobalWhitelistType.Channel);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandChannel(CommandOrCrInfo command, ulong channelID)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				channelID, GlobalWhitelistType.Channel);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleChannel(ModuleOrCrInfo module, ITextChannel channel)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				channel.Id, GlobalWhitelistType.Channel);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleChannel(ModuleOrCrInfo module, ulong channelID)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				channelID, GlobalWhitelistType.Channel);
+			#endregion Channel
+
+			#region Server
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandServer(CommandOrCrInfo command, IGuild server)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				server.Id, GlobalWhitelistType.Server);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckCommandServer(CommandOrCrInfo command, ulong serverID)
+				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
+				UnblockedType.Command, 
+				serverID, GlobalWhitelistType.Server);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleServer(ModuleOrCrInfo module, IGuild server)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				server.Id, GlobalWhitelistType.Server);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task CheckModuleServer(ModuleOrCrInfo module, ulong serverID)
+				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
+				UnblockedType.Module, 
+				serverID, GlobalWhitelistType.Server);
+			#endregion Server
+
+			private async Task CheckIfUnblockedForMember(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
+			{
+				if (_gwl.CheckIfUnblockedFor(ubName, ubType, memID, memType, out string[] lists))
+				{
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gwl_check_ub_yes", 
+							Format.Code(ubType.ToString()), 
+							Format.Bold(ubName),
+							Format.Code(memType.ToString()),
+							_gwl.GetNameOrMentionFromId(memType, memID),
+							lists.Count(),
+							string.Join("\n",lists)
+							));
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                	return;
+
+				} else
+				{
+					await ReplyErrorLocalized("gwl_check_ub_no", 
+						Format.Code(ubType.ToString()), 
+						Format.Bold(ubName),
+						Format.Code(memType.ToString()),
+						_gwl.GetNameOrMentionFromId(memType, memID)
+						)
+					.ConfigureAwait(false);
+                	return;
+				}
+			}
+
+			#endregion Check If Unblocked For Member
+
 			#region Add/Remove UnblockedCmdOrMdl
 
             [NadekoCommand, Usage, Description, Aliases]
