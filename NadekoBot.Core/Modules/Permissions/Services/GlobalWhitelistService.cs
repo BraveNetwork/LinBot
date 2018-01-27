@@ -596,14 +596,118 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
-		public bool AddUbItemToGroupBulk(string[] name, UnblockedType type, GlobalWhitelistSet group)
+		public bool AddUbItemToGroupBulk(string[] names, UnblockedType type, GlobalWhitelistSet group, out string[] successList)
 		{
-			return true;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// Get the necessary botconfig ID
+				var bc = uow.BotConfig.GetOrCreate();
+				var bcField = (type.Equals(UnblockedType.Module)) ? "BotConfigId1" : "BotConfigId";
+
+				// For each non-existing ub, add it to the database
+				// Fetch all ub names already in the database
+				var curNames = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(type))
+					.Select(x => x.Name)
+					.ToArray();
+				// Focus only on given names that aren't yet in the database
+				var excludedNames = names.Except(curNames);
+				if (excludedNames.Count() > 0) {
+					string[] sqlInsertItemList = new string[excludedNames.Count()];
+					for (int i=0; i<excludedNames.Count(); i++) {
+						sqlInsertItemList[i] = $"({bc.Id}, '{excludedNames.ElementAt(i)}', {(int)type}, datetime('now'))";
+					}
+					string sqlInsertItem = $"INSERT INTO UnblockedCmdOrMdl ('{bcField}', 'Name', 'Type', 'DateAdded') VALUES " + string.Join(", ", sqlInsertItemList) + ";";
+					//System.Console.WriteLine(sqlInsertItem);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertItem);
+					uow._context.SaveChanges();
+				}
+
+				// For each non-existing relationship, add it to the database
+				// Fetch all ub IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => names.Contains(x.Name))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all ub IDs already related to group
+				var curRel = uow._context.Set<GlobalUnblockedSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Select(x => x.UnblockedPK)
+					.ToArray();
+				// Focus only on given IDs that aren't yet related to group
+				var excludedIDs = curIDs.Except(curRel);			
+				if (excludedIDs.Count() > 0) {
+					string[] sqlInsertRelList = new string[excludedIDs.Count()];
+					for (int i=0; i<excludedIDs.Count(); i++) {
+						sqlInsertRelList[i] = $"({group.Id}, {excludedIDs.ElementAt(i)})";
+					}
+					string sqlInsertRel = "INSERT INTO GlobalUnblockedSet ('ListPK', 'UnblockedPK') VALUES " + string.Join(", ", sqlInsertRelList) + ";";
+					//System.Console.WriteLine(sqlInsertRel);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
+					uow._context.SaveChanges();
+				}				
+
+				// Return list of all newly added relationships
+				successList = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => excludedIDs.Contains(x.Id))
+					.Select(x => x.Name)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
 		}
 
-		public bool RemoveUbItemFromGroupBulk(string[] name, UnblockedType type, GlobalWhitelistSet group)
+		public bool RemoveUbItemFromGroupBulk(string[] names, UnblockedType type, GlobalWhitelistSet group, out string[] successList)
 		{
-			return true;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// For each non-existing relationship, add it to the database
+				// Fetch all ub IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => names.Contains(x.Name))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all ub IDs related to the given group BEFORE delete
+				var relIDs = uow._context.Set<GlobalUnblockedSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.UnblockedPK))
+					.Select(x => x.UnblockedPK)
+					.ToArray();
+
+				// Delete all existing IDs where type and name matches		
+				if (curIDs.Count() > 0) {
+					string sqlInsertRel = $"DELETE FROM GlobalUnblockedSet WHERE ListPK = {group.Id} AND UnblockedPK IN (" + string.Join(", ", curIDs) + ");";
+					//System.Console.WriteLine(sqlInsertRel);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
+					uow._context.SaveChanges();
+				}
+				// Fetch all ub IDs related to the given group AFTER delete
+				var relIDsRemain = uow._context.Set<GlobalUnblockedSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.UnblockedPK))
+					.Select(x => x.UnblockedPK)
+					.ToArray();
+
+				var deletedIDs = relIDs.Except(relIDsRemain);
+
+				// Return list of all deleted relationships
+				successList = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => deletedIDs.Contains(x.Id))
+					.Select(x => x.Name)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
 		}
 		public UnblockedCmdOrMdl[] GetGroupUnblocked(GlobalWhitelistSet group)
 		{

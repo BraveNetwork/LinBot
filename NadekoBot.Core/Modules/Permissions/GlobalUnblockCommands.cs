@@ -217,38 +217,47 @@ namespace NadekoBot.Modules.Permissions
                     return;
                 }
 
+				// Get itemlist string
+				string itemList = string.Join("\n",itemNames);
+
                 // Process Add Command/Module
                 if (action == AddRemove.Add) 
                 {   
+					// Keep track of internal changes
+					int delta = 0;
+
 					// Add to hashset in GlobalPermissionService
 					if (type == UnblockedType.Command)
                     {
-						System.Console.WriteLine(_service.UnblockedCommands.Count);
+						int pre = _service.UnblockedCommands.Count;
 						_service.UnblockedCommands.AddRange(itemNames);
-						System.Console.WriteLine(_service.UnblockedCommands.Count);
+						delta = _service.UnblockedCommands.Count - pre;
                     }
 					else {
-						System.Console.WriteLine(_service.UnblockedModules.Count);
+						int pre = _service.UnblockedModules.Count;
 						_service.UnblockedModules.AddRange(itemNames);
-						System.Console.WriteLine(_service.UnblockedModules.Count);
+						delta = _service.UnblockedModules.Count - pre;
 					}
 
-					// Get itemlist
-					string itemlist = "{"+string.Join(", ",itemNames)+"}";
+					System.Console.WriteLine("Added {0} items to GlobalPermissionService Unblocked HashSet", delta);
 
 					// Add to a whitelist
-                    if(_gwl.AddUbItemToGroupBulk(itemNames,type,group))
+                    if(_gwl.AddUbItemToGroupBulk(itemNames,type,group, out string[] successList))
                     {
-                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), 
-							Format.Bold(itemlist), 
-							Format.Bold(listName))
+                        await ReplyConfirmLocalized("gwl_add_bulk",
+							successList.Count(), itemNames.Count(),
+							Format.Code(type.ToString()+"s"), 
+							Format.Bold(listName), 
+							Format.Bold(string.Join("\n", successList)))
 							.ConfigureAwait(false);
 						return;
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), 
-							Format.Bold(itemlist), 
-							Format.Bold(listName))
+                        await ReplyErrorLocalized("gwl_add_bulk_failed",
+							successList.Count(), itemNames.Count(),
+							Format.Code(type.ToString()+"s"), 
+							Format.Bold(listName), 
+							Format.Bold(itemList))
 							.ConfigureAwait(false);
                         return;
                     }
@@ -257,13 +266,23 @@ namespace NadekoBot.Modules.Permissions
                 else
                 {
 					// Remove from whitelist
-                    if(_gwl.RemoveUbItemFromGroupBulk(itemNames,type,group))
+                    if(_gwl.RemoveUbItemFromGroupBulk(itemNames,type,group, out string[] successList))
                     {
-                        await ReplyConfirmLocalized("gwl_remove_bulk", Format.Code(type.ToString()), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_remove_bulk",
+							successList.Count(), itemNames.Count(),
+							Format.Code(type.ToString()+"s"),
+							Format.Bold(listName),
+							Format.Bold(string.Join("\n", successList)))
+							.ConfigureAwait(false);
                         return;
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_remove_bulk_failed", Format.Code(type.ToString()), Format.Bold("{"+string.Join(", ",itemNames)+"}"), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyErrorLocalized("gwl_remove_bulk_failed",
+							successList.Count(), itemNames.Count(),
+							Format.Code(type.ToString()+"s"),
+							Format.Bold(listName),
+							Format.Bold(itemList))
+							.ConfigureAwait(false);
                         return;
                     }
                 }
