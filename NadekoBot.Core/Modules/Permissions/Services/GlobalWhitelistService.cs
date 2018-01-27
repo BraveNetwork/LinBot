@@ -90,25 +90,11 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#endregion Resolve ulong IDs
 
-		#region IDK
+		#region CheckUnblocked
 		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, out string[] lists)
 		{
-			/*string sql = $@"SELECT GlobalWhitelistSet.ListName FROM UnblockedCmdOrMdl
-				INNER JOIN GlobalUnblockedSet ON UnblockedCmdOrMdl.Id = GlobalUnblockedSet.UnblockedPK
-				INNER JOIN GlobalWhitelistSet ON GlobalUnblockedSet.ListPK = GlobalWhitelistSet.Id
-				INNER JOIN GlobalWhitelistItemSet ON GlobalWhitelistSet.Id = GlobalWhitelistItemSet.ListPK
-				INNER JOIN GlobalWhitelistItem ON GlobalWhitelistItemSet.ItemPK = GlobalWhitelistItem.Id
-				WHERE UnblockedCmdOrMdl.Type = {(int)ubType} AND 
-				UnblockedCmdOrMdl.Name = '{ubName}' AND 
-				GlobalWhitelistItem.Type = {(int)memType} AND 
-				GlobalWhitelistItem.ItemId = {memID};";*/
-
 			using (var uow = _db.UnitOfWork)
             {
-				//lists = uow._context.Database.SqlQuery<string>(sql,ubType,ubName, memType, memID).ToArray();
-				//uow._context.SaveChanges();
-				//uow.Complete();
-
 				lists = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(ubType))
 					.Where(x => x.Name.Equals(ubName))
@@ -138,7 +124,49 @@ namespace NadekoBot.Modules.Permissions.Services
 				return false;
 			}
 		}
-		#endregion IDK
+		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
+		{
+			// string sql = @"SELECT GlobalWhitelistSet.ListName FROM UnblockedCmdOrMdl
+			// 	INNER JOIN GlobalUnblockedSet ON UnblockedCmdOrMdl.Id = GlobalUnblockedSet.UnblockedPK
+			// 	INNER JOIN GlobalWhitelistSet ON GlobalUnblockedSet.ListPK = GlobalWhitelistSet.Id
+			// 	INNER JOIN GlobalWhitelistItemSet ON GlobalWhitelistSet.Id = GlobalWhitelistItemSet.ListPK
+			// 	INNER JOIN GlobalWhitelistItem ON GlobalWhitelistItemSet.ItemPK = GlobalWhitelistItem.Id
+			// 	WHERE UnblockedCmdOrMdl.Type = @p0 AND 
+			// 	UnblockedCmdOrMdl.Name = '@p1' AND 
+			// 	GlobalWhitelistItem.Type = @p2 AND 
+			// 	GlobalWhitelistItem.ItemId = @p3;";
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// var result = uow._context.Database.ExecuteSqlCommand(sql, ubType,ubName,memType,memID);
+				// uow._context.SaveChanges();
+				// uow.Complete();
+
+				var result = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(ubType))
+					.Where(x => x.Name.Equals(ubName))
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>(),
+						gubPK => gubPK, g => g.Id,
+						(gubPK, g) => g.Id)
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						gId => gId, gi => gi.ListPK,
+						(gId, gi) => gi.ItemPK)
+					.Join(uow._context.Set<GlobalWhitelistItem>()
+						.Where(x => x.Type.Equals(memType))
+						.Where(x => x.ItemId.Equals(memID)),
+						giPK => giPK, i => i.Id,
+						(giPK, i) => giPK)
+					.Count();
+
+				// System.Console.WriteLine(result);
+				if (result > 0) return true;
+				return false;
+			}
+		}
+		#endregion CheckUnblocked
 
 		#region General Whitelist Actions
 
