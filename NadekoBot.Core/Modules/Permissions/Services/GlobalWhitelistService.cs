@@ -451,14 +451,117 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
-		public bool AddItemToGroupBulk(ulong[] ids, GlobalWhitelistType type, GlobalWhitelistSet group)
+		public bool AddItemToGroupBulk(ulong[] items, GlobalWhitelistType type, GlobalWhitelistSet group, out ulong[] successList)
 		{
-			return true;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// Get the necessary botconfig ID
+				var bc = uow.BotConfig.GetOrCreate();
+
+				// For each non-existing member, add it to the database
+				// Fetch all member names already in the database
+				var curItems = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => x.Type.Equals(type))
+					.Select(x => x.ItemId)
+					.ToArray();
+				// Focus only on given names that aren't yet in the database
+				var excludedItems = items.Except(curItems);
+				if (excludedItems.Count() > 0) {
+					string[] sqlInsertItemList = new string[excludedItems.Count()];
+					for (int i=0; i<excludedItems.Count(); i++) {
+						sqlInsertItemList[i] = $"({bc.Id}, {excludedItems.ElementAt(i)}, {(int)type}, datetime('now'))";
+					}
+					string sqlInsertItem = "INSERT INTO GlobalWhitelistItem ('BotConfigId', 'ItemId', 'Type', 'DateAdded') VALUES " + string.Join(", ", sqlInsertItemList) + ";";
+					//System.Console.WriteLine(sqlInsertItem);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertItem);
+					uow._context.SaveChanges();
+				}
+
+				// For each non-existing relationship, add it to the database
+				// Fetch all member IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => items.Contains(x.ItemId))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all member IDs already related to group
+				var curRel = uow._context.Set<GlobalWhitelistItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Select(x => x.ItemPK)
+					.ToArray();
+				// Focus only on given IDs that aren't yet related to group
+				var excludedIDs = curIDs.Except(curRel);			
+				if (excludedIDs.Count() > 0) {
+					string[] sqlInsertRelList = new string[excludedIDs.Count()];
+					for (int i=0; i<excludedIDs.Count(); i++) {
+						sqlInsertRelList[i] = $"({group.Id}, {excludedIDs.ElementAt(i)})";
+					}
+					string sqlInsertRel = "INSERT INTO GlobalWhitelistItemSet ('ListPK', 'ItemPK') VALUES " + string.Join(", ", sqlInsertRelList) + ";";
+					//System.Console.WriteLine(sqlInsertRel);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
+					uow._context.SaveChanges();
+				}				
+
+				// Return list of all newly added relationships
+				successList = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => excludedIDs.Contains(x.Id))
+					.Select(x => x.ItemId)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
 		}
 
-		public bool RemoveItemFromGroupBulk(ulong[] ids, GlobalWhitelistType type, GlobalWhitelistSet group)
+		public bool RemoveItemFromGroupBulk(ulong[] items, GlobalWhitelistType type, GlobalWhitelistSet group, out ulong[] successList)
 		{
-			return true;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// For each non-existing relationship, add it to the database
+				// Fetch all member IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => items.Contains(x.ItemId))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all member IDs related to the given group BEFORE delete
+				var relIDs = uow._context.Set<GlobalWhitelistItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.ItemPK))
+					.Select(x => x.ItemPK)
+					.ToArray();
+
+				// Delete all existing IDs where type and name matches		
+				if (curIDs.Count() > 0) {
+					string sqlInsertRel = $"DELETE FROM GlobalWhitelistItemSet WHERE ListPK = {group.Id} AND ItemPK IN (" + string.Join(", ", curIDs) + ");";
+					//System.Console.WriteLine(sqlInsertRel);
+					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
+					uow._context.SaveChanges();
+				}
+				// Fetch all member IDs related to the given group AFTER delete
+				var relIDsRemain = uow._context.Set<GlobalWhitelistItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.ItemPK))
+					.Select(x => x.ItemPK)
+					.ToArray();
+
+				var deletedIDs = relIDs.Except(relIDsRemain);
+
+				// Return list of all deleted relationships
+				successList = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => deletedIDs.Contains(x.Id))
+					.Select(x => x.ItemId)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
 		}
 
 		#endregion GlobalWhitelist Member Actions

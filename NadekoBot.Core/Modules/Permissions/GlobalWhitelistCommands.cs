@@ -459,23 +459,28 @@ namespace NadekoBot.Modules.Permissions
                 }
 
 				// Get string list of name/mention from ids
-				string idlist = "{"+string.Join(", ",_service.GetNameOrMentionFromId(type,ids))+"}";
+				string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
 
                 // Process Add ID to Whitelist of ListName
                 if (action == AddRemove.Add) 
                 {
-                    if(_service.AddItemToGroupBulk(ids,type,group))
+                    if(_service.AddItemToGroupBulk(ids,type,group, out ulong[] successList))
                     {
-                        await ReplyConfirmLocalized("gwl_add_bulk", Format.Code(type.ToString()+"s"), 
-							idlist,
-							Format.Bold(listName))
+						string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+                        await ReplyConfirmLocalized("gwl_add_bulk",
+							successList.Count(), ids.Count(),
+							Format.Code(type.ToString()+"s"),
+							Format.Bold(listName),
+							strList)
 							.ConfigureAwait(false);
 						return;
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_add_bulk_failed", Format.Code(type.ToString()+"s"), 
-							idlist,
-							Format.Bold(listName))
+                        await ReplyErrorLocalized("gwl_add_bulk_failed",
+							successList.Count(), ids.Count(),
+							Format.Code(type.ToString()+"s"), 
+							Format.Bold(listName),
+							idList)
 							.ConfigureAwait(false);
                         return;
                     }
@@ -483,18 +488,23 @@ namespace NadekoBot.Modules.Permissions
                 // Process Remove ID from Whitelist of ListName
                 else
                 {
-                    if(_service.RemoveItemFromGroupBulk(ids,type,group))
+                    if(_service.RemoveItemFromGroupBulk(ids,type,group, out ulong[] successList))
                     {
-                        await ReplyConfirmLocalized("gwl_remove_bulk", Format.Code(type.ToString()+"s"), 
-							idlist,
-							Format.Bold(listName))
+						string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+                        await ReplyConfirmLocalized("gwl_remove_bulk", 
+							successList.Count(), ids.Count(),
+							Format.Code(type.ToString()+"s"),
+							Format.Bold(listName),
+							strList)
 							.ConfigureAwait(false);
 						return;
                     }
                     else {
-                        await ReplyErrorLocalized("gwl_remove_bulk_failed", Format.Code(type.ToString()+"s"), 
-							idlist,
-							Format.Bold(listName))
+                        await ReplyErrorLocalized("gwl_remove_bulk_failed", 
+							successList.Count(), ids.Count(),
+							Format.Code(type.ToString()+"s"),
+							Format.Bold(listName),
+							idList)
 							.ConfigureAwait(false);
                         return;
                     }
