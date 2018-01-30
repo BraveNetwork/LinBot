@@ -601,74 +601,6 @@ namespace NadekoBot.Migrations
                     b.ToTable("GCChannelId");
                 });
 
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalUnblockedSet", b =>
-                {
-                    b.Property<int>("ListPK");
-
-                    b.Property<int>("UnblockedPK");
-
-                    b.HasKey("ListPK", "UnblockedPK");
-
-                    b.HasIndex("UnblockedPK");
-
-                    b.ToTable("GlobalUnblockedSet");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int?>("BotConfigId");
-
-                    b.Property<DateTime?>("DateAdded");
-
-                    b.Property<ulong>("ItemId");
-
-                    b.Property<int>("Type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BotConfigId");
-
-                    b.ToTable("GlobalWhitelistItem");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItemSet", b =>
-                {
-                    b.Property<int>("ListPK");
-
-                    b.Property<int>("ItemPK");
-
-                    b.HasKey("ListPK", "ItemPK");
-
-                    b.HasIndex("ItemPK");
-
-                    b.ToTable("GlobalWhitelistItemSet");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int?>("BotConfigId");
-
-                    b.Property<DateTime?>("DateAdded");
-
-                    b.Property<string>("ListName")
-                        .IsRequired()
-                        .HasMaxLength(20);
-
-                    b.HasKey("Id");
-
-                    b.HasAlternateKey("ListName");
-
-                    b.HasIndex("BotConfigId");
-
-                    b.ToTable("GlobalWhitelistSet");
-                });
-
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GuildConfig", b =>
                 {
                     b.Property<int>("Id")
@@ -1489,30 +1421,6 @@ namespace NadekoBot.Migrations
                     b.ToTable("StreamRoleWhitelistedUser");
                 });
 
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.UnblockedCmdOrMdl", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int?>("BotConfigId");
-
-                    b.Property<int?>("BotConfigId1");
-
-                    b.Property<DateTime?>("DateAdded");
-
-                    b.Property<string>("Name");
-
-                    b.Property<int>("Type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BotConfigId");
-
-                    b.HasIndex("BotConfigId1");
-
-                    b.ToTable("UnblockedCmdOrMdl");
-                });
-
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.UnmuteTimer", b =>
                 {
                     b.Property<int>("Id")
@@ -1950,46 +1858,6 @@ namespace NadekoBot.Migrations
                         .HasForeignKey("GuildConfigId");
                 });
 
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalUnblockedSet", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", "List")
-                        .WithMany("GlobalUnblockedSets")
-                        .HasForeignKey("ListPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.UnblockedCmdOrMdl", "CmdOrMdl")
-                        .WithMany("GlobalUnblockedSets")
-                        .HasForeignKey("UnblockedPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("GlobalWhitelistMembers")
-                        .HasForeignKey("BotConfigId");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItemSet", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", "Item")
-                        .WithMany("GlobalWhitelistItemSets")
-                        .HasForeignKey("ItemPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", "List")
-                        .WithMany("GlobalWhitelistItemSets")
-                        .HasForeignKey("ListPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("GlobalWhitelistGroups")
-                        .HasForeignKey("BotConfigId");
-                });
-
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GuildConfig", b =>
                 {
                     b.HasOne("NadekoBot.Core.Services.Database.Models.LogSetting", "LogSetting")
@@ -2171,17 +2039,6 @@ namespace NadekoBot.Migrations
                     b.HasOne("NadekoBot.Core.Services.Database.Models.StreamRoleSettings")
                         .WithMany("Whitelist")
                         .HasForeignKey("StreamRoleSettingsId");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.UnblockedCmdOrMdl", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("UnblockedCommands")
-                        .HasForeignKey("BotConfigId");
-
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("UnblockedModules")
-                        .HasForeignKey("BotConfigId1");
                 });
 
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.UnmuteTimer", b =>
