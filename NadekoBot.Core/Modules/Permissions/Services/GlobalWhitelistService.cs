@@ -876,6 +876,30 @@ namespace NadekoBot.Modules.Permissions.Services
 			return nameCounts;
 		}
 
+		public string[] GetUnblockedNamesForMember(UnblockedType type, ulong id, GlobalWhitelistType memType)
+		{
+			string[] names;
+			using (var uow = _db.UnitOfWork)
+            {
+                names = uow._context.Set<GlobalWhitelistItem>()
+					.Where(x => x.ItemId.Equals(id))
+					.Where(x => x.Type.Equals(memType))
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GlobalUnblockedSet>(),
+						listPK => listPK, gub => gub.ListPK,
+						(listPK, gub) => gub.UnblockedPK)
+					.Join(uow._context.Set<UnblockedCmdOrMdl>()
+						.Where(x => x.Type.Equals(type)),
+						uPK => uPK, ub => ub.Id,
+						(uPK, ub) => ub.Name)
+					.ToArray();
+				uow.Complete();
+            }
+			return names;
+		}
+
 		#endregion UnblockedCmdOrMdl Actions
     }
 }

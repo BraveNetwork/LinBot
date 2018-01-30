@@ -213,6 +213,30 @@
       "{0}listgwlmdl SomeModule"
     ]
   },
+  "listunblockuser": {
+    "cmd": "listunblockuser lsubu",
+    "desc": "List all commands and modules unblocked for this user.",
+    "usage": [
+      "{0}lsubu @SomeUser",
+      "{0}lsubu 123123123"
+    ]
+  },
+  "listunblockchannel": {
+    "cmd": "listunblockchannel lsubc",
+    "desc": "List all commands and modules unblocked for this channel.",
+    "usage": [
+      "{0}lsubc #SomeChannel",
+      "{0}lsubc 123123123"
+    ]
+  },
+  "listunblockserver": {
+    "cmd": "listunblockserver lsubs",
+    "desc": "List all commands and modules unblocked for this server.",
+    "usage": [
+      "{0}lsubs SomeServer",
+      "{0}lsubs 123123123"
+    ]
+  },
   "checkcommanduser": {
     "cmd": "gwlubcmdu",
     "desc": "Check if a command is unblocked for a user.",

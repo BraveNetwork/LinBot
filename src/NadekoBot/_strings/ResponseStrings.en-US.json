@@ -37,6 +37,7 @@
   "permissions_gwl_check_ub_failed": "Unable to check whether or not the {0} {1} is unblocked for {2} {3}.",
   "permissions_ub_list_gwl": "Here are all the whitelists allowed to bypass global permissions that disable {0} {1}:",
   "permissions_ub_list_gwl_failed": "Failed to find whitelists linked to {0} {1}...",
+  "permissions_ub_list_for_member": "Here are all the commands and modules that have been explicitly unblocked for {0} {1}",
   "permissions_gwl_member_remove_all": "Removed all members from whitelist named {0}.",
   "permissions_gwl_member_remove_all_failed": "Failed to remove all members from whitelist named {0}.",
   "permissions_gwl_ub_remove_all": "Removed all unblocked commands and modules from whitelist named {0}.",

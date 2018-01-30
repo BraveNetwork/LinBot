@@ -120,6 +120,68 @@ namespace NadekoBot.Modules.Permissions
 				return;
 			}
 
+			#region ListUnblockedForMember
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockUser(ulong userID)
+				=> ListUnblockedForMember(userID, GlobalWhitelistType.User);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockUser(IUser user)
+				=> ListUnblockedForMember(user.Id, GlobalWhitelistType.User);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockChannel(ulong channelID)
+				=> ListUnblockedForMember(channelID, GlobalWhitelistType.Channel);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockChannel(ITextChannel channel)
+				=> ListUnblockedForMember(channel.Id, GlobalWhitelistType.Channel);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockServer(ulong guildID)
+				=> ListUnblockedForMember(guildID, GlobalWhitelistType.Server);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public Task ListUnblockServer(IGuild guild)
+				=> ListUnblockedForMember(guild.Id, GlobalWhitelistType.Server);
+			
+			private async Task ListUnblockedForMember(ulong id, GlobalWhitelistType type)
+			{
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("ub_list_for_member", 
+						Format.Code(type.ToString()),
+						_gwl.GetNameOrMentionFromId(type, id)));
+
+				// Send list of all unblocked modules/commands and number of lists for each
+				string[] cmds = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, id, type);
+				string[] mdls = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, id, type);
+
+				string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+
+				embed.AddField(efb => 
+					efb.WithName(GetText("unblocked_commands"))
+					.WithValue(strCmd)
+					.WithIsInline(true));
+				embed.AddField(efb => 
+					efb.WithName(GetText("unblocked_modules"))
+					.WithValue(strMdl)
+					.WithIsInline(true));
+				
+				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
+			#endregion ListUnblockedForMember
+
 			#endregion List Info
 
 			#region Check If Unblocked For Member
