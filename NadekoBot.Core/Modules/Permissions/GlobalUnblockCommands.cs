@@ -32,69 +32,34 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task Lgu(string listName="")
+            public async Task Lgu()
             {
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
                 {
-                    await ReplyErrorLocalized("lgu_none", listName).ConfigureAwait(false);
+                    await ReplyErrorLocalized("lgu_none", "WhitelistName").ConfigureAwait(false);
                     return;
                 }
 
-				EmbedBuilder embed;
+				// Send list of all unblocked modules/commands and number of lists for each
+				string[] cmds = _gwl.GetUnblockedNames(UnblockedType.Command);
+				string[] mdls = _gwl.GetUnblockedNames(UnblockedType.Module);
 
-				// Case when no listname provided
-                if (string.IsNullOrWhiteSpace(listName))
-                {
-					// Send list of all unblocked modules/commands and number of lists for each
-					string[] cmds = _gwl.GetUnblockedNames(UnblockedType.Command);
-					string[] mdls = _gwl.GetUnblockedNames(UnblockedType.Module);
+				string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
 
-					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
-					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"));
 
-					embed = new EmbedBuilder()
-						.WithOkColor()
-						.WithTitle(GetText("gwl_title"));
-
-					embed.AddField(efb => 
-						efb.WithName(GetText("unblocked_commands"))
-						.WithValue(strCmd)
-						.WithIsInline(true));
-					embed.AddField(efb => 
-						efb.WithName(GetText("unblocked_modules"))
-						.WithValue(strMdl)
-						.WithIsInline(true));
-                }
-				// Case when listname is provided
-				else if (_gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group)) 
-				{
-					// If valid whitelist, get its related modules/commands
-					string[] cmds = _gwl.GetGroupUnblockedNames(group, UnblockedType.Command);
-					string[] mdls = _gwl.GetGroupUnblockedNames(group, UnblockedType.Module);
-
-					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
-					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
-
-					embed = new EmbedBuilder()
-						.WithOkColor()
-						.WithTitle(GetText("gwl_title"))
-						.WithDescription(Format.Bold(group.ListName));
-
-					embed.AddField(efb => 
-						efb.WithName(GetText("unblocked_commands"))
-						.WithValue(strCmd)
-						.WithIsInline(true));
-					embed.AddField(efb => 
-						efb.WithName(GetText("unblocked_modules"))
-						.WithValue(strMdl)
-						.WithIsInline(true));
-				} 
-				else {
-					// Let the user know they might have typed it wrong
-					await ReplyErrorLocalized("lgu_invalidname", listName).ConfigureAwait(false);
-                    return;
-				}
+				embed.AddField(efb => 
+					efb.WithName(GetText("unblocked_commands"))
+					.WithValue(strCmd)
+					.WithIsInline(true));
+				embed.AddField(efb => 
+					efb.WithName(GetText("unblocked_modules"))
+					.WithValue(strMdl)
+					.WithIsInline(true));
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;

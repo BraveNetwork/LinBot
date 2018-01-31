@@ -122,7 +122,7 @@
   },
   "lgu": {
     "cmd": "listglobalunblock lgu",
-    "desc": "List all globally unblocked commands and modules (and how many lists can use them), or if a whitelist is specified, lists all unblocked commands and modules for a given whitelist",
+    "desc": "List all globally unblocked commands and modules (and how many lists can use them).",
     "usage": [
       "{0}lgu",
       "{0}lgu WLNAME"
