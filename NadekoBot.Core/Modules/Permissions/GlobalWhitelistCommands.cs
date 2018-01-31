@@ -30,7 +30,7 @@ namespace NadekoBot.Modules.Permissions
             public async Task GlobalWhiteList(string listName)
             {
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
-                if (!_service.CreateWhitelist(listName))
+                if (!_service.CreateWhitelist(listName.ToLowerInvariant()))
                 {
                     await ReplyErrorLocalized("gwl_create_error", Format.Bold(listName)).ConfigureAwait(false);
                     return;
@@ -46,8 +46,12 @@ namespace NadekoBot.Modules.Permissions
             {
 				if (string.IsNullOrWhiteSpace(newName) || newName.Length > 20) return;
 				if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
-				if (_service.GetGroupByName(listName, out GlobalWhitelistSet group)) {
-					bool success = _service.RenameWhitelist(listName, newName);
+
+				string listNameI = listName.ToLowerInvariant();
+				string newNameI = newName.ToLowerInvariant();
+				
+				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
+					bool success = _service.RenameWhitelist(listNameI, newNameI);
 					if (success) {
 						await ReplyConfirmLocalized("gwl_renamed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
                 		return;
@@ -66,7 +70,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ClearGwlMembers(string listName="")
 			{
-				if (_service.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				if (_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group)) 
 				{
 					if (_service.ClearGroupMembers(group))
 					{
@@ -88,10 +92,10 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GlobalWhiteListDelete(string listName)
+            public async Task GlobalWhiteListDelete(string listName="")
             {
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
-                if (!_service.DeleteWhitelist(listName))
+                if (!_service.DeleteWhitelist(listName.ToLowerInvariant()))
                 {
                     await ReplyErrorLocalized("gwl_delete_error", Format.Bold(listName)).ConfigureAwait(false);
                     return;
@@ -130,10 +134,10 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task ListWhitelistMembers(string listName=null, int page=1)
+            public async Task ListWhitelistMembers(string listName="", int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
-                if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     if (group.GlobalWhitelistItemSets.Count() < 1) {
                         await ReplyErrorLocalized("gwl_no_members", Format.Bold(listName), listName).ConfigureAwait(false);    
@@ -174,7 +178,7 @@ namespace NadekoBot.Modules.Permissions
             public async Task GlobalWhitelistInfo(string listName=null, int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
-                if (_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
 					// If valid whitelist, get its related modules/commands
 					string[] cmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command);
@@ -309,7 +313,7 @@ namespace NadekoBot.Modules.Permissions
             private async Task IsMemberInWhitelist(ulong id, GlobalWhitelistType type, string listName)
             {
                 // Return error if whitelist doesn't exist
-                if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
                     return;
@@ -366,7 +370,7 @@ namespace NadekoBot.Modules.Permissions
                     return;
 
                 // If the listName doesn't exist, return an error message
-                if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
@@ -452,7 +456,7 @@ namespace NadekoBot.Modules.Permissions
 			private async Task GlobalWhitelistAddRmBulk(AddRemove action, GlobalWhitelistType type, string listName, params ulong[] ids)
 			{
                 // If the listName doesn't exist, return an error message
-                if (!_service.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;

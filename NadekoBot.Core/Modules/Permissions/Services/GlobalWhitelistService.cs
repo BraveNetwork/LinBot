@@ -194,7 +194,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			using (var uow = _db.UnitOfWork)
             {
                 GlobalWhitelistSet group = uow._context.Set<GlobalWhitelistSet>()
-					.Where(g => g.ListName == oldName)
+					.Where(g => g.ListName.Equals(oldName))
 					.SingleOrDefault();
 
 				if (group == null) return false;
@@ -230,7 +230,7 @@ namespace NadekoBot.Modules.Permissions.Services
                 // Delete the whitelist record and all relation records
                 uow._context.Set<GlobalWhitelistSet>().Remove( 
                     uow._context.Set<GlobalWhitelistSet>()
-                    .Where( x => x.ListName == name ).FirstOrDefault()
+                    .Where( x => x.ListName.Equals(name) ).FirstOrDefault()
                 );
                 uow.Complete();
             }

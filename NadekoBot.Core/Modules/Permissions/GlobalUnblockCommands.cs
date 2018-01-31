@@ -32,7 +32,7 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task Lgu(string listName=null)
+            public async Task Lgu(string listName="")
             {
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -44,7 +44,7 @@ namespace NadekoBot.Modules.Permissions
 				var embed = new EmbedBuilder().WithOkColor().WithTitle(GetText("gwl_title"));
 
 				// Case when no listname provided
-                if (listName == null)
+                if (string.IsNullOrWhiteSpace(listName))
                 {
 					// Send list of all unblocked modules/commands and number of lists for each
 					string[] cmds = _gwl.GetUnblockedNames(UnblockedType.Command);
@@ -63,7 +63,7 @@ namespace NadekoBot.Modules.Permissions
 						.WithIsInline(true));
                 }
 				// Case when listname is provided
-				else if (_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				else if (_gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group)) 
 				{
 					// If valid whitelist, get its related modules/commands
 					string[] cmds = _gwl.GetGroupUnblockedNames(group, UnblockedType.Command);
@@ -315,18 +315,18 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName)
+            public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName="")
 				=> UnblockAddRemove(action, UnblockedType.Module, module.Name.ToLowerInvariant(), listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UbCmd(AddRemove action, CommandOrCrInfo cmd, string listName)
+            public Task UbCmd(AddRemove action, CommandOrCrInfo cmd, string listName="")
 				=> UnblockAddRemove(action, UnblockedType.Command, cmd.Name.ToLowerInvariant(), listName);
 
 			private async Task UnblockAddRemove(AddRemove action, UnblockedType type, string itemName, string listName)
 			{
 				// If the listName doesn't exist, return an error message
-                if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (!_gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
@@ -377,7 +377,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UbModBulk(AddRemove action, string listName, params ModuleOrCrInfo[] mdls)
+            public Task UbModBulk(AddRemove action, string listName="", params ModuleOrCrInfo[] mdls)
 			{
 				string[] names = new string[mdls.Length];
 				for (int i=0; i<mdls.Length; i++) {
@@ -388,7 +388,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UbCmdBulk(AddRemove action, string listName, params CommandOrCrInfo[] cmds)
+            public Task UbCmdBulk(AddRemove action, string listName="", params CommandOrCrInfo[] cmds)
 			{
 				string[] names = new string[cmds.Length];
 				for (int i=0; i<cmds.Length; i++) {
@@ -400,7 +400,7 @@ namespace NadekoBot.Modules.Permissions
 			private async Task UnblockAddRemoveBulk(AddRemove action, UnblockedType type, string listName, params string[] itemNames)
 			{
 				// If the listName doesn't exist, return an error message
-                if (!_gwl.GetGroupByName(listName, out GlobalWhitelistSet group))
+                if (!_gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
@@ -485,7 +485,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ClearGwlUb(string listName="")
 			{
-				if (_gwl.GetGroupByName(listName, out GlobalWhitelistSet group)) 
+				if (_gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group)) 
 				{
 					if (_gwl.ClearGroupUbItems(group))
 					{
