@@ -75,17 +75,17 @@ namespace NadekoBot.Modules.Permissions
 				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
 					if (statusI != "true" && statusI != "false") 
 					{
-						string statusTxt = (group.IsEnabled) ? "✅ Enabled" : "❌ Disabled";
+						string statusTxt = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") : GetText("gwl_status_disabled_emoji");
 						await ReplyConfirmLocalized("gwl_status", Format.Bold(listName), Format.Code(statusTxt)).ConfigureAwait(false);
 						return;
 					} else {
 						if (statusI == "true") {
 							_service.SetEnabledStatus(listNameI, true);
-							await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(listName), Format.Code("✅ Enabled")).ConfigureAwait(false);
+							await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(listName), Format.Code(GetText("gwl_status_enabled_emoji"))).ConfigureAwait(false);
 							return;
 						} else {
 							_service.SetEnabledStatus(listNameI, false);
-							await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(listName), Format.Code("❌ Disabled")).ConfigureAwait(false);
+							await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(listName), Format.Code(GetText("gwl_status_disabled_emoji"))).ConfigureAwait(false);
 							return;
 						}
 					}
