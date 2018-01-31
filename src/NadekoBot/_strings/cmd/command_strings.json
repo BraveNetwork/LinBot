@@ -96,30 +96,6 @@
       "{0}gwlcs 123123123"
     ]
   },
-  "userglobalwhitelist": {
-    "cmd": "userglobalwhitelist gwlu",
-    "desc": "Add or remove a user from a whitelist",
-    "usage": [
-      "{0}gwlu add MyAwesomeWhitelist @SomeUser",
-      "{0}gwlu rem MyAwesomeWhitelist 123123123"
-    ]
-  },
-  "channelglobalwhitelist": {
-    "cmd": "channelglobalwhitelist gwlc",
-    "desc": "Add or remove a channel from a whitelist",
-    "usage": [
-      "{0}gwlc add MyAwesomeWhitelist #SomeChannel",
-      "{0}gwlc rem MyAwesomeWhitelist 123123123"
-    ]
-  },
-  "serverglobalwhitelist": {
-    "cmd": "serverglobalwhitelist gwls",
-    "desc": "Add or remove a server from a whitelist",
-    "usage": [
-      "{0}gwls add MyAwesomeWhitelist SomeServer",
-      "{0}gwls rem MyAwesomeWhitelist 123123123"
-    ]
-  },
   "userglobalwhitelistbulk": {
     "cmd": "userglobalwhitelistbulk gwlbulku",
     "desc": "Add or remove several users from a whitelist",
