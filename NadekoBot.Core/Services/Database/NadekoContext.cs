@@ -172,7 +172,14 @@ namespace NadekoBot.Core.Services.Database
 
             #region GlobalWhitelistSet Unique ListName
             modelBuilder.Entity<GlobalWhitelistSet>()
-                .HasAlternateKey( x => x.ListName );
+                //.HasAlternateKey( x => x.ListName ); // prevents us from changing the name
+				.HasIndex(x => x.ListName).IsUnique();
+            #endregion
+
+			#region GlobalWhitelistSet Default State Enabled
+            modelBuilder.Entity<GlobalWhitelistSet>()
+                .Property(g => g.IsEnabled)
+				.HasDefaultValue(true);
             #endregion
 
             #region Global WhiteList ItemInSet Join ManytoMany            

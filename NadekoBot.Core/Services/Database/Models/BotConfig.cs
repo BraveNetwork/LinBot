@@ -175,6 +175,8 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         [MaxLength(20)]
         public string ListName { get; set; }
 
+		public bool IsEnabled { get; set; }
+
         public ICollection<GlobalWhitelistItemSet> GlobalWhitelistItemSets { get; set; }
 
         public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
