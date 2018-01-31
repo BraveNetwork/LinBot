@@ -70,10 +70,10 @@ namespace NadekoBot.Modules.Permissions
 				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
 					bool success = _service.RenameWhitelist(listNameI, newName);
 					if (success) {
-						await ReplyConfirmLocalized("gwl_rename_success", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyConfirmLocalized("gwl_rename_success", Format.Bold(group.ListName), Format.Bold(newName)).ConfigureAwait(false);
                 		return;
 					} else {
-						await ReplyErrorLocalized("gwl_rename_failed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyErrorLocalized("gwl_rename_failed", Format.Bold(group.ListName), Format.Bold(newName)).ConfigureAwait(false);
                     	return;
 					}
 				} else 
@@ -93,16 +93,16 @@ namespace NadekoBot.Modules.Permissions
 					if (statusI != "true" && statusI != "false") 
 					{
 						string statusTxt = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") : GetText("gwl_status_disabled_emoji");
-						await ReplyConfirmLocalized("gwl_status", Format.Bold(listName), Format.Code(statusTxt)).ConfigureAwait(false);
+						await ReplyConfirmLocalized("gwl_status", Format.Bold(group.ListName), Format.Code(statusTxt)).ConfigureAwait(false);
 						return;
 					} else {
 						if (statusI == "true") {
 							_service.SetEnabledStatus(listNameI, true);
-							await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(listName), Format.Code(GetText("gwl_status_enabled_emoji"))).ConfigureAwait(false);
+							await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(group.ListName), Format.Code(GetText("gwl_status_enabled_emoji"))).ConfigureAwait(false);
 							return;
 						} else {
 							_service.SetEnabledStatus(listNameI, false);
-							await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(listName), Format.Code(GetText("gwl_status_disabled_emoji"))).ConfigureAwait(false);
+							await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(group.ListName), Format.Code(GetText("gwl_status_disabled_emoji"))).ConfigureAwait(false);
 							return;
 						}
 					}
@@ -120,11 +120,11 @@ namespace NadekoBot.Modules.Permissions
 				{
 					if (_service.ClearGroupMembers(group))
 					{
-						await ReplyConfirmLocalized("gwl_member_remove_all", Format.Bold(listName)).ConfigureAwait(false);
+						await ReplyConfirmLocalized("gwl_member_remove_all", Format.Bold(group.ListName)).ConfigureAwait(false);
                     	return;
 					}
 					else{
-						await ReplyErrorLocalized("gwl_member_remove_all_failed", Format.Bold(listName)).ConfigureAwait(false);
+						await ReplyErrorLocalized("gwl_member_remove_all_failed", Format.Bold(group.ListName)).ConfigureAwait(false);
                     	return;
 					}
 				}
@@ -186,7 +186,7 @@ namespace NadekoBot.Modules.Permissions
                 if (_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     if (group.GlobalWhitelistItemSets.Count() < 1) {
-                        await ReplyErrorLocalized("gwl_no_members", Format.Bold(listName), listName).ConfigureAwait(false);    
+                        await ReplyErrorLocalized("gwl_no_members", Format.Bold(group.ListName), group.ListName).ConfigureAwait(false);    
                         return;
                     } else {
                         ulong[] servers = _service.GetGroupMembers(group, GlobalWhitelistType.Server, page);
@@ -204,7 +204,7 @@ namespace NadekoBot.Modules.Permissions
                         var embed = new EmbedBuilder()
                             .WithOkColor()
                             .WithTitle(GetText("gwl_title"))
-                            .WithDescription(GetText("gwl_members", Format.Bold(listName)))
+                            .WithDescription(GetText("gwl_members", Format.Bold(group.ListName)))
                             .AddField("Servers", serverStr, true)
                             .AddField("Channels", channelStr, true)
                             .AddField("Users", userStr, true)
@@ -221,10 +221,10 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GlobalWhitelistInfo(string listName=null, int page=1)
+            public async Task GlobalWhitelistInfo(string listName="", int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
-                if (_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
 					// If valid whitelist, get its related modules/commands
 					string[] cmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command);
@@ -245,16 +245,19 @@ namespace NadekoBot.Modules.Permissions
 					if (servers.Length > 0) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Server, servers)); }
 					if (channels.Length > 0) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Channel, channels)); }
 					if (users.Length > 0) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.User, users)); }
-						
+					
+					string statusText = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") :  GetText("gwl_status_disabled_emoji");
+
 					var embed = new EmbedBuilder()
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"))
-						.WithDescription(GetText("gwl_info", Format.Bold(listName)))
+						.WithDescription(GetText("gwl_info", Format.Bold(group.ListName)))
 						.AddField(GetText("unblocked_commands") + "("+cmds.Length+")", strCmd, true)
 						.AddField(GetText("unblocked_modules") + "("+mdls.Length+")", strMdl, true)
-						.AddField("Servers " + "("+servers.Length+")", serverStr, true)
-						.AddField("Channels " + "("+channels.Length+")", channelStr, true)
+						.AddField("Status", statusText, true)
 						.AddField("Users " + "("+users.Length+")", userStr, true)
+						.AddField("Channels " + "("+channels.Length+")", channelStr, true)
+						.AddField("Servers " + "("+servers.Length+")", serverStr, true)
 						.WithFooter("Page " + (page+1));
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -359,21 +362,21 @@ namespace NadekoBot.Modules.Permissions
             private async Task IsMemberInWhitelist(ulong id, GlobalWhitelistType type, string listName)
             {
                 // Return error if whitelist doesn't exist
-                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
-                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
-                    return;
-                } else {
                     // Return result of IsMemberInList()
                     if(_creds.OwnerIds.Contains(id) || !_service.IsMemberInGroup(id,group)) {
-                        string helpCmd = GetText("gwl_help_add_"+type.ToString().ToLowerInvariant(), Prefix, listName, id);
-                        await ReplyErrorLocalized("gwl_not_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName), helpCmd).ConfigureAwait(false);
+                        string helpCmd = GetText("gwl_help_add_"+type.ToString().ToLowerInvariant(), Prefix, group.ListName, id);
+                        await ReplyErrorLocalized("gwl_not_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName), helpCmd).ConfigureAwait(false);
                         return;
                     } else {
-                        await ReplyConfirmLocalized("gwl_is_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
+                        await ReplyConfirmLocalized("gwl_is_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName)).ConfigureAwait(false);
                         return;
                     }
-                }                
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
+                    return;
+				}           
             }
 
 			#endregion IsMemberInWhitelist
@@ -416,36 +419,36 @@ namespace NadekoBot.Modules.Permissions
                     return;
 
                 // If the listName doesn't exist, return an error message
-                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
-                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    // Process Add ID to Whitelist of ListName
+					if (action == AddRemove.Add) 
+					{
+						if(_service.AddItemToGroup(id,type,group))
+						{
+							await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName)).ConfigureAwait(false);
+						}
+						else {
+							await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName)).ConfigureAwait(false);
+							return;
+						}
+					}
+					// Process Remove ID from Whitelist of ListName
+					else
+					{
+						if(_service.RemoveItemFromGroup(id,type,group))
+						{
+							await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName)).ConfigureAwait(false);
+						}
+						else {
+							await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName)).ConfigureAwait(false);
+							return;
+						}
+					} 
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
-                }
-
-                // Process Add ID to Whitelist of ListName
-                if (action == AddRemove.Add) 
-                {
-                    if(_service.AddItemToGroup(id,type,group))
-                    {
-                        await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                    }
-                }
-                // Process Remove ID from Whitelist of ListName
-                else
-                {
-                    if(_service.RemoveItemFromGroup(id,type,group))
-                    {
-                        await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(listName)).ConfigureAwait(false);
-                        return;
-                    }
-                }                   
+				}              
             }
 
 			#endregion Add/Remove
@@ -453,12 +456,12 @@ namespace NadekoBot.Modules.Permissions
 			#region Bulk Add/Remove
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UserGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+            public Task UserGlobalWhitelistBulk(AddRemove action, string listName="", params ulong[] ids)
                 => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.User, listName, ids);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task UserGlobalWhitelistBulk(AddRemove action, string listName, params IUser[] usrs)
+            public Task UserGlobalWhitelistBulk(AddRemove action, string listName="", params IUser[] usrs)
             {
 				ulong[] ids = new ulong[usrs.Length];
 				for (int i=0; i<usrs.Length; i++) {
@@ -469,12 +472,12 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName="", params ulong[] ids)
                 => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Channel, listName, ids);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName, params ITextChannel[] channels)
+            public Task ChannelGlobalWhitelistBulk(AddRemove action, string listName="", params ITextChannel[] channels)
             {
 				ulong[] ids = new ulong[channels.Length];
 				for (int i=0; i<channels.Length; i++) {
@@ -485,12 +488,12 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName, params ulong[] ids)
+            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName="", params ulong[] ids)
                 => GlobalWhitelistAddRmBulk(action, GlobalWhitelistType.Server, listName, ids);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName, params IGuild[] guilds)
+            public Task ServerGlobalWhitelistBulk(AddRemove action, string listName="", params IGuild[] guilds)
 			{
 				ulong[] ids = new ulong[guilds.Length];
 				for (int i=0; i<guilds.Length; i++) {
@@ -502,63 +505,63 @@ namespace NadekoBot.Modules.Permissions
 			private async Task GlobalWhitelistAddRmBulk(AddRemove action, GlobalWhitelistType type, string listName, params ulong[] ids)
 			{
                 // If the listName doesn't exist, return an error message
-                if (!_service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
-                    await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+					// Get string list of name/mention from ids
+					string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
+
+					// Process Add ID to Whitelist of ListName
+					if (action == AddRemove.Add) 
+					{
+						if(_service.AddItemToGroupBulk(ids,type,group, out ulong[] successList))
+						{
+							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							await ReplyConfirmLocalized("gwl_add_bulk",
+								successList.Count(), ids.Count(),
+								Format.Code(type.ToString()+"s"),
+								Format.Bold(group.ListName),
+								strList)
+								.ConfigureAwait(false);
+							return;
+						}
+						else {
+							await ReplyErrorLocalized("gwl_add_bulk_failed",
+								successList.Count(), ids.Count(),
+								Format.Code(type.ToString()+"s"), 
+								Format.Bold(group.ListName),
+								idList)
+								.ConfigureAwait(false);
+							return;
+						}
+					}
+					// Process Remove ID from Whitelist of ListName
+					else
+					{
+						if(_service.RemoveItemFromGroupBulk(ids,type,group, out ulong[] successList))
+						{
+							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							await ReplyConfirmLocalized("gwl_remove_bulk", 
+								successList.Count(), ids.Count(),
+								Format.Code(type.ToString()+"s"),
+								Format.Bold(group.ListName),
+								strList)
+								.ConfigureAwait(false);
+							return;
+						}
+						else {
+							await ReplyErrorLocalized("gwl_remove_bulk_failed", 
+								successList.Count(), ids.Count(),
+								Format.Code(type.ToString()+"s"),
+								Format.Bold(group.ListName),
+								idList)
+								.ConfigureAwait(false);
+							return;
+						}
+					}
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
-                }
-
-				// Get string list of name/mention from ids
-				string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
-
-                // Process Add ID to Whitelist of ListName
-                if (action == AddRemove.Add) 
-                {
-                    if(_service.AddItemToGroupBulk(ids,type,group, out ulong[] successList))
-                    {
-						string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
-                        await ReplyConfirmLocalized("gwl_add_bulk",
-							successList.Count(), ids.Count(),
-							Format.Code(type.ToString()+"s"),
-							Format.Bold(listName),
-							strList)
-							.ConfigureAwait(false);
-						return;
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_add_bulk_failed",
-							successList.Count(), ids.Count(),
-							Format.Code(type.ToString()+"s"), 
-							Format.Bold(listName),
-							idList)
-							.ConfigureAwait(false);
-                        return;
-                    }
-                }
-                // Process Remove ID from Whitelist of ListName
-                else
-                {
-                    if(_service.RemoveItemFromGroupBulk(ids,type,group, out ulong[] successList))
-                    {
-						string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
-                        await ReplyConfirmLocalized("gwl_remove_bulk", 
-							successList.Count(), ids.Count(),
-							Format.Code(type.ToString()+"s"),
-							Format.Bold(listName),
-							strList)
-							.ConfigureAwait(false);
-						return;
-                    }
-                    else {
-                        await ReplyErrorLocalized("gwl_remove_bulk_failed", 
-							successList.Count(), ids.Count(),
-							Format.Code(type.ToString()+"s"),
-							Format.Bold(listName),
-							idList)
-							.ConfigureAwait(false);
-                        return;
-                    }
-                }
+				}
 			}
 
 			#endregion Bulk Add/Remove

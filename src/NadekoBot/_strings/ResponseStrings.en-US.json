@@ -42,7 +42,7 @@
   "permissions_gwl_check_ub_yes": "The {0} {1} is unblocked for {2} {3} through {4} whitelists:\n{5}",
   "permissions_gwl_check_ub_no": "The {0} {1} is NOT unblocked for {2} {3}.",
   "permissions_gwl_check_ub_failed": "Unable to check whether or not the {0} {1} is unblocked for {2} {3}.",
-  "permissions_ub_list_gwl": "Here are all the whitelists allowed to bypass global permissions that disable {0} {1}:",
+  "permissions_ub_list_gwl": "Here are all the whitelists allowed to unblock {0} {1} when enabled:",
   "permissions_ub_list_gwl_failed": "Failed to find whitelists linked to {0} {1}...",
   "permissions_ub_list_for_member": "Here are all the commands and modules that have been explicitly unblocked for {0} {1}",
   "permissions_gwl_member_remove_all": "Removed all members from whitelist named {0}.",

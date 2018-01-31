@@ -17,6 +17,9 @@ namespace NadekoBot.Modules.Permissions.Services
         private readonly DbService _db;
 		private readonly DiscordSocketClient _client;
 
+		private string enabledText = Format.Code("✅");
+		private string disabledText = Format.Code("❌");
+
         public GlobalWhitelistService(DiscordSocketClient client, DbService db)
         {
             _db = db;
@@ -96,23 +99,24 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>(),
+					.Join(uow._context.Set<GlobalWhitelistSet>()
+						,//.Where(g => g.IsEnabled.Equals(true)),
 						gub => gub, g => g.Id,
 						(gub, g) => new {
-							g.ListName,
+							ListText = (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName,
 							g.Id
 						})
 					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
 						g => g.Id, gi => gi.ListPK,
 						(g, gi) => new {
-							g.ListName,
+							g.ListText,
 							gi.ItemPK
 						})
 					.Join(uow._context.Set<GlobalWhitelistItem>()
 						.Where(x => x.Type.Equals(memType))
 						.Where(x => x.ItemId.Equals(memID)),
 						gi => gi.ItemPK, i => i.Id,
-						(gi, i) => gi.ListName)
+						(gi, i) => gi.ListText)
 					.ToArray();
 
 				if (lists.Count() > 0) return true;
@@ -143,7 +147,8 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>(),
+					.Join(uow._context.Set<GlobalWhitelistSet>()
+						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
 					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
@@ -264,7 +269,8 @@ namespace NadekoBot.Modules.Permissions.Services
                 // Then, Take just the names
                 for ( var i=0; i<groups.Length; i++ ) 
                 {
-                    names.Add(groups[i].ListName);
+					string text = (groups[i].IsEnabled) ? enabledText + groups[i].ListName : disabledText + groups[i].ListName;
+                    names.Add(text);
                 }
 
                 uow.Complete();
@@ -295,7 +301,8 @@ namespace NadekoBot.Modules.Permissions.Services
                 // Third, Take just the names
                 for ( var i=0; i<groups.Length; i++ ) 
                 {
-                    names.Add(groups[i].ListName);
+                    string text = (groups[i].IsEnabled) ? enabledText + groups[i].ListName : disabledText + groups[i].ListName;
+                    names.Add(text);
                 }
 
                 uow.Complete();
@@ -609,7 +616,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(
 						uow._context.Set<GlobalUnblockedSet>().Where(u => u.UnblockedPK.Equals(item.Id)), 
 						g => g.Id, gu => gu.ListPK,
-						(group, relation) => group.ListName
+						(group, relation) => (group.IsEnabled) ? enabledText + group.ListName : disabledText + group.ListName
 						)
 					.ToArray();
                 uow.Complete();
@@ -900,6 +907,10 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
 						i => i.Id, gi => gi.ItemPK,
 						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>()
+						.Where(g => g.IsEnabled.Equals(true)),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g.Id)
 					.Join(uow._context.Set<GlobalUnblockedSet>(),
 						listPK => listPK, gub => gub.ListPK,
 						(listPK, gub) => gub.UnblockedPK)

@@ -25,7 +25,7 @@
   },
   "globalwhiteliststatus": {
     "cmd": "globalwhiteliststatus gwlstatus gwlenable",
-    "desc": "Check the status of a whitelist, or change it to Enabled (true) or Disabled (false).",
+    "desc": "Check the status of a whitelist, or change it to Enabled (true) or Disabled (false). All whitelists are enabled by default. Disabled whitelists will be ignored by the unblocker.",
     "usage": [
       "{0}gwlstatus \"List Name\"",
       "{0}gwlstatus ListName true",
