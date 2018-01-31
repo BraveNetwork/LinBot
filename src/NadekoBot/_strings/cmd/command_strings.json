@@ -128,22 +128,6 @@
       "{0}lgu WLNAME"
     ]
   },
-  "ubmod": {
-    "cmd": "unblockmdl ubmdl",
-    "desc": "[Add] or [rem]ove a module from the specified global whitelist.",
-    "usage": [
-      "{0}ubmdl add SomeModule WLNAME",
-      "{0}ubmdl rem SomeModule WLNAME"
-    ]
-  },
-  "ubcmd": {
-    "cmd": "unblockcmd ubcmd",
-    "desc": "[Add] or [rem]ove a command or customreaction from the specified global whitelist.",
-    "usage": [
-      "{0}ubcmd add {0}SomeCommand WLNAME",
-      "{0}ubcmd rem SomeCustomReaction WLNAME"
-    ]
-  },
   "ubmodbulk": {
     "cmd": "unblockmdlbulk ubmdlbulk",
     "desc": "[Add] or [rem]ove several modules from the specified global whitelist.",

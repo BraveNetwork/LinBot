@@ -285,68 +285,6 @@ namespace NadekoBot.Modules.Permissions
 
 			#endregion Check If Unblocked For Member
 
-			#region Add/Remove UnblockedCmdOrMdl
-
-            [NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public Task UbMod(AddRemove action, ModuleOrCrInfo module, string listName="")
-				=> UnblockAddRemove(action, UnblockedType.Module, module.Name.ToLowerInvariant(), listName);
-
-            [NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public Task UbCmd(AddRemove action, CommandOrCrInfo cmd, string listName="")
-				=> UnblockAddRemove(action, UnblockedType.Command, cmd.Name.ToLowerInvariant(), listName);
-
-			private async Task UnblockAddRemove(AddRemove action, UnblockedType type, string itemName, string listName)
-			{
-				// If the listName doesn't exist, return an error message
-                if (!string.IsNullOrWhiteSpace(listName) && _gwl.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
-                {
-                    // Process Add Command/Module
-					if (action == AddRemove.Add) 
-					{   
-						// Add to hashset in GlobalPermissionService
-						if (type == UnblockedType.Command)
-						{
-							if (_service.UnblockedCommands.Add(itemName)) System.Console.WriteLine("Adding command to GlobalPermissionService.UnblockedCommands");
-						}
-						else {
-							if (_service.UnblockedModules.Add(itemName)) System.Console.WriteLine("Adding module to GlobalPermissionService.UnblockedModules");
-						}
-
-						// Add to a whitelist
-						if(_gwl.AddUbItemToGroup(itemName,type,group))
-						{
-							await ReplyConfirmLocalized("gwl_add", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
-							return;
-						}
-						else {
-							await ReplyErrorLocalized("gwl_add_failed", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
-							return;
-						}
-					}
-					// Process Remove Command/Module
-					else
-					{
-						// Remove from whitelist
-						if(_gwl.RemoveUbItemFromGroup(itemName,type,group))
-						{
-							await ReplyConfirmLocalized("gwl_remove", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
-							return;
-						}
-						else {
-							await ReplyErrorLocalized("gwl_remove_failed", Format.Code(type.ToString()), Format.Bold(itemName), Format.Bold(listName)).ConfigureAwait(false);
-							return;
-						}
-					}
-                } else {
-					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
-                    return;
-				}
-			}
-
-			#endregion Add/Remove UnblockedCmdOrMdl
-
 			#region Bulk Add/Remove
 
 			[NadekoCommand, Usage, Description, Aliases]
