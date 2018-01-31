@@ -27,16 +27,24 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GlobalWhiteList(string listName)
+            public async Task GlobalWhiteList(string listName="")
             {
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) return;
-                if (!_service.CreateWhitelist(listName.ToLowerInvariant()))
-                {
-                    await ReplyErrorLocalized("gwl_create_error", Format.Bold(listName)).ConfigureAwait(false);
-                    return;
-                }
 
-                await ReplyConfirmLocalized("gwl_created", Format.Bold(listName)).ConfigureAwait(false);
+				// Ensure a similar name doesnt already exist
+				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group);
+                if (exists) {
+					await ReplyErrorLocalized("gwl_create_dupe", Format.Bold(listName), Format.Bold(group.ListName)).ConfigureAwait(false);
+                	return;
+				}
+				// Create new list
+				if (_service.CreateWhitelist(listName))
+                {
+                    await ReplyConfirmLocalized("gwl_created", Format.Bold(listName)).ConfigureAwait(false);
+                	return;
+                }
+				// Failure
+				await ReplyErrorLocalized("gwl_create_error", Format.Bold(listName)).ConfigureAwait(false);
                 return;
             }
 
@@ -50,13 +58,22 @@ namespace NadekoBot.Modules.Permissions
 				string listNameI = listName.ToLowerInvariant();
 				string newNameI = newName.ToLowerInvariant();
 
+				// Ensure a similar name doesnt already exist, but do allow if existing group is the one we are renaming
+				if (newNameI != listNameI) {
+					if (_service.GetGroupByName(newNameI, out GlobalWhitelistSet groupExists)) {
+						await ReplyErrorLocalized("gwl_rename_dupe", Format.Bold(listName), Format.Bold(newName), Format.Bold(groupExists.ListName)).ConfigureAwait(false);
+						return;
+					}
+				}
+
+				// Create the new list if oldName is valid
 				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
-					bool success = _service.RenameWhitelist(listNameI, newNameI);
+					bool success = _service.RenameWhitelist(listNameI, newName);
 					if (success) {
-						await ReplyConfirmLocalized("gwl_renamed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyConfirmLocalized("gwl_rename_success", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
                 		return;
 					} else {
-						await ReplyErrorLocalized("gwl_renamed_failed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyErrorLocalized("gwl_rename_failed", Format.Bold(listName), Format.Bold(newName)).ConfigureAwait(false);
                     	return;
 					}
 				} else 

@@ -14,7 +14,7 @@ namespace NadekoBot.Core.Services.Database.Repositories.Impl
         public GlobalWhitelistSet GetByName(string name)
         {
             return _set
-                .Where(x => x.ListName.ToLowerInvariant() == name.ToLowerInvariant())
+                .Where(x => x.ListName.ToLowerInvariant().Equals(name))
                 .Include(x => x.GlobalWhitelistItemSets)
                 .Include(x => x.GlobalUnblockedSets)
                 .FirstOrDefault();
