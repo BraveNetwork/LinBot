@@ -49,7 +49,7 @@ namespace NadekoBot.Modules.Permissions
 
 				string listNameI = listName.ToLowerInvariant();
 				string newNameI = newName.ToLowerInvariant();
-				
+
 				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
 					bool success = _service.RenameWhitelist(listNameI, newNameI);
 					if (success) {
@@ -61,6 +61,35 @@ namespace NadekoBot.Modules.Permissions
 					}
 				} else 
 				{
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+				}
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task GlobalWhitelistStatus(string listName="", string status="")
+			{
+				string listNameI = listName.ToLowerInvariant();
+				string statusI = status.ToLower();
+				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
+					if (statusI != "true" && statusI != "false") 
+					{
+						string statusTxt = (group.IsEnabled) ? "✅ Enabled" : "❌ Disabled";
+						await ReplyConfirmLocalized("gwl_status", Format.Bold(listName), Format.Code(statusTxt)).ConfigureAwait(false);
+						return;
+					} else {
+						if (statusI == "true") {
+							_service.SetEnabledStatus(listNameI, true);
+							await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(listName), Format.Code("✅ Enabled")).ConfigureAwait(false);
+							return;
+						} else {
+							_service.SetEnabledStatus(listNameI, false);
+							await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(listName), Format.Code("❌ Disabled")).ConfigureAwait(false);
+							return;
+						}
+					}
+				} else {
 					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
 				}

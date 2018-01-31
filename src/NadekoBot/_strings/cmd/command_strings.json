@@ -23,6 +23,15 @@
       "{0}gwlrename \"Original Name\" \"New Name\""
     ]
   },
+  "globalwhiteliststatus": {
+    "cmd": "globalwhiteliststatus gwlstatus gwlenable",
+    "desc": "Check the status of a whitelist, or change it to Enabled (true) or Disabled (false).",
+    "usage": [
+      "{0}gwlstatus \"List Name\"",
+      "{0}gwlstatus ListName true",
+      "{0}gwlstatus ListName false"
+    ]
+  },
   "globalwhitelistdelete": {
     "cmd": "globalwhitelistdelete gwldel",
     "desc": "Delete a global whitelist and unlink all its related data (members and unblocked commands/modules).",

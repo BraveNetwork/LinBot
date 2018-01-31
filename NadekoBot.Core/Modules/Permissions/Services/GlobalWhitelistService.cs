@@ -207,6 +207,24 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
+		public bool SetEnabledStatus(string listName, bool status)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+                GlobalWhitelistSet group = uow._context.Set<GlobalWhitelistSet>()
+					.Where(g => g.ListName.Equals(listName))
+					.SingleOrDefault();
+
+				if (group == null) return false;
+
+				group.IsEnabled = status;
+				uow._context.SaveChanges();
+				
+                uow.Complete();
+            }
+			return status;
+		}
+
 		public bool ClearGroupMembers(GlobalWhitelistSet group)
 		{
 			int result;
