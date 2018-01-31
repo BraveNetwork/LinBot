@@ -222,7 +222,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				
                 uow.Complete();
             }
-			return status;
+			return true;
 		}
 
 		public bool ClearGroupMembers(GlobalWhitelistSet group)
