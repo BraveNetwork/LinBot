@@ -48,14 +48,6 @@
       "{0}gwlname 5"
     ]
   },
-  "listwhitelistmembers": {
-    "cmd": "listwhitelistmembers gwlmem",
-    "desc": "A list of all members belonging to a given whitelist, sorted by type (Server/ Channel/ User). Returns 9 IDs per type per page. Advance to the next/prev page by specifying a page number (1, 2, 3, etc.)",
-    "usage": [
-      "{0}gwlmem MyAwesomeWhitelistName",
-      "{0}gwlmem MyAwesomeWhitelistName 5"
-    ]
-  },
   "isuserinwhitelist": {
     "cmd": "iswhitelistuser gwlisu",
     "desc": "Returns TRUE if user belongs to the specified whitelist. FALSE otherwise.",
