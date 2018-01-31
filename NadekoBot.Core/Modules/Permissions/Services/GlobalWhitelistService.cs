@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
 using System.Collections.Generic;
 using NadekoBot.Common.Collections;
 using NadekoBot.Common.ModuleBehaviors;
@@ -14,19 +15,13 @@ namespace NadekoBot.Modules.Permissions.Services
     public class GlobalWhitelistService : INService
     {
         private readonly DbService _db;
-        public ConcurrentHashSet<ulong> GlobalWhitelistedUsers { get; }
-        public ConcurrentHashSet<ulong> GlobalWhitelistedGuilds { get; }
-        public ConcurrentHashSet<ulong> GlobalWhitelistedChannels { get; }
+		private readonly DiscordSocketClient _client;
 
-        public GlobalWhitelistService(IBotConfigProvider bc, DbService db)
+        public GlobalWhitelistService(DiscordSocketClient client, DbService db)
         {
             _db = db;
-
-            var GlobalWhitelist = bc.BotConfig.GlobalWhitelistMembers;
-            GlobalWhitelistedUsers = new ConcurrentHashSet<ulong>(GlobalWhitelist.Where(bi => bi.Type == GlobalWhitelistType.User).Select(c => c.ItemId));
-            GlobalWhitelistedGuilds = new ConcurrentHashSet<ulong>(GlobalWhitelist.Where(bi => bi.Type == GlobalWhitelistType.Server).Select(c => c.ItemId));
-            GlobalWhitelistedChannels = new ConcurrentHashSet<ulong>(GlobalWhitelist.Where(bi => bi.Type == GlobalWhitelistType.Channel).Select(c => c.ItemId));
-        }
+			_client = client;
+		}
 
 		#region Resolve ulong IDs
         public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
@@ -47,9 +42,9 @@ namespace NadekoBot.Modules.Permissions.Services
                     break;
 
                 case GlobalWhitelistType.Server:
-                    // TODO: uow to get name from _client.guilds using IGuild type reader
                     for (var i = 0; i < ids.Length; i++) {
-                      str[i] = ids[i].ToString();
+						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
+                    	str[i] = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
                     }
                     break;
 
@@ -76,8 +71,8 @@ namespace NadekoBot.Modules.Permissions.Services
                     break;
 
                 case GlobalWhitelistType.Server:
-                    // TODO: uow to get name from _client.guilds using IGuild type reader
-                    str = id.ToString();
+					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
+                    str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
                     break;
 
                 default:
