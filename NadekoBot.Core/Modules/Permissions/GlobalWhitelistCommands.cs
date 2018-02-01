@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
 using System.Threading.Tasks;
@@ -17,10 +18,8 @@ namespace NadekoBot.Modules.Permissions
         [Group]
         public class GlobalWhitelistCommands : NadekoSubmodule<GlobalWhitelistService>
         {
-            private readonly IBotCredentials _creds;
-            public GlobalWhitelistCommands(IBotCredentials creds)
+            public GlobalWhitelistCommands()
             {
-                _creds = creds;
             }
 
 			#region Whitelist Utilities
@@ -161,19 +160,32 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
-                var names = _service.GetAllNames(page);
+                if (_service.GetAllNames(page, out string[] names, out int count)) {
+					int lastPage = (count - 1)/_service.numPerPage;
+					if (page > lastPage) page = lastPage;
+                    /*var embed = new EmbedBuilder()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gwl_list"))
+						.AddField(GetText("gwl_titlefield"), string.Join("\n", names))
+						.AddPaginatedFooter(page, lastPage)
+						.WithOkColor();
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);*/
 
-                if (names.Length <= 0) {
-                    await ReplyErrorLocalized("gwl_empty").ConfigureAwait(false);
+					await Context.Channel.SendPaginatedConfirmAsync(
+						(DiscordSocketClient)Context.Client, page,
+						(curPage) => {
+							_service.GetAllNames(curPage, out string[] _names, out int _count);
+							return new EmbedBuilder()
+								.WithTitle(GetText("gwl_title"))
+								.WithDescription(GetText("gwl_list"))
+								.AddField(GetText("gwl_titlefield"), string.Join("\n", _names))
+								.WithOkColor();
+						},
+						count, _service.numPerPage);
                     return;
-                } else {
-                    var embed = new EmbedBuilder()
-                      .WithTitle(GetText("gwl_title"))
-                      .WithDescription(GetText("gwl_list"))
-                      .AddField(GetText("gwl_titlefield"), string.Join("\n", names))
-                      .WithFooter("Page " + (page+1))
-                      .WithOkColor();
-                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                } 
+				else {
+					await ReplyErrorLocalized("gwl_empty").ConfigureAwait(false);
                     return;
                 }
             }

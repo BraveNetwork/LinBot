@@ -20,23 +20,14 @@ namespace NadekoBot.Core.Services.Database.Repositories.Impl
                 .FirstOrDefault();
         }
 
-        public GlobalWhitelistSet[] GetWhitelistGroups(int page)
-        {
-            return _set
-                .OrderByDescending(x => x.ListName)
-                //.Skip(page * 9)
-                //.Take(9)
-                .ToArray();
-        }
-
         public GlobalWhitelistSet[] GetWhitelistGroupsByMember(int itemPK, int page)
         {
             return _set
                 .Include(x => x.GlobalWhitelistItemSets)
-                .Where(x => x.GlobalWhitelistItemSets.Any(y => y.ItemPK == itemPK))
-                .OrderByDescending(x => x.ListName)
-                //.Skip(page * 9)
-                //.Take(9)
+                .Where(x => x.GlobalWhitelistItemSets.Any(y => y.ItemPK.Equals(itemPK)))
+                .OrderBy(x => x.ListName)
+                .Skip( (page-1)  * 9)
+                .Take(9)
                 .ToArray();
         }
     }

@@ -19,6 +19,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		private string enabledText = Format.Code("✅");
 		private string disabledText = Format.Code("❌");
+		public readonly int numPerPage = 9;
 
         public GlobalWhitelistService(DiscordSocketClient client, DbService db)
         {
@@ -254,28 +255,29 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return true;
         }
-        public string[] GetAllNames(int page)
+        public bool GetAllNames(int page, out string[] names, out int count)
         {
-            var names = new List<string>();
-
+			names = null;
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate();
-                uow._context.SaveChanges();
+				count = uow._context.Set<GlobalWhitelistSet>().Count();
 
-                // First, Collect all lists
-                var groups = uow.GlobalWhitelists.GetWhitelistGroups(page);
-                
-                // Then, Take just the names
-                for ( var i=0; i<groups.Length; i++ ) 
-                {
-					string text = (groups[i].IsEnabled) ? enabledText + groups[i].ListName : disabledText + groups[i].ListName;
-                    names.Add(text);
-                }
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = uow._context.Set<GlobalWhitelistSet>()
+					.OrderBy(g => g.DateAdded)
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
 
                 uow.Complete();
             }
-            return names.ToArray();
+            return true;
         }
 
         public string[] GetNamesByMember(ulong id, GlobalWhitelistType type, int page)
