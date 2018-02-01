@@ -264,7 +264,7 @@ namespace NadekoBot.Modules.Permissions
 
             private async Task CheckMemberWhitelist(ulong id, GlobalWhitelistType type, int page=1)
             {
-                if(_creds.OwnerIds.Contains(id) || --page < 0) return;
+                if(--page < 0) return;
 
                 var names = _service.GetNamesByMember(id, type, page);
                 
@@ -324,7 +324,7 @@ namespace NadekoBot.Modules.Permissions
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
                     // Return result of IsMemberInList()
-                    if(_creds.OwnerIds.Contains(id) || !_service.IsMemberInGroup(id,group)) {
+                    if(!_service.IsMemberInGroup(id,group)) {
                         string helpCmd = GetText("gwl_help_add_"+type.ToString().ToLowerInvariant(), Prefix, group.ListName, id);
                         await ReplyErrorLocalized("gwl_not_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id), Format.Bold(group.ListName), helpCmd).ConfigureAwait(false);
                         return;
