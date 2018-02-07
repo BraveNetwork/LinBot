@@ -35,20 +35,24 @@ namespace NadekoBot.Modules.Permissions.Services
             switch (type) {
                 case GlobalWhitelistType.User:
                     for (var i = 0; i < ids.Length; i++) {
-                      str[i] = MentionUtils.MentionUser(ids[i]);
+                      // str[i] = MentionUtils.MentionUser(ids[i]);
+					  str[i] = MentionUtils.MentionUser(ids[i]) + "\n\t" + ids[i].ToString();
                     }
                     break;
 
                 case GlobalWhitelistType.Channel:
                     for (var i = 0; i < ids.Length; i++) {
-                      str[i] = MentionUtils.MentionChannel(ids[i]);
+                      // str[i] = MentionUtils.MentionChannel(ids[i]);
+					  str[i] = MentionUtils.MentionChannel(ids[i]) + "\n\t" + ids[i].ToString();
                     }
                     break;
 
                 case GlobalWhitelistType.Server:
                     for (var i = 0; i < ids.Length; i++) {
 						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
-                    	str[i] = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
+                    	// str[i] = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
+						string name = (guild != null) ? guild.Name : "Null";
+						str[i] = $" [{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
                     }
                     break;
 
@@ -67,17 +71,20 @@ namespace NadekoBot.Modules.Permissions.Services
 
             switch (type) {
                 case GlobalWhitelistType.User:
-                    str = MentionUtils.MentionUser(id);
+                    // str = MentionUtils.MentionUser(id);
+					str = MentionUtils.MentionUser(id) + " " + id.ToString();
                     break;
 
                 case GlobalWhitelistType.Channel:
-                    str = MentionUtils.MentionChannel(id);
+                    // str = MentionUtils.MentionChannel(id);
+					str = MentionUtils.MentionChannel(id) + " " + id.ToString();
                     break;
 
                 case GlobalWhitelistType.Server:
 					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
-                    str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
-                    break;
+                    // str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
+                    str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}')\n\t{id}" : id.ToString();
+					break;
 
                 default:
                     str = id.ToString();
