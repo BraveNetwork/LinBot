@@ -19,7 +19,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		private string enabledText = Format.Code("✅");
 		private string disabledText = Format.Code("❌");
-		public readonly int numPerPage = 9;
+		public readonly int numPerPage = 5;
 
         public GlobalWhitelistService(DiscordSocketClient client, DbService db)
         {
@@ -97,11 +97,12 @@ namespace NadekoBot.Modules.Permissions.Services
 		#endregion Resolve ulong IDs
 
 		#region CheckUnblocked
-		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, out string[] lists)
+		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, int page, out string[] lists, out int count)
 		{
+			lists = null;
 			using (var uow = _db.UnitOfWork)
             {
-				lists = uow._context.Set<UnblockedCmdOrMdl>()
+				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(ubType))
 					.Where(x => x.Name.Equals(ubName))
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
@@ -110,26 +111,43 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalWhitelistSet>()
 						,//.Where(g => g.IsEnabled.Equals(true)),
 						gub => gub, g => g.Id,
-						(gub, g) => new {
-							ListText = (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName,
-							g.Id
-						})
+						(gub, g) => g
+						// new {
+						//	 ListText = (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName,
+						//	 g.Id
+						// })
+						)
 					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
 						g => g.Id, gi => gi.ListPK,
 						(g, gi) => new {
-							g.ListText,
+							// g.ListText,
+							g,
 							gi.ItemPK
 						})
 					.Join(uow._context.Set<GlobalWhitelistItem>()
 						.Where(x => x.Type.Equals(memType))
 						.Where(x => x.ItemId.Equals(memID)),
 						gi => gi.ItemPK, i => i.Id,
-						(gi, i) => gi.ListText)
-					.ToArray();
+						// (gi, i) => gi.ListText);
+						(gi, i) => gi.g);
+				
+				uow.Complete();
 
-				if (lists.Count() > 0) return true;
-				return false;
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				lists = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
 			}
+			return true;
 		}
 		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
 		{
@@ -276,7 +294,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = uow._context.Set<GlobalWhitelistSet>()
-					.OrderBy(g => g.DateAdded)
+					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
                 	.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
@@ -287,36 +305,38 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-        public string[] GetNamesByMember(ulong id, GlobalWhitelistType type, int page)
+        public bool GetNamesByMember(ulong id, GlobalWhitelistType type, int page, out string[] names, out int count)
         {
-            var names = new List<string>();
-
+            names = null;
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate();
-                uow._context.SaveChanges();
+				var allnames = uow._context.Set<GlobalWhitelistItem>()
+					.Where(i => i.Type.Equals(type))
+					.Where(i => i.ItemId.Equals(id))
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>(),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g);
+				
+				count = allnames.Count();
+				if (count <= 0) return false;
 
-                // First, Retrieve the WhitelistItem given id,type
-                var item = bc.GlobalWhitelistMembers
-                        .Where( x => x.ItemId.Equals(id) )
-                        .Where( x => x.Type.Equals(type) )
-                        .FirstOrDefault();
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
-                if (item == null) return names.ToArray();
-
-                // Second, Collect all lists related to item
-                var groups = uow.GlobalWhitelists.GetWhitelistGroupsByMember(item.Id,page);
-
-                // Third, Take just the names
-                for ( var i=0; i<groups.Length; i++ ) 
-                {
-                    string text = (groups[i].IsEnabled) ? enabledText + groups[i].ListName : disabledText + groups[i].ListName;
-                    names.Add(text);
-                }
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
 
                 uow.Complete();
             }
-            return names.ToArray();
+            return true;
         }
 
         public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
@@ -338,28 +358,29 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region GlobalWhitelist Member Actions
 
-        public ulong[] GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page)
+        public bool GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page, out ulong[] results, out int count)
         {
-            ulong[] results = null;
-
+            results = null;
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate();
-                uow._context.SaveChanges();
-
-                results = group.GlobalWhitelistItemSets
-                  .Join(bc.GlobalWhitelistMembers.Where(i => i.Type == type), 
-                      p => p.ItemPK, 
-                      m => m.Id, 
-                      (pair,member) => member.ItemId)
-                  .ToArray();
-
+                var anon = group.GlobalWhitelistItemSets
+                	.Join(uow._context.Set<GlobalWhitelistItem>()
+				  		.Where(m => m.Type.Equals(type)), 
+							p => p.ItemPK, 
+							m => m.Id, 
+							(pair,member) => member.ItemId)
+					.OrderBy(id => id);
                 uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				
+				results = anon.Skip(numSkip).Take(numPerPage).ToArray();
             }
-
-            //System.Console.WriteLine("Type {0} Results: {1}", type, results.Length);
-
-            return results;
+            return true;
         }
 
         public bool IsMemberInGroup(ulong id, GlobalWhitelistSet group)
@@ -608,29 +629,44 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region UnblockedCmdOrMdl Actions
 
-		public string[] GetGroupNamesFromUbItem(string name, UnblockedType type)
+		public bool GetGroupNamesFromUbItem(string name, UnblockedType type, int page, out string[] names, out int count)
 		{
-			string[] names;
+			names = null;
+			count = 0;
 
 			// Get the item
 			UnblockedCmdOrMdl item;
 			bool exists = GetUbItemByNameType(name, type, out item);
 
-			if (!exists) return null;
+			if (!exists) return false;
 
 			using (var uow = _db.UnitOfWork)
             {
                 // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
-                names = uow._context.Set<GlobalWhitelistSet>()
+                var allnames = uow._context.Set<GlobalWhitelistSet>()
 					.Join(
-						uow._context.Set<GlobalUnblockedSet>().Where(u => u.UnblockedPK.Equals(item.Id)), 
+						uow._context.Set<GlobalUnblockedSet>()
+							.Where(u => u.UnblockedPK.Equals(item.Id)), 
 						g => g.Id, gu => gu.ListPK,
-						(group, relation) => (group.IsEnabled) ? enabledText + group.ListName : disabledText + group.ListName
-						)
-					.ToArray();
+						// (group, relation) => (group.IsEnabled) ? enabledText + group.ListName : disabledText + group.ListName
+						(group, relation) => group);
                 uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
             }
-			return names;
+			return true;
 		}
 
 		public bool ClearGroupUbItems(GlobalWhitelistSet group)
@@ -853,27 +889,34 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public string[] GetGroupUnblockedNames(GlobalWhitelistSet group, UnblockedType type)
+		public bool GetGroupUnblockedNames(GlobalWhitelistSet group, UnblockedType type, int page, out string[] names, out int count)
 		{
-			string[] names;
+			names = null;
 			using (var uow = _db.UnitOfWork)
             {
                 // Retrieve a list of unblocked names linked to group on GlobalUnblockedSets.UnblockedPK
-                names = group.GlobalUnblockedSets
-					.Join(
-						uow._context.Set<UnblockedCmdOrMdl>().Where(u => u.Type.Equals(type)), 
-						gu => gu.UnblockedPK, u => u.Id,
-						(relation, unblocked) => unblocked.Name
-						)
-					.ToArray();
+                var anon = group.GlobalUnblockedSets
+					.Join(uow._context.Set<UnblockedCmdOrMdl>()
+					  	.Where(u => u.Type.Equals(type)), 
+							gu => gu.UnblockedPK, u => u.Id,
+							(relation, unblocked) => unblocked.Name)
+					.OrderBy(a => a.ToLowerInvariant());
                 uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				
+				names = anon.Skip(numSkip).Take(numPerPage).ToArray();
             }
-			return names;
+			return true;
 		}
 
-		public string[] GetUnblockedNames(UnblockedType type)
+		public bool GetUnblockedNames(UnblockedType type, int page, out string[] names, out int count)
 		{
-			string[] nameCounts;
+			names = null;
 			using (var uow = _db.UnitOfWork)
             {
                 // Retrieve a list of unblocked names with at least one relationship record
@@ -886,31 +929,39 @@ namespace NadekoBot.Modules.Permissions.Services
 							Name = unblocked.Name,
 							NumRelations = relations.Count()
 						})
-					.ToArray();
+					.OrderBy(a => a.Name.ToLowerInvariant());
 
 				uow.Complete();
 
-				nameCounts = new string[anon.Length];
-				for (int i=0; i<anon.Length; i++)
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				
+				var subset = anon.Skip(numSkip).Take(numPerPage).ToArray();
+
+				names = new string[subset.Count()];
+				for (int i=0; i<subset.Length; i++)
 				{
-					if (anon[i].NumRelations > 0) 
+					if (subset[i].NumRelations > 0) 
 					{
-						string lists = (anon[i].NumRelations > 1) ? " lists)" : " list)";
-						nameCounts[i] = anon[i].Name + " (in " + anon[i].NumRelations + lists;
+						string lists = (subset[i].NumRelations > 1) ? " lists)" : " list)";
+						names[i] = subset[i].Name + " (" + subset[i].NumRelations + lists;
 					} else {
-						nameCounts[i] = anon[i].Name + " (unassigned)";
+						names[i] = subset[i].Name + " (0 lists)";
 					}
-				}                
+				}
             }
-			return nameCounts;
+			return true;
 		}
 
-		public string[] GetUnblockedNamesForMember(UnblockedType type, ulong id, GlobalWhitelistType memType)
+		public bool GetUnblockedNamesForMember(UnblockedType type, ulong id, GlobalWhitelistType memType, int page, out string[] names, out int count)
 		{
-			string[] names;
+			names= null;
 			using (var uow = _db.UnitOfWork)
             {
-                names = uow._context.Set<GlobalWhitelistItem>()
+                var anon = uow._context.Set<GlobalWhitelistItem>()
 					.Where(x => x.ItemId.Equals(id))
 					.Where(x => x.Type.Equals(memType))
 					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
@@ -927,10 +978,18 @@ namespace NadekoBot.Modules.Permissions.Services
 						.Where(x => x.Type.Equals(type)),
 						uPK => uPK, ub => ub.Id,
 						(uPK, ub) => ub.Name)
-					.ToArray();
+					.OrderBy(a => a.ToLowerInvariant());
 				uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				
+				names = anon.Skip(numSkip).Take(numPerPage).ToArray();
             }
-			return names;
+			return true;
 		}
 
 		#endregion UnblockedCmdOrMdl Actions

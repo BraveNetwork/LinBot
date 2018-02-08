@@ -32,8 +32,10 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task Lgu()
+            public async Task Lgu(int page=1)
             {
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
                 {
@@ -42,24 +44,29 @@ namespace NadekoBot.Modules.Permissions
                 }
 
 				// Send list of all unblocked modules/commands and number of lists for each
-				string[] cmds = _gwl.GetUnblockedNames(UnblockedType.Command);
-				string[] mdls = _gwl.GetUnblockedNames(UnblockedType.Module);
+				bool hasCmds = _gwl.GetUnblockedNames(UnblockedType.Command, page, out string[] cmds, out int cmdCount);
+				bool hasMdls = _gwl.GetUnblockedNames(UnblockedType.Module, page, out string[] mdls, out int mdlCount);
 
-				string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
-				string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
+				page++;
+				if (page > lastPage) page = lastPage;
+				if (page > 1) {
+					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
+					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
+				}
 
 				var embed = new EmbedBuilder()
 					.WithOkColor()
-					.WithTitle(GetText("gwl_title"));
-
-				embed.AddField(efb => 
-					efb.WithName(GetText("unblocked_commands"))
-					.WithValue(strCmd)
-					.WithIsInline(true));
-				embed.AddField(efb => 
-					efb.WithName(GetText("unblocked_modules"))
-					.WithValue(strMdl)
-					.WithIsInline(true));
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("gwl_lgu_desc"))
+					.AddField(GetText("unblocked_commands", cmdCount), strCmd, true)
+					.AddField(GetText("unblocked_modules", mdlCount), strMdl, true)
+					.WithFooter($"Page {page}/{lastPage}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -67,90 +74,108 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListGwlCmd(CommandOrCrInfo cmd)
-				=>ListGwl(cmd.Name.ToLowerInvariant(), UnblockedType.Command);
+			public Task ListGwlCmd(CommandOrCrInfo command, int page=1)
+				=>ListGwl(command.Name.ToLowerInvariant(), UnblockedType.Command, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListGwlMdl(ModuleOrCrInfo module)
-				=>ListGwl(module.Name.ToLowerInvariant(), UnblockedType.Module);
+			public Task ListGwlMdl(ModuleOrCrInfo module, int page=1)
+				=>ListGwl(module.Name.ToLowerInvariant(), UnblockedType.Module, page);
 
-			private async Task ListGwl(string name, UnblockedType type)
+			private async Task ListGwl(string name, UnblockedType type, int page)
 			{
-				string[] listnames = _gwl.GetGroupNamesFromUbItem(name,type);
-				if (listnames == null) {
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				if (_gwl.GetGroupNamesFromUbItem(name,type,page, out string[] names, out int count)) {
+					int lastPage = (count - 1)/_gwl.numPerPage;
+					if (page > lastPage) page = lastPage;
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("ub_list_gwl", Format.Code(type.ToString()), Format.Bold(name)))
+						.AddField(GetText("gwl_titlefield", count), string.Join("\n", names), true)
+						.WithFooter($"Page {page+1}/{lastPage+1}");
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+					return;
+				}
+				else {
 					await ReplyErrorLocalized("ub_list_gwl_failed", Format.Code(type.ToString()), Format.Bold(name)).ConfigureAwait(false);
                     return;
 				}
-				string lists = (listnames.Length > 0) ? string.Join("\n", listnames) : "*none*";
-
-				var embed = new EmbedBuilder()
-					.WithOkColor()
-					.WithTitle(GetText("gwl_title"))
-					.WithDescription(GetText("ub_list_gwl", Format.Code(type.ToString()), Format.Bold(name)))
-					.AddField(GetText("gwl_titlefield"), lists, true);
-
-				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
-				return;
+				
 			}
 
 			#region ListUnblockedForMember
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockUser(ulong userID)
-				=> ListUnblockedForMember(userID, GlobalWhitelistType.User);
+			public Task ListUnblockUser(ulong userID, int page=1)
+				=> ListUnblockedForMember(userID, GlobalWhitelistType.User, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockUser(IUser user)
-				=> ListUnblockedForMember(user.Id, GlobalWhitelistType.User);
+			public Task ListUnblockUser(IUser user, int page=1)
+				=> ListUnblockedForMember(user.Id, GlobalWhitelistType.User, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockChannel(ulong channelID)
-				=> ListUnblockedForMember(channelID, GlobalWhitelistType.Channel);
+			public Task ListUnblockChannel(ulong channelID, int page=1)
+				=> ListUnblockedForMember(channelID, GlobalWhitelistType.Channel, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockChannel(ITextChannel channel)
-				=> ListUnblockedForMember(channel.Id, GlobalWhitelistType.Channel);
+			public Task ListUnblockChannel(ITextChannel channel, int page=1)
+				=> ListUnblockedForMember(channel.Id, GlobalWhitelistType.Channel, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockServer(ulong guildID)
-				=> ListUnblockedForMember(guildID, GlobalWhitelistType.Server);
+			public Task ListUnblockServer(ulong guildID, int page=1)
+				=> ListUnblockedForMember(guildID, GlobalWhitelistType.Server, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task ListUnblockServer(IGuild guild)
-				=> ListUnblockedForMember(guild.Id, GlobalWhitelistType.Server);
+			public Task ListUnblockServer(IGuild guild, int page=1)
+				=> ListUnblockedForMember(guild.Id, GlobalWhitelistType.Server, page);
 			
-			private async Task ListUnblockedForMember(ulong id, GlobalWhitelistType type)
+			private async Task ListUnblockedForMember(ulong id, GlobalWhitelistType type, int page)
 			{
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				// Error if nothing to show
+				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
+                {
+                    await ReplyErrorLocalized("lgu_none", "WhitelistName").ConfigureAwait(false);
+                    return;
+                }
+
+				// Send list of all unblocked modules/commands and number of lists for each
+				bool hasCmds = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, id, type, page, out string[] cmds, out int cmdCount);
+				bool hasMdls = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, id, type, page, out string[] mdls, out int mdlCount);
+
+				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
+				page++;
+				if (page > lastPage) page = lastPage;
+				if (page > 1) {
+					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
+					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
+				}
+
 				var embed = new EmbedBuilder()
 					.WithOkColor()
 					.WithTitle(GetText("gwl_title"))
 					.WithDescription(GetText("ub_list_for_member", 
 						Format.Code(type.ToString()),
-						_gwl.GetNameOrMentionFromId(type, id)));
+						_gwl.GetNameOrMentionFromId(type, id)))
+					.AddField(GetText("unblocked_commands", cmdCount), strCmd, true)
+					.AddField(GetText("unblocked_modules", mdlCount), strMdl, true)
+					.WithFooter($"Page {page}/{lastPage}");
 
-				// Send list of all unblocked modules/commands and number of lists for each
-				string[] cmds = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, id, type);
-				string[] mdls = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, id, type);
-
-				string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
-				string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
-
-				embed.AddField(efb => 
-					efb.WithName(GetText("unblocked_commands"))
-					.WithValue(strCmd)
-					.WithIsInline(true));
-				embed.AddField(efb => 
-					efb.WithName(GetText("unblocked_modules"))
-					.WithValue(strMdl)
-					.WithIsInline(true));
-				
-				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
 			}
 
@@ -163,98 +188,103 @@ namespace NadekoBot.Modules.Permissions
 			#region User
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandUser(CommandOrCrInfo command, IUser user)
+			public Task CheckCommandUser(CommandOrCrInfo command, IUser user, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				user.Id, GlobalWhitelistType.User);
+				user.Id, GlobalWhitelistType.User, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandUser(CommandOrCrInfo command, ulong userID)
+			public Task CheckCommandUser(CommandOrCrInfo command, ulong userID, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				userID, GlobalWhitelistType.User);
+				userID, GlobalWhitelistType.User, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleUser(ModuleOrCrInfo module, IUser user)
+			public Task CheckModuleUser(ModuleOrCrInfo module, IUser user, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				user.Id, GlobalWhitelistType.User);
+				user.Id, GlobalWhitelistType.User, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleUser(ModuleOrCrInfo module, ulong userID)
+			public Task CheckModuleUser(ModuleOrCrInfo module, ulong userID, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				userID, GlobalWhitelistType.User);
+				userID, GlobalWhitelistType.User, page);
 			#endregion User
 
 			#region Channel
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandChannel(CommandOrCrInfo command, ITextChannel channel)
+			public Task CheckCommandChannel(CommandOrCrInfo command, ITextChannel channel, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				channel.Id, GlobalWhitelistType.Channel);
+				channel.Id, GlobalWhitelistType.Channel, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandChannel(CommandOrCrInfo command, ulong channelID)
+			public Task CheckCommandChannel(CommandOrCrInfo command, ulong channelID, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				channelID, GlobalWhitelistType.Channel);
+				channelID, GlobalWhitelistType.Channel, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleChannel(ModuleOrCrInfo module, ITextChannel channel)
+			public Task CheckModuleChannel(ModuleOrCrInfo module, ITextChannel channel, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				channel.Id, GlobalWhitelistType.Channel);
+				channel.Id, GlobalWhitelistType.Channel, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleChannel(ModuleOrCrInfo module, ulong channelID)
+			public Task CheckModuleChannel(ModuleOrCrInfo module, ulong channelID, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				channelID, GlobalWhitelistType.Channel);
+				channelID, GlobalWhitelistType.Channel, page);
 			#endregion Channel
 
 			#region Server
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandServer(CommandOrCrInfo command, IGuild server)
+			public Task CheckCommandServer(CommandOrCrInfo command, IGuild server, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				server.Id, GlobalWhitelistType.Server);
+				server.Id, GlobalWhitelistType.Server, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckCommandServer(CommandOrCrInfo command, ulong serverID)
+			public Task CheckCommandServer(CommandOrCrInfo command, ulong serverID, int page=1)
 				=> CheckIfUnblockedForMember(command.Name.ToLowerInvariant(), 
 				UnblockedType.Command, 
-				serverID, GlobalWhitelistType.Server);
+				serverID, GlobalWhitelistType.Server, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleServer(ModuleOrCrInfo module, IGuild server)
+			public Task CheckModuleServer(ModuleOrCrInfo module, IGuild server, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				server.Id, GlobalWhitelistType.Server);
+				server.Id, GlobalWhitelistType.Server, page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task CheckModuleServer(ModuleOrCrInfo module, ulong serverID)
+			public Task CheckModuleServer(ModuleOrCrInfo module, ulong serverID, int page=1)
 				=> CheckIfUnblockedForMember(module.Name.ToLowerInvariant(), 
 				UnblockedType.Module, 
-				serverID, GlobalWhitelistType.Server);
+				serverID, GlobalWhitelistType.Server, page);
 			#endregion Server
 
-			private async Task CheckIfUnblockedForMember(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
+			private async Task CheckIfUnblockedForMember(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, int page=1)
 			{
-				if (_gwl.CheckIfUnblockedFor(ubName, ubType, memID, memType, out string[] lists))
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				if (_gwl.CheckIfUnblockedFor(ubName, ubType, memID, memType, page, out string[] lists, out int count))
 				{
+					int lastPage = (count - 1)/_gwl.numPerPage;
+					if (page > lastPage) page = lastPage;
+
 					var embed = new EmbedBuilder()
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"))
@@ -262,10 +292,10 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, memID),
-							lists.Count(),
-							string.Join("\n",lists)
-							));
+							_gwl.GetNameOrMentionFromId(memType, memID)
+							))
+						.AddField(GetText("gwl_titlefield", count), string.Join("\n", lists), true)
+						.WithFooter($"Page {page+1}/{lastPage+1}");
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                 	return;

@@ -163,25 +163,26 @@ namespace NadekoBot.Modules.Permissions
                 if (_service.GetAllNames(page, out string[] names, out int count)) {
 					int lastPage = (count - 1)/_service.numPerPage;
 					if (page > lastPage) page = lastPage;
-                    /*var embed = new EmbedBuilder()
+                    var embed = new EmbedBuilder()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list"))
-						.AddField(GetText("gwl_titlefield"), string.Join("\n", names))
-						.AddPaginatedFooter(page, lastPage)
+						.AddField(GetText("gwl_titlefield", count), string.Join("\n", names))
+						.WithFooter($"Page {page+1}/{lastPage+1}")
 						.WithOkColor();
-                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);*/
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 
-					await Context.Channel.SendPaginatedConfirmAsync(
-						(DiscordSocketClient)Context.Client, page,
-						(curPage) => {
-							_service.GetAllNames(curPage, out string[] _names, out int _count);
-							return new EmbedBuilder()
-								.WithTitle(GetText("gwl_title"))
-								.WithDescription(GetText("gwl_list"))
-								.AddField(GetText("gwl_titlefield"), string.Join("\n", _names))
-								.WithOkColor();
-						},
-						count, _service.numPerPage);
+					// await Context.Channel.SendPaginatedConfirmAsync(
+					// 	(DiscordSocketClient)Context.Client, page,
+					// 	(curPage) => {
+					// 		_service.GetAllNames(curPage, out string[] _names, out int _count);
+					// 		return new EmbedBuilder()
+					// 			.WithTitle(GetText("gwl_title"))
+					// 			.WithDescription(GetText("gwl_list"))
+					// 			.AddField(GetText("gwl_titlefield"), string.Join("\n", _names))
+					// 			.WithOkColor();
+					// 	},
+					// 	count, _service.numPerPage);
+
                     return;
                 } 
 				else {
@@ -195,41 +196,62 @@ namespace NadekoBot.Modules.Permissions
             public async Task GlobalWhitelistInfo(string listName="", int page=1)
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
                 {
 					// If valid whitelist, get its related modules/commands
-					string[] cmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command);
-					string[] mdls = _service.GetGroupUnblockedNames(group, UnblockedType.Module);
+					bool hasCmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command, page, out string[] cmds, out int cmdCount);
+					bool hasMdls = _service.GetGroupUnblockedNames(group, UnblockedType.Module, page, out string[] mdls, out int mdlCount);
 
-					string strCmd = (cmds.Length > 0) ? string.Join("\n", cmds) : "*no such commands*";
-					string strMdl = (mdls.Length > 0) ? string.Join("\n", mdls) : "*no such modules*";
+					string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+					string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
 					
 					// Get member lists
-					ulong[] servers = _service.GetGroupMembers(group, GlobalWhitelistType.Server, page);
-					ulong[] channels = _service.GetGroupMembers(group, GlobalWhitelistType.Channel, page);
-					ulong[] users = _service.GetGroupMembers(group, GlobalWhitelistType.User, page);
+					bool hasServers = _service.GetGroupMembers(group, GlobalWhitelistType.Server, page, out ulong[] servers, out int serverCount);
+					bool hasChannels = _service.GetGroupMembers(group, GlobalWhitelistType.Channel, page, out ulong[] channels, out int channelCount);
+					bool hasUsers = _service.GetGroupMembers(group, GlobalWhitelistType.User, page, out ulong[] users, out int userCount);
 
 					string serverStr = "*none*";
 					string channelStr = "*none*";
 					string userStr = "*none*";
 
-					if (servers.Length > 0) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Server, servers)); }
-					if (channels.Length > 0) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Channel, channels)); }
-					if (users.Length > 0) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.User, users)); }
+					if (hasServers) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Server, servers)); }
+					if (hasChannels) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.Channel, channels)); }
+					if (hasUsers) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GlobalWhitelistType.User, users)); }
 					
 					string statusText = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") :  GetText("gwl_status_disabled_emoji");
+
+					// Paginated Embed
+					int lastCmdPage = (cmdCount - 1)/_service.numPerPage +1;
+					int lastMdlPage = (mdlCount - 1)/_service.numPerPage +1;
+					int lastServerPage = (serverCount - 1)/_service.numPerPage +1;
+					int lastChannelPage = (channelCount - 1)/_service.numPerPage +1;
+					int lastUserPage = (userCount - 1)/_service.numPerPage +1;
+					int lastPage = System.Math.Max( lastCmdPage, 
+						System.Math.Max( lastMdlPage, 
+							System.Math.Max( lastServerPage,
+								System.Math.Max( lastChannelPage, lastUserPage ) ) ) );
+					page++;
+					if (page > lastPage) page = lastPage;
+					if (page > 1) {
+						if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
+						if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
+						if (hasServers && page >= lastServerPage) serverStr += GetText("gwl_endlist", lastServerPage);
+						if (hasChannels && page >= lastChannelPage) channelStr += GetText("gwl_endlist", lastChannelPage);
+						if (hasUsers && page >= lastUserPage) userStr += GetText("gwl_endlist", lastUserPage);
+					}
 
 					var embed = new EmbedBuilder()
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_info", Format.Bold(group.ListName)))
-						.AddField(GetText("unblocked_commands") + "("+cmds.Length+")", strCmd, true)
-						.AddField(GetText("unblocked_modules") + "("+mdls.Length+")", strMdl, true)
+						.AddField(GetText("unblocked_commands", cmdCount), strCmd, true)
+						.AddField(GetText("unblocked_modules", mdlCount), strMdl, true)
 						.AddField("Status", statusText, true)
-						.AddField("Users " + "("+users.Length+")", userStr, true)
-						.AddField("Channels " + "("+channels.Length+")", channelStr, true)
-						.AddField("Servers " + "("+servers.Length+")", serverStr, true)
-						.WithFooter("Page " + (page+1));
+						.AddField(GetText("gwl_users", userCount), userStr, true)
+						.AddField(GetText("gwl_channels", channelCount), channelStr, true)
+						.AddField(GetText("gwl_servers", serverCount), serverStr, true)
+						.WithFooter($"Page {page}/{lastPage}");
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                     
@@ -277,20 +299,20 @@ namespace NadekoBot.Modules.Permissions
             private async Task CheckMemberWhitelist(ulong id, GlobalWhitelistType type, int page=1)
             {
                 if(--page < 0) return;
-
-                var names = _service.GetNamesByMember(id, type, page);
                 
-                if (names.Length <= 0) {
-                    await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)).ConfigureAwait(false);
-                    return;
-                } else {
+                if (_service.GetNamesByMember(id, type, page, out string[] names, out int count)) {
+					int lastPage = (count - 1)/_service.numPerPage;
+					if (page > lastPage) page = lastPage;
                     EmbedBuilder embed = new EmbedBuilder()
                       .WithTitle(GetText("gwl_title"))
                       .WithDescription(GetText("gwl_listbymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)))
-                      .AddField(GetText("gwl_titlefield"), string.Join("\n", names))
-                      .WithFooter("Page " + (page+1))
+                      .AddField(GetText("gwl_titlefield", count), string.Join("\n", names))
+                      .WithFooter($"Page {page+1}/{lastPage+1}")
                       .WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    return;
+                } else {
+					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)).ConfigureAwait(false);
                     return;
                 }
             }
@@ -301,32 +323,32 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsUserInWhitelist(ulong id, string listName)
+            public Task IsUserInWhitelist(ulong id, string listName="")
                 => IsMemberInWhitelist(id,GlobalWhitelistType.User, listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsUserInWhitelist(IUser user, string listName)
+            public Task IsUserInWhitelist(IUser user, string listName="")
                 => IsMemberInWhitelist(user.Id,GlobalWhitelistType.User, listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsChannelInWhitelist(ulong id, string listName)
+            public Task IsChannelInWhitelist(ulong id, string listName="")
                 => IsMemberInWhitelist(id,GlobalWhitelistType.Channel, listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsChannelInWhitelist(ITextChannel channel, string listName)
+            public Task IsChannelInWhitelist(ITextChannel channel, string listName="")
                 => IsMemberInWhitelist(channel.Id,GlobalWhitelistType.Channel, listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsServerInWhitelist(ulong id, string listName)
+            public Task IsServerInWhitelist(ulong id, string listName="")
                 => IsMemberInWhitelist(id,GlobalWhitelistType.Server, listName);
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task IsServerInWhitelist(IGuild guild, string listName)
+            public Task IsServerInWhitelist(IGuild guild, string listName="")
                 => IsMemberInWhitelist(guild.Id,GlobalWhitelistType.Server, listName);
 
 
