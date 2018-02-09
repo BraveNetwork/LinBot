@@ -59,9 +59,9 @@ namespace NadekoBot.Modules.Permissions.Services
                 case GlobalWhitelistType.Server:
                     for (var i = 0; i < ids.Length; i++) {
 						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
-                    	// str[i] = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
+                    	// str[i] = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
 						string name = (guild != null) ? guild.Name : "Null";
-						str[i] = $" [{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
+						str[i] = $"[{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
                     }
                     break;
 
@@ -91,8 +91,8 @@ namespace NadekoBot.Modules.Permissions.Services
 
                 case GlobalWhitelistType.Server:
 					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
-                    // str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
-                    str = (guild != null) ? $" [{guild.Name}](https://discordapp.com/channels/{id}/ '{id}')\n\t{id}" : id.ToString();
+                    // str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
+                    str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
 					break;
 
                 default:
@@ -195,6 +195,8 @@ namespace NadekoBot.Modules.Permissions.Services
 						giPK => giPK, i => i.Id,
 						(giPK, i) => giPK)
 					.Count();
+				
+				uow.Complete();
 
 				// System.Console.WriteLine(result);
 				if (result > 0) return true;
@@ -234,9 +236,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				if (group == null) return false;
 
-				group.ListName = name;
-				uow._context.SaveChanges();
-				
+				group.ListName = name;				
                 uow.Complete();
             }
 			return true;
@@ -253,8 +253,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (group == null) return false;
 
 				group.IsEnabled = status;
-				uow._context.SaveChanges();
-				
                 uow.Complete();
             }
 			return true;
@@ -267,7 +265,6 @@ namespace NadekoBot.Modules.Permissions.Services
 			{
 				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = " + group.Id + ";";
 				result = uow._context.Database.ExecuteSqlCommand(sql);
-				uow._context.SaveChanges();
 				uow.Complete();
 			}
 			//System.Console.WriteLine("Query Result: ",result);
