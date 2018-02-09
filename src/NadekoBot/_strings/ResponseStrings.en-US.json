@@ -19,6 +19,7 @@
   "permissions_gwl_deleted": "Successfully deleted the whitelist named {0}",
   "permissions_gwl_empty": "No whitelists found! Do `.gwl MyWhitelistName` to make a new whitelist.",
   "permissions_gwl_info": "Here is everything I know about the whitelist named {0}.",
+  "permissions_gwl_info_field": "Here are all the {0} for the whitelist named {1}.",
   "permissions_gwl_no_members": "Whitelist named {0} doesn't have any members yet. Do `.gwlu add \"{1}\" @Username` to add a user to the whitelist.",
   "permissions_gwl_list": "Here are the whitelists that I'm managing:",
   "permissions_gwl_members": "Here are the members belonging to the whitelist named {0}:",

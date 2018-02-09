@@ -21,6 +21,15 @@ namespace NadekoBot.Modules.Permissions.Services
 		private string disabledText = Format.Code("❌");
 		public readonly int numPerPage = 5;
 
+		public enum FieldType {
+			ALL = 0,
+			CMD = 1, COMMAND = CMD, COMMANDS = CMD, CMDS = CMD,
+			MOD = 2, MODULE = MOD, MODULES = MOD, MODS = MOD, MDL = MOD, MDLS = MOD,
+			SRVR = 3, SERVER = SRVR, SERVERS = SRVR, SRVRS = SRVR, GUILD = SRVR, GUILDS = SRVR,
+			CHNL = 4, CHANNEL = CHNL, CHANNELS = CHNL, CHNLS = CHNL,
+			USR = 5, USER = USR, USERS = USR, USRS = USR
+		};
+
         public GlobalWhitelistService(DiscordSocketClient client, DbService db)
         {
             _db = db;
