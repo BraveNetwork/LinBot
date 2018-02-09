@@ -322,6 +322,7 @@ namespace NadekoBot.Modules.Permissions
 				}
 				
 				int lastPage = (fieldCount - 1)/_service.numPerPage;
+				if (page > lastPage) page = lastPage;
 
 				// Alter the object stored in memory, pointed to by the provided embed argument
 				embed.WithDescription(GetText("gwl_info_field", Format.Code(fieldLabel), Format.Bold(group.ListName)))

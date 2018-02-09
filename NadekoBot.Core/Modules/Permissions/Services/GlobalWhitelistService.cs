@@ -296,7 +296,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
-				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = uow._context.Set<GlobalWhitelistSet>()
@@ -330,7 +330,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
-				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
@@ -662,7 +662,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
-				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
