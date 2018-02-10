@@ -263,8 +263,8 @@ namespace NadekoBot.Modules.Permissions.Services
 			int result;
 			using (var uow = _db.UnitOfWork)
 			{
-				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = " + group.Id + ";";
-				result = uow._context.Database.ExecuteSqlCommand(sql);
+				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0;";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
 				uow.Complete();
 			}
 			//System.Console.WriteLine("Query Result: ",result);
@@ -456,16 +456,17 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.Type.Equals(type))
 					.Select(x => x.ItemId)
 					.ToArray();
-				// Focus only on given names that aren't yet in the database
+				// Focus only on given names that aren't yet in the database, while simultaneously removing dupes
 				var excludedItems = items.Except(curItems);
 				if (excludedItems.Count() > 0) {
-					string[] sqlInsertItemList = new string[excludedItems.Count()];
 					for (int i=0; i<excludedItems.Count(); i++) {
-						sqlInsertItemList[i] = $"({bc.Id}, {excludedItems.ElementAt(i)}, {(int)type}, datetime('now'))";
+						uow._context.Database.ExecuteSqlCommand(
+							"INSERT INTO GlobalWhitelistItem ('BotConfigId', 'ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,@p2,datetime('now'));", 
+							bc.Id, 
+							excludedItems.ElementAt(i), 
+							(int)type);
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					string sqlInsertItem = "INSERT INTO GlobalWhitelistItem ('BotConfigId', 'ItemId', 'Type', 'DateAdded') VALUES " + string.Join(", ", sqlInsertItemList) + ";";
-					//System.Console.WriteLine(sqlInsertItem);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertItem);
 					uow._context.SaveChanges();
 				}
 
@@ -481,16 +482,16 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.ItemPK)
 					.ToArray();
-				// Focus only on given IDs that aren't yet related to group
+				// Focus only on given IDs that aren't yet related to group (automatically removes dupes)
 				var excludedIDs = curIDs.Except(curRel);			
 				if (excludedIDs.Count() > 0) {
-					string[] sqlInsertRelList = new string[excludedIDs.Count()];
 					for (int i=0; i<excludedIDs.Count(); i++) {
-						sqlInsertRelList[i] = $"({group.Id}, {excludedIDs.ElementAt(i)})";
+						uow._context.Database.ExecuteSqlCommand(
+							"INSERT INTO GlobalWhitelistItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
+							group.Id, 
+							excludedIDs.ElementAt(i));
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					string sqlInsertRel = "INSERT INTO GlobalWhitelistItemSet ('ListPK', 'ItemPK') VALUES " + string.Join(", ", sqlInsertRelList) + ";";
-					//System.Console.WriteLine(sqlInsertRel);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
 					uow._context.SaveChanges();
 				}				
 
@@ -526,12 +527,16 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Select(x => x.ItemPK)
 					.ToArray();
 
-				// Delete all existing IDs where type and name matches		
+				// Delete all existing IDs where type and name matches (above lines ensure no dupes)	
 				if (curIDs.Count() > 0) {
-					string sqlInsertRel = $"DELETE FROM GlobalWhitelistItemSet WHERE ListPK = {group.Id} AND ItemPK IN (" + string.Join(", ", curIDs) + ");";
-					//System.Console.WriteLine(sqlInsertRel);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
-					uow._context.SaveChanges();
+					for (int i=0; i<curIDs.Count(); i++) {
+						uow._context.Database.ExecuteSqlCommand(
+							"DELETE FROM GlobalWhitelistItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
+							group.Id,
+							curIDs[i]);
+						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
+					}
+					uow._context.SaveChanges();					
 				}
 				// Fetch all member IDs related to the given group AFTER delete
 				var relIDsRemain = uow._context.Set<GlobalWhitelistItemSet>()
@@ -603,8 +608,8 @@ namespace NadekoBot.Modules.Permissions.Services
 			int result;
 			using (var uow = _db.UnitOfWork)
 			{
-				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = " + group.Id + ";";
-				result = uow._context.Database.ExecuteSqlCommand(sql);
+				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0;";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
 				uow.Complete();
 			}
 			//System.Console.WriteLine("Query Result: ",result);
@@ -648,16 +653,17 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.Type.Equals(type))
 					.Select(x => x.Name)
 					.ToArray();
-				// Focus only on given names that aren't yet in the database
+				// Focus only on given names that aren't yet in the database (and auto remove dupes)
 				var excludedNames = names.Except(curNames);
 				if (excludedNames.Count() > 0) {
-					string[] sqlInsertItemList = new string[excludedNames.Count()];
 					for (int i=0; i<excludedNames.Count(); i++) {
-						sqlInsertItemList[i] = $"({bc.Id}, '{excludedNames.ElementAt(i)}', {(int)type}, datetime('now'))";
+						uow._context.Database.ExecuteSqlCommand(
+							$"INSERT INTO UnblockedCmdOrMdl ('{bcField}', 'Name', 'Type', 'DateAdded') VALUES (@p0,@p1,@p2,datetime('now'));", 
+							bc.Id,
+							excludedNames.ElementAt(i),
+							(int)type);
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					string sqlInsertItem = $"INSERT INTO UnblockedCmdOrMdl ('{bcField}', 'Name', 'Type', 'DateAdded') VALUES " + string.Join(", ", sqlInsertItemList) + ";";
-					//System.Console.WriteLine(sqlInsertItem);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertItem);
 					uow._context.SaveChanges();
 				}
 
@@ -673,16 +679,16 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.UnblockedPK)
 					.ToArray();
-				// Focus only on given IDs that aren't yet related to group
+				// Focus only on given IDs that aren't yet related to group (and auto remove dupes)
 				var excludedIDs = curIDs.Except(curRel);			
 				if (excludedIDs.Count() > 0) {
-					string[] sqlInsertRelList = new string[excludedIDs.Count()];
 					for (int i=0; i<excludedIDs.Count(); i++) {
-						sqlInsertRelList[i] = $"({group.Id}, {excludedIDs.ElementAt(i)})";
+						uow._context.Database.ExecuteSqlCommand(
+							"INSERT INTO GlobalUnblockedSet ('ListPK', 'UnblockedPK') VALUES (@p0,@p1);", 
+							group.Id,
+							excludedIDs.ElementAt(i));
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					string sqlInsertRel = "INSERT INTO GlobalUnblockedSet ('ListPK', 'UnblockedPK') VALUES " + string.Join(", ", sqlInsertRelList) + ";";
-					//System.Console.WriteLine(sqlInsertRel);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
 					uow._context.SaveChanges();
 				}				
 
@@ -718,11 +724,15 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Select(x => x.UnblockedPK)
 					.ToArray();
 
-				// Delete all existing IDs where type and name matches		
+				// Delete all existing IDs where type and name matches (above lines ensure no dupes)	
 				if (curIDs.Count() > 0) {
-					string sqlInsertRel = $"DELETE FROM GlobalUnblockedSet WHERE ListPK = {group.Id} AND UnblockedPK IN (" + string.Join(", ", curIDs) + ");";
-					//System.Console.WriteLine(sqlInsertRel);
-					uow._context.Database.ExecuteSqlCommand(sqlInsertRel);
+					for (int i=0; i<curIDs.Count(); i++) {
+						uow._context.Database.ExecuteSqlCommand(
+							"DELETE FROM GlobalUnblockedSet WHERE ListPK = @p0 AND UnblockedPK = @p1;",
+							group.Id,
+							curIDs[i]);
+						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
+					}
 					uow._context.SaveChanges();
 				}
 				// Fetch all ub IDs related to the given group AFTER delete
