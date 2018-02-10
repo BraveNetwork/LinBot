@@ -24,7 +24,6 @@ namespace NadekoBot.Core.Services.Database
         IXpRepository Xp { get; }
         IClubRepository Clubs { get; }
         IPollsRepository Polls { get; }
-        IGlobalWhitelistRepository GlobalWhitelists { get; }
 
         int Complete();
         Task<int> CompleteAsync();

@@ -218,7 +218,7 @@ namespace NadekoBot.Modules.Permissions.Services
                 {
                     ListName = name
                 };
-                bc.GlobalWhitelistGroups.Add(group);
+                bc.GlobalWhitelistGroups.Add(group); // Necessary for setting BotConfigId
 
                 uow.Complete();
             }
@@ -353,7 +353,9 @@ namespace NadekoBot.Modules.Permissions.Services
 
             using (var uow = _db.UnitOfWork)
             {
-                group = uow.GlobalWhitelists.GetByName(listName);
+                group = uow._context.Set<GlobalWhitelistSet>()
+					.Where(x => x.ListName.ToLowerInvariant().Equals(listName))
+					.FirstOrDefault();
 
                 if (group == null) { return false; }
                 else { return true; }
@@ -395,20 +397,17 @@ namespace NadekoBot.Modules.Permissions.Services
 
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.GlobalWhitelistMembers));
-                
-                var temp = bc.GlobalWhitelistMembers
-                .Where( x => x.ItemId == id ) // GWLItem.Id for which id is the GWLItem.ItemId
-                .Join(
-                    uow._context.Set<GlobalWhitelistItemSet>(), 
-                    m => m.Id, i => i.ItemPK,
-                    (m,i) => new {
-                        m.ItemId,
-                        i.ListPK
-                    })
-                .Where( y => y.ListPK == group.Id ) // Temporary table for which list matches group
-                .FirstOrDefault();
+                var temp = uow._context.Set<GlobalWhitelistItem>()
+					.Where( x => x.ItemId == id ) // GWLItem.Id for which id is the GWLItem.ItemId
+					.Join(
+						uow._context.Set<GlobalWhitelistItemSet>(), 
+						m => m.Id, i => i.ItemPK,
+						(m,i) => new {
+							m.ItemId,
+							i.ListPK
+						})
+					.Where( y => y.ListPK == group.Id ) // Temporary table for which list matches group
+					.FirstOrDefault();
 
                 uow.Complete();
                 
@@ -423,92 +422,14 @@ namespace NadekoBot.Modules.Permissions.Services
             return result;
         }
 
-        public bool AddItemToGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
-        {
-            using (var uow = _db.UnitOfWork)
-            {
-                var bc = uow.BotConfig.GetOrCreate();
-                uow._context.SaveChanges();
-
-                // First GetOrCreate the WhitelistItem given id and type
-                var item = bc.GlobalWhitelistMembers
-                        .Where( x => x.ItemId.Equals(id) )
-                        .Where( x => x.Type.Equals(type) )
-                        .FirstOrDefault();
-                
-                if (item == null) {
-                    item = new GlobalWhitelistItem
-                    {
-                        ItemId = id,
-                        Type = type
-                    };
-                    bc.GlobalWhitelistMembers.Add(item);
-                    //uow._context.Set<GlobalWhitelistItem>().Add(item); // don't do this as it sets BotConfigId to null!
-                    uow._context.SaveChanges();
-                    uow._context.Set<GlobalWhitelistItemSet>().Add(new GlobalWhitelistItemSet
-                    {
-                        ListPK = group.Id,
-                        ItemPK = item.Id
-                    });
-                } else {
-                    // Second Check that id is not already in the group
-                    var itemInGroup = group.GlobalWhitelistItemSets
-                        .FirstOrDefault(x => x.ItemPK == item.Id);
-
-                    if (itemInGroup != null) return false; // already exists!
-                    
-                    // Third Create a new WhitelistItemSet
-                    itemInGroup = new GlobalWhitelistItemSet
-                    {
-                        ListPK = group.Id,
-                        ItemPK = item.Id
-                    };
-
-                    // Finally add the WhitelistItemSet
-                    uow._context.Set<GlobalWhitelistItemSet>().Add(itemInGroup);
-                }
-                uow.Complete();
-            }
-            return true;
-        }
-        public bool RemoveItemFromGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
-        {
-            using (var uow = _db.UnitOfWork)
-            {
-                bool exists;
-                GlobalWhitelistItem item;
-
-                // Get the item
-                exists = GetMemberByIdType(id, type, out item);
-
-                System.Console.WriteLine("Item id {0}, type {1}, dId {2}", item.Id, item.Type, item.ItemId );
-                System.Console.WriteLine("Group id {0}, name {1}", group.Id, group.ListName);
-
-                if (item == null) return false;
-
-                // Second, Find the ItemInSet record
-                var itemInSet = group.GlobalWhitelistItemSets
-                    .FirstOrDefault(x => x.ItemPK == item.Id);
-
-                // Finally remove the Item from the Set
-                uow._context.Set<GlobalWhitelistItemSet>().Remove(itemInSet);
-
-                uow.Complete();
-            }
-            return true;
-        }
-
         public bool GetMemberByIdType(ulong id, GlobalWhitelistType type, out GlobalWhitelistItem item)
         {
             item = null;
 
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.GlobalWhitelistMembers));
-
                 // Retrieve the member item given name
-                item = bc.GlobalWhitelistMembers
+                item = uow._context.Set<GlobalWhitelistItem>()
                     .Where( x => x.Type.Equals(type) )
                     .Where( x => x.ItemId.Equals(id) )
                     .FirstOrDefault();
@@ -682,83 +603,11 @@ namespace NadekoBot.Modules.Permissions.Services
 			{
 				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = " + group.Id + ";";
 				result = uow._context.Database.ExecuteSqlCommand(sql);
-				uow._context.SaveChanges();
 				uow.Complete();
 			}
 			//System.Console.WriteLine("Query Result: ",result);
 			return true;
 		}
-
-        public bool AddUbItemToGroup(string name, UnblockedType type, GlobalWhitelistSet group)
-        {   
-            GlobalUnblockedSet itemInGroup;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.UnblockedModules)
-                      .ThenInclude(x => x.GlobalUnblockedSets)
-                    .Include(x => x.UnblockedCommands)
-                      .ThenInclude(x => x.GlobalUnblockedSets));
-
-                // Get the item
-                UnblockedCmdOrMdl item;
-				bool exists = GetUbItemByNameType(name, type, out item);
-
-                // Check if item already exists
-                if (!exists) {
-                    // Add new item to DB
-                    item = new UnblockedCmdOrMdl
-                    {
-                        Name = name,
-						Type = type
-                    };                        
-                    if (type == UnblockedType.Command) {
-                      bc.UnblockedCommands.Add(item);
-                    } else {
-                      bc.UnblockedModules.Add(item);
-                    }
-                    uow.Complete();
-                }
-
-                // Check if relationship already exists
-                itemInGroup = group.GlobalUnblockedSets
-                    .FirstOrDefault(x => x.UnblockedPK == item.Id);
-
-                if (itemInGroup != null) return false; // already exists!
-                
-                // Add relationship to DB
-                itemInGroup = new GlobalUnblockedSet
-                {
-                    ListPK = group.Id,
-                    UnblockedPK = item.Id
-                };
-                uow._context.Set<GlobalUnblockedSet>().Add(itemInGroup);
-                uow.Complete();
-            }
-            return true;
-        }
-        public bool RemoveUbItemFromGroup(string name, UnblockedType type, GlobalWhitelistSet group)
-        {
-            using (var uow = _db.UnitOfWork)
-            {
-				// Get the item
-                UnblockedCmdOrMdl item;
-				bool exists = GetUbItemByNameType(name, type, out item);
-
-                if (!exists) return false;
-
-                // Second, Find the relationship record
-                var itemInSet = group.GlobalUnblockedSets
-                    .FirstOrDefault(x => x.UnblockedPK == item.Id);
-
-                // Finally remove the Item from the Set
-                uow._context.Set<GlobalUnblockedSet>().Remove(itemInSet);
-
-                uow.Complete();
-            }
-            return true;
-        }
 
         public bool GetUbItemByNameType(string name, UnblockedType type, out UnblockedCmdOrMdl item)
         {
