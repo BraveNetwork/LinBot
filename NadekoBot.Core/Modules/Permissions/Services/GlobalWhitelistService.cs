@@ -355,6 +355,8 @@ namespace NadekoBot.Modules.Permissions.Services
             {
                 group = uow._context.Set<GlobalWhitelistSet>()
 					.Where(x => x.ListName.ToLowerInvariant().Equals(listName))
+					.Include(x => x.GlobalUnblockedSets)
+					.Include(x => x.GlobalWhitelistItemSets)
 					.FirstOrDefault();
 
                 if (group == null) { return false; }
