@@ -260,7 +260,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(memType.ToString()),
 							_gwl.GetNameOrMentionFromId(memType, memID)
 							))
-						.AddField(GetText("gwl_titlefield", count), string.Join("\n", lists), true)
+						.AddField(GetText("gwl_field_title", count), string.Join("\n", lists), true)
 						.WithFooter($"Page {page+1}/{lastPage+1}");
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -281,7 +281,169 @@ namespace NadekoBot.Modules.Permissions
 
 			#endregion GUBCheck
 
+			#region User-Oriented
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task ListMyGUB(int page=1)
+            	=> _GUBForMember(GlobalWhitelistType.User, Context.User.Id, page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public async Task ListContextGUB(int page=1)
+            {
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				// Error if nothing to show
+				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
+                {
+                    await ReplyErrorLocalized("gub_none").ConfigureAwait(false);
+                    return;
+                }
+
+				ulong idC = Context.Channel.Id;
+				ulong idS = Context.Guild.Id;
+
+				GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
+				GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+
+				// Send list of all unblocked modules/commands and number of lists for each
+				bool hasCmdsC = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, idC, typeC, page, out string[] cmdsC, out int cmdCountC);
+				bool hasMdlsC = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, idC, typeC, page, out string[] mdlsC, out int mdlCountC);
+
+				bool hasCmdsS = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, idS, typeS, page, out string[] cmdsS, out int cmdCountS);
+				bool hasMdlsS = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, idS, typeS, page, out string[] mdlsS, out int mdlCountS);
+
+				bool hasCmds = hasCmdsC || hasCmdsS;
+				bool hasMdls = hasMdlsC || hasMdlsS;
+
+				// Combine the lists and remove dupes
+				string[] cmds = cmdsC.Union(cmdsS).ToArray();
+				string[] mdls = mdlsC.Union(mdlsS).ToArray();
+
+				int cmdCount = cmds.Length;
+				int mdlCount = mdls.Length;
+
+				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
+				page++;
+				if (page > lastPage) page = lastPage;
+				if (page > 1) {
+					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
+					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
+				}
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("gub_list_formember_ctx", 
+						Format.Code(typeS.ToString()),
+						Context.Guild.Name,
+						Format.Code(typeC.ToString()),
+						MentionUtils.MentionChannel(idC)))
+					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
+					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
+					.WithFooter($"Page {page}/{lastPage}");
+
+                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task IsMyGUB(CommandInfo command, int page=1)
+				=> _GUBCheck(GlobalWhitelistType.User, Context.User.Id, UnblockedType.Command, command.Name.ToLowerInvariant(), page);
 			
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task IsMyGUB(ModuleInfo module, int page=1)
+				=> _GUBCheck(GlobalWhitelistType.User, Context.User.Id, UnblockedType.Module, module.Name.ToLowerInvariant(), page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task IsContextGUB(CommandInfo command, int page=1)
+				=> _IsContextGUB(UnblockedType.Command, command.Name.ToLowerInvariant(), page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task IsContextGUB(ModuleInfo module, int page=1)
+				=> _IsContextGUB(UnblockedType.Module, module.Name.ToLowerInvariant(), page);
+
+			private async Task _IsContextGUB(UnblockedType type, string name, int page)
+			{
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				ulong idC = Context.Channel.Id;
+				ulong idS = Context.Guild.Id;
+
+				GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
+				GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+
+				bool yesC = _gwl.CheckIfUnblockedFor(name, type, idC, typeC, page, out string[] listC, out int countC);
+				bool yesS = _gwl.CheckIfUnblockedFor(name, type, idS, typeS, page, out string[] listS, out int countS);
+
+				string serverStr = "*none*";
+				string channelStr = "*none*";
+
+				if (yesS) { serverStr = string.Join("\n",listS); }
+				if (yesC) { channelStr = string.Join("\n",listC); }
+
+				int lastServerPage = (countS - 1)/_gwl.numPerPage +1;
+				int lastChannelPage = (countC - 1)/_gwl.numPerPage +1;
+
+				int lastPage = System.Math.Max( lastServerPage, lastChannelPage );
+				page++;
+				if (page > lastPage) page = lastPage;
+				if (page > 1) {
+					if (yesS && page >= lastServerPage) serverStr += GetText("gwl_endlist", lastServerPage);
+					if (yesC && page >= lastChannelPage) channelStr += GetText("gwl_endlist", lastChannelPage);
+				}
+
+				string desc = "";
+
+				if (yesC && yesS) {
+					desc = GetText("gwl_is_unblocked_ctx", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeS.ToString()), 
+						Context.Guild.Name, 
+						Format.Code(typeC.ToString()), 
+						MentionUtils.MentionChannel(idC));
+				} else if (yesC) {
+					desc = GetText("gwl_is_unblocked", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeC.ToString()), 
+						MentionUtils.MentionChannel(idC));
+				} else if (yesS) {
+					desc = GetText("gwl_is_unblocked", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeS.ToString()), 
+						Context.Guild.Name);
+				} else {
+					await ReplyErrorLocalized("gwl_not_unblocked_ctx", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeS.ToString()), 
+						Context.Guild.Name, 
+						Format.Code(typeC.ToString()), 
+						MentionUtils.MentionChannel(idC))
+						.ConfigureAwait(false);
+					return;
+				}
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(desc)
+					.AddField(GetText("gwl_field_channel_ctx", countC), string.Join("\n", channelStr), true)
+					.AddField(GetText("gwl_field_server_ctx", countS), string.Join("\n", serverStr), true)
+					.WithFooter($"Page {page+1}/{lastPage+1}");
+
+				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                return;
+			}
+
+			#endregion User-Oriented
         }
     }
 }
