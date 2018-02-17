@@ -1249,7 +1249,7 @@ namespace NadekoBot.Modules.Permissions
 					bool hasS = _service.IsMemberInGroup(idS, typeS, group);
 
 					if (hasC && hasS) {
-						await ReplyConfirmLocalized("gwl_is_member_context", 
+						await ReplyConfirmLocalized("gwl_is_member_ctx", 
 							Format.Code(typeS.ToString()), 
 							Context.Guild.Name, 
 							Format.Code(typeC.ToString()), 
@@ -1272,7 +1272,7 @@ namespace NadekoBot.Modules.Permissions
 							.ConfigureAwait(false);
                         return;
 					} else {
-						await ReplyErrorLocalized("gwl_not_member_context", 
+						await ReplyErrorLocalized("gwl_not_member_ctx", 
 							Format.Code(typeS.ToString()), 
 							Context.Guild.Name, 
 							Format.Code(typeC.ToString()), 
