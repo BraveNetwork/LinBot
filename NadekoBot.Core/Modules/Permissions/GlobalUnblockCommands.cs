@@ -37,7 +37,7 @@ namespace NadekoBot.Modules.Permissions
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
                 {
-                    await ReplyErrorLocalized("gub_none", "WhitelistName").ConfigureAwait(false);
+                    await ReplyErrorLocalized("gub_none").ConfigureAwait(false);
                     return;
                 }
 
@@ -119,7 +119,7 @@ namespace NadekoBot.Modules.Permissions
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
                 {
-                    await ReplyErrorLocalized("gub_none", "WhitelistName").ConfigureAwait(false);
+                    await ReplyErrorLocalized("gub_none").ConfigureAwait(false);
                     return;
                 }
 

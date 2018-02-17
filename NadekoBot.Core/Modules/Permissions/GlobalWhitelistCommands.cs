@@ -27,6 +27,7 @@ namespace NadekoBot.Modules.Permissions
 			};
 
 			public const int MaxNumInput = 30;
+			public const int MaxNameLength = 20;
 
             public GlobalWhitelistCommands(GlobalPermissionService perm)
             {
@@ -39,8 +40,8 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLCreate(string listName="")
             {
-                if (string.IsNullOrWhiteSpace(listName) || listName.Length > 20) {
-					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName)).ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(listName) || listName.Length > MaxNameLength) {
+					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
                 	return;
 				}
 
@@ -65,8 +66,8 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLRename(string listName="", string newName="")
             {
-				if (string.IsNullOrWhiteSpace(newName) || newName.Length > 20) {
-					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName)).ConfigureAwait(false);
+				if (string.IsNullOrWhiteSpace(newName) || newName.Length > MaxNameLength) {
+					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
                 	return;
 				}
 
@@ -201,7 +202,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLAddRemove(AddRemove action, string listName="", params IGuild[] servers)
 			{
 				if (servers.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Server")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Server"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				ulong[] ids = new ulong[servers.Length];
@@ -217,7 +218,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLAddRemove(AddRemove action, string listName="", params ITextChannel[] channels)
 			{
 				if (channels.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Channel")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Channel"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				ulong[] ids = new ulong[channels.Length];
@@ -233,7 +234,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLAddRemove(AddRemove action, string listName="", params IUser[] users)
 			{
 				if (users.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("User")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("User"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				ulong[] ids = new ulong[users.Length];
@@ -253,7 +254,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLAddRemove(AddRemove action, string listName="", params CommandOrCrInfo[] cmds)
 			{
 				if (cmds.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Command")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Command"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				string[] names = new string[cmds.Length];
@@ -269,7 +270,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLAddRemove(AddRemove action, string listName="", params ModuleOrCrInfo[] mdls)
 			{
 				if (mdls.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Module")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Module"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				string[] names = new string[mdls.Length];
@@ -291,7 +292,7 @@ namespace NadekoBot.Modules.Permissions
 				}
 				// If params is too long, report error
 				if (ids.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString())).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString()), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				// If the listName doesn't exist, return an error message
@@ -363,7 +364,7 @@ namespace NadekoBot.Modules.Permissions
 				}
 				// If params is too long, report error
 				if (names.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString())).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString()), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				// If the listName doesn't exist, return an error message
@@ -455,7 +456,7 @@ namespace NadekoBot.Modules.Permissions
             public async Task GWLRoleSync(SyncMethod method, string listName="", params IRole[] roles)
 			{
 				if (roles.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 				ulong[] ids = new ulong[roles.Length];
@@ -480,7 +481,7 @@ namespace NadekoBot.Modules.Permissions
 				}
 				// If params is too long, report error
 				if (ids.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role")).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 
