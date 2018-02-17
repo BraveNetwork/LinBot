@@ -152,6 +152,20 @@
       "{0}gwlhere 2"
     ]
   },
+  "ismygwl": {
+    "cmd": "ismygwl",
+    "desc": "Find out whether or not you belong to the global whitelist named MyListName.",
+    "usage": [
+      "{0}ismygwl MyListName"
+    ]
+  },
+  "iscontextgwl": {
+    "cmd": "iscontextgwl isgwlhere",
+    "desc": "Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
+    "usage": [
+      "{0}isgwlhere MyListName"
+    ]
+  },
   "listgub": {
     "cmd": "listgub lgub",
     "desc": "List all unblocked commands/modules along with how many lists for which each is unblocked. Include an optional page number to jump to a specific subset of the data.",
@@ -192,6 +206,40 @@
       "{0}gubcheck @User Module",
       "{0}gubcheck usr 123123123 .Command",
       "{0}gubcheck usr 123123123 Module"
+    ]
+  },
+  "listmygub": {
+    "cmd": "listmygub mygub",
+    "desc": "Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}mygub",
+      "{0}mygub 2"
+    ]
+  },
+  "listcontextgub": {
+    "cmd": "listcontextgub gubhere",
+    "desc": "Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gubhere",
+      "{0}gubhere 2"
+    ]
+  },
+  "ismygub": {
+    "cmd": "ismygub",
+    "desc": "Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}ismygub .Command 2",
+      "{0}ismygub .Command",
+      "{0}ismygub Module"
+    ]
+  },
+  "iscontextgub": {
+    "cmd": "iscontextgub isgubhere",
+    "desc": "Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}isgubhere .Command 2",
+      "{0}isgubhere .Command",
+      "{0}isgubhere Module"
     ]
   },
   "resetglobalwhitelists": {
