@@ -251,7 +251,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", params CommandOrCrInfo[] cmds)
+			public async Task GWLAddRemove(AddRemove action, string listName="", params CommandInfo[] cmds)
 			{
 				if (cmds.Length > MaxNumInput) {
 					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Command"), MaxNumInput).ConfigureAwait(false);
@@ -267,7 +267,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", params ModuleOrCrInfo[] mdls)
+			public async Task GWLAddRemove(AddRemove action, string listName="", params ModuleInfo[] mdls)
 			{
 				if (mdls.Length > MaxNumInput) {
 					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Module"), MaxNumInput).ConfigureAwait(false);
@@ -662,12 +662,12 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLPurge(CommandOrCrInfo cmd)
+            public Task GWLPurge(CommandInfo cmd)
 				=> _Purge(UnblockedType.Command, cmd.Name.ToLowerInvariant());
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLPurge(ModuleOrCrInfo mdl)
+            public Task GWLPurge(ModuleInfo mdl)
 				=> _Purge(UnblockedType.Module, mdl.Name.ToLowerInvariant());
 
 			#endregion PurgeUnblock
@@ -982,12 +982,12 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLHasMember(CommandOrCrInfo cmd, string listName="")
+            public Task GWLHasMember(CommandInfo cmd, string listName="")
 				=> _HasMember(UnblockedType.Command, cmd.Name.ToLowerInvariant(), listName);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLHasMember(ModuleOrCrInfo mdl, string listName="")
+            public Task GWLHasMember(ModuleInfo mdl, string listName="")
 				=> _HasMember(UnblockedType.Module, mdl.Name.ToLowerInvariant(), listName);
 
 			#endregion Has UB
@@ -1116,12 +1116,12 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLForMember(CommandOrCrInfo cmd, int page=1)
+            public Task GWLForMember(CommandInfo cmd, int page=1)
 				=> _ListForMember(UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLForMember(ModuleOrCrInfo mdl, int page=1)
+            public Task GWLForMember(ModuleInfo mdl, int page=1)
 				=> _ListForMember(UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			#endregion ListGWLFor Unblock

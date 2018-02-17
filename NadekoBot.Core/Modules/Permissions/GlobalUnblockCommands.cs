@@ -162,7 +162,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, CommandOrCrInfo cmd, int page=1)
+            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, CommandInfo cmd, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
@@ -183,7 +183,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, ModuleOrCrInfo mdl, int page=1)
+            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, ModuleInfo mdl, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
@@ -208,17 +208,17 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, CommandOrCrInfo cmd, int page=1)
+            public Task GUBCheck(IGuild server, CommandInfo cmd, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.Server, server.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(ITextChannel channel, CommandOrCrInfo cmd, int page=1)
+            public Task GUBCheck(ITextChannel channel, CommandInfo cmd, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.Channel, channel.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IUser user, CommandOrCrInfo cmd, int page=1)
+            public Task GUBCheck(IUser user, CommandInfo cmd, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.User, user.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Command
@@ -227,17 +227,17 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, ModuleOrCrInfo mdl, int page=1)
+            public Task GUBCheck(IGuild server, ModuleInfo mdl, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.Server, server.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(ITextChannel channel, ModuleOrCrInfo mdl, int page=1)
+            public Task GUBCheck(ITextChannel channel, ModuleInfo mdl, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.Channel, channel.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IUser user, ModuleOrCrInfo mdl, int page=1)
+            public Task GUBCheck(IUser user, ModuleInfo mdl, int page=1)
 				=> _GUBCheck(GlobalWhitelistType.User, user.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Module
