@@ -59,9 +59,9 @@ namespace NadekoBot.Modules.Permissions
             {
                 bool result = await _service.ResetGlobalUnblocked().ConfigureAwait(false);
 				if (result) {
-					await ReplyConfirmLocalized("gwl_ub_reset").ConfigureAwait(false);
+					await ReplyConfirmLocalized("gub_reset").ConfigureAwait(false);
 				} else {
-					await ReplyConfirmLocalized("gwl_ub_reset_fail").ConfigureAwait(false);
+					await ReplyConfirmLocalized("gub_reset_fail").ConfigureAwait(false);
 				}
             }
         }
