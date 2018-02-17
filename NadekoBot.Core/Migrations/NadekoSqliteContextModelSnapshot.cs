@@ -619,8 +619,6 @@ namespace NadekoBot.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int?>("BotConfigId");
-
                     b.Property<DateTime?>("DateAdded");
 
                     b.Property<ulong>("ItemId");
@@ -628,8 +626,6 @@ namespace NadekoBot.Migrations
                     b.Property<int>("Type");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BotConfigId");
 
                     b.ToTable("GlobalWhitelistItem");
                 });
@@ -652,8 +648,6 @@ namespace NadekoBot.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int?>("BotConfigId");
-
                     b.Property<DateTime?>("DateAdded");
 
                     b.Property<bool>("IsEnabled")
@@ -664,8 +658,6 @@ namespace NadekoBot.Migrations
                         .HasMaxLength(20);
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BotConfigId");
 
                     b.HasIndex("ListName")
                         .IsUnique();
@@ -1967,13 +1959,6 @@ namespace NadekoBot.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("GlobalWhitelistMembers")
-                        .HasForeignKey("BotConfigId");
-                });
-
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItemSet", b =>
                 {
                     b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", "Item")
@@ -1985,13 +1970,6 @@ namespace NadekoBot.Migrations
                         .WithMany("GlobalWhitelistItemSets")
                         .HasForeignKey("ListPK")
                         .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.BotConfig")
-                        .WithMany("GlobalWhitelistGroups")
-                        .HasForeignKey("BotConfigId");
                 });
 
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GuildConfig", b =>

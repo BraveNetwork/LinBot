@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace NadekoBot.Migrations
 {
-    public partial class Create_GlobalWhitelistModelsRevised : Migration
+    public partial class Create_GWLModelsNoHashSet : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,7 +14,6 @@ namespace NadekoBot.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    BotConfigId = table.Column<int>(nullable: true),
                     DateAdded = table.Column<DateTime>(nullable: true),
                     ItemId = table.Column<ulong>(nullable: false),
                     Type = table.Column<int>(nullable: false)
@@ -22,12 +21,6 @@ namespace NadekoBot.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GlobalWhitelistItem", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GlobalWhitelistItem_BotConfig_BotConfigId",
-                        column: x => x.BotConfigId,
-                        principalTable: "BotConfig",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -36,7 +29,6 @@ namespace NadekoBot.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    BotConfigId = table.Column<int>(nullable: true),
                     DateAdded = table.Column<DateTime>(nullable: true),
                     IsEnabled = table.Column<bool>(nullable: false, defaultValue: true),
                     ListName = table.Column<string>(maxLength: 20, nullable: true)
@@ -44,12 +36,6 @@ namespace NadekoBot.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GlobalWhitelistSet", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GlobalWhitelistSet_BotConfig_BotConfigId",
-                        column: x => x.BotConfigId,
-                        principalTable: "BotConfig",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -135,19 +121,9 @@ namespace NadekoBot.Migrations
                 column: "UnblockedPK");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GlobalWhitelistItem_BotConfigId",
-                table: "GlobalWhitelistItem",
-                column: "BotConfigId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_GlobalWhitelistItemSet_ItemPK",
                 table: "GlobalWhitelistItemSet",
                 column: "ItemPK");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GlobalWhitelistSet_BotConfigId",
-                table: "GlobalWhitelistSet",
-                column: "BotConfigId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GlobalWhitelistSet_ListName",

@@ -214,7 +214,7 @@ namespace NadekoBot.Modules.Permissions.Services
         {
             using (var uow = _db.UnitOfWork)
             {
-				// Old version that relies on maintaining a HashSet in memory
+				// Old version that relies on maintaining a HashSet in memory via BotConfig
                 //var bc = uow.BotConfig.GetOrCreate(set => set
                 //    .Include(x => x.GlobalWhitelistGroups));
 				// var group = new GlobalWhitelistSet()
@@ -223,12 +223,8 @@ namespace NadekoBot.Modules.Permissions.Services
                 // };
                 // bc.GlobalWhitelistGroups.Add(group); // Necessary for setting BotConfigId
 
-				// Get the necessary botconfig ID
-				var bcId = uow.BotConfig.GetOrCreate().Id;
-
 				uow._context.Database.ExecuteSqlCommand(
-					"INSERT INTO GlobalWhitelistSet ('BotConfigId', 'DateAdded', 'ListName') VALUES (@p0, datetime('now'), @p1);", 
-					bcId, 
+					"INSERT INTO GlobalWhitelistSet ('DateAdded', 'ListName') VALUES (datetime('now'), @p0);",
 					name);
 
                 uow.Complete();
@@ -395,9 +391,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 			using (var uow = _db.UnitOfWork)
             {
-				// Get the necessary botconfig ID
-				var bc = uow.BotConfig.GetOrCreate();
-
 				// For each non-existing member, add it to the database
 				// Fetch all member names already in the database
 				var curItems = uow._context.Set<GlobalWhitelistItem>()
@@ -409,8 +402,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (excludedItems.Count() > 0) {
 					for (int i=0; i<excludedItems.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							"INSERT INTO GlobalWhitelistItem ('BotConfigId', 'ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,@p2,datetime('now'));", 
-							bc.Id, 
+							"INSERT INTO GlobalWhitelistItem ('ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,datetime('now'));",
 							excludedItems.ElementAt(i), 
 							(int)type);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
