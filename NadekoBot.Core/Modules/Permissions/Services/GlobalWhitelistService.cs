@@ -39,193 +39,15 @@ namespace NadekoBot.Modules.Permissions.Services
 			_client = client;
 		}
 
-		#region Resolve ulong IDs
-        public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
-        {
-            string[] str = new string[ids.Length];
-
-            switch (type) {
-                case GlobalWhitelistType.User:
-                    for (var i = 0; i < ids.Length; i++) {
-                      // str[i] = MentionUtils.MentionUser(ids[i]);
-					  str[i] = MentionUtils.MentionUser(ids[i]) + "\n\t" + ids[i].ToString();
-                    }
-                    break;
-
-                case GlobalWhitelistType.Channel:
-                    for (var i = 0; i < ids.Length; i++) {
-                      // str[i] = MentionUtils.MentionChannel(ids[i]);
-					  str[i] = MentionUtils.MentionChannel(ids[i]) + "\n\t" + ids[i].ToString();
-                    }
-                    break;
-
-                case GlobalWhitelistType.Server:
-                    for (var i = 0; i < ids.Length; i++) {
-						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
-                    	// str[i] = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}') " : ids[i].ToString();
-						string name = (guild != null) ? guild.Name : "Null";
-						str[i] = $"[{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
-                    }
-                    break;
-
-                default:
-                    for (var i = 0; i < ids.Length; i++) {
-                      str[i] = ids[i].ToString();
-                    }
-                    break;
-            }
-
-            return str;
-        }
-        public string GetNameOrMentionFromId(GlobalWhitelistType type, ulong id)
-        {
-            string str = "";
-
-            switch (type) {
-                case GlobalWhitelistType.User:
-                    // str = MentionUtils.MentionUser(id);
-					str = MentionUtils.MentionUser(id) + " " + id.ToString();
-                    break;
-
-                case GlobalWhitelistType.Channel:
-                    // str = MentionUtils.MentionChannel(id);
-					str = MentionUtils.MentionChannel(id) + " " + id.ToString();
-                    break;
-
-                case GlobalWhitelistType.Server:
-					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
-                    // str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') " : id.ToString();
-                    str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
-					break;
-
-                default:
-                    str = id.ToString();
-                    break;
-            }
-
-            return str;
-        }
-
-		#endregion Resolve ulong IDs
-
-		#region CheckUnblocked
-		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, int page, out string[] lists, out int count)
-		{
-			lists = null;
-			using (var uow = _db.UnitOfWork)
-            {
-				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
-					.Where(x => x.Type.Equals(ubType))
-					.Where(x => x.Name.Equals(ubName))
-					.Join(uow._context.Set<GlobalUnblockedSet>(), 
-						ub => ub.Id, gub => gub.UnblockedPK, 
-						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>()
-						,//.Where(g => g.IsEnabled.Equals(true)),
-						gub => gub, g => g.Id,
-						(gub, g) => g
-						// new {
-						//	 ListText = (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName,
-						//	 g.Id
-						// })
-						)
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
-						g => g.Id, gi => gi.ListPK,
-						(g, gi) => new {
-							// g.ListText,
-							g,
-							gi.ItemPK
-						})
-					.Join(uow._context.Set<GlobalWhitelistItem>()
-						.Where(x => x.Type.Equals(memType))
-						.Where(x => x.ItemId.Equals(memID)),
-						gi => gi.ItemPK, i => i.Id,
-						// (gi, i) => gi.ListText);
-						(gi, i) => gi.g);
-				
-				uow.Complete();
-
-				count = allnames.Count();
-				if (count <= 0) return false;
-
-				int numSkip = page*numPerPage;
-				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
-
-				lists = allnames
-					.OrderBy(g => g.ListName.ToLowerInvariant())
-					.Skip(numSkip)
-                	.Take(numPerPage)
-					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-					.ToArray();
-			}
-			return true;
-		}
-		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
-		{
-			// string sql = @"SELECT GlobalWhitelistSet.ListName FROM UnblockedCmdOrMdl
-			// 	INNER JOIN GlobalUnblockedSet ON UnblockedCmdOrMdl.Id = GlobalUnblockedSet.UnblockedPK
-			// 	INNER JOIN GlobalWhitelistSet ON GlobalUnblockedSet.ListPK = GlobalWhitelistSet.Id
-			// 	INNER JOIN GlobalWhitelistItemSet ON GlobalWhitelistSet.Id = GlobalWhitelistItemSet.ListPK
-			// 	INNER JOIN GlobalWhitelistItem ON GlobalWhitelistItemSet.ItemPK = GlobalWhitelistItem.Id
-			// 	WHERE UnblockedCmdOrMdl.Type = @p0 AND 
-			// 	UnblockedCmdOrMdl.Name = '@p1' AND 
-			// 	GlobalWhitelistItem.Type = @p2 AND 
-			// 	GlobalWhitelistItem.ItemId = @p3;";
-
-			using (var uow = _db.UnitOfWork)
-            {
-				// var result = uow._context.Database.ExecuteSqlCommand(sql, ubType,ubName,memType,memID);
-				// uow._context.SaveChanges();
-				// uow.Complete();
-
-				var result = uow._context.Set<UnblockedCmdOrMdl>()
-					.Where(x => x.Type.Equals(ubType))
-					.Where(x => x.Name.Equals(ubName))
-					.Join(uow._context.Set<GlobalUnblockedSet>(), 
-						ub => ub.Id, gub => gub.UnblockedPK, 
-						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>()
-						.Where(g => g.IsEnabled.Equals(true)),
-						gubPK => gubPK, g => g.Id,
-						(gubPK, g) => g.Id)
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
-						gId => gId, gi => gi.ListPK,
-						(gId, gi) => gi.ItemPK)
-					.Join(uow._context.Set<GlobalWhitelistItem>()
-						.Where(x => x.Type.Equals(memType))
-						.Where(x => x.ItemId.Equals(memID)),
-						giPK => giPK, i => i.Id,
-						(giPK, i) => giPK)
-					.Count();
-				
-				uow.Complete();
-
-				// System.Console.WriteLine(result);
-				if (result > 0) return true;
-				return false;
-			}
-		}
-		#endregion CheckUnblocked
-
 		#region General Whitelist Actions
 
-        public bool CreateWhitelist(string name)
+        public bool CreateWhitelist(string listName)
         {
             using (var uow = _db.UnitOfWork)
             {
-				// Old version that relies on maintaining a HashSet in memory via BotConfig
-                //var bc = uow.BotConfig.GetOrCreate(set => set
-                //    .Include(x => x.GlobalWhitelistGroups));
-				// var group = new GlobalWhitelistSet()
-                // {
-                //     ListName = name
-                // };
-                // bc.GlobalWhitelistGroups.Add(group); // Necessary for setting BotConfigId
-
 				uow._context.Database.ExecuteSqlCommand(
 					"INSERT INTO GlobalWhitelistSet ('DateAdded', 'ListName') VALUES (datetime('now'), @p0);",
-					name);
+					listName);
 
                 uow.Complete();
             }
@@ -233,7 +55,7 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		public bool RenameWhitelist(string oldName, string name)
+		public bool RenameWhitelist(string oldName, string listName)
 		{
 			using (var uow = _db.UnitOfWork)
             {
@@ -243,7 +65,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				if (group == null) return false;
 
-				group.ListName = name;				
+				group.ListName = listName;				
                 uow.Complete();
             }
 			return true;
@@ -265,125 +87,23 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		public bool ClearGroupMembers(GlobalWhitelistSet group)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0;";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
-				uow.Complete();
-			}
-			//System.Console.WriteLine("Query Result: ",result);
-			return true;
-		}
-
-        public bool DeleteWhitelist(string name)
+        public bool DeleteWhitelist(string listName)
         {
             using (var uow = _db.UnitOfWork)
             {
-                // NOTE: using bc to remove will only set the BotConfigId FK to null
-
                 // Delete the whitelist record and all relation records
                 uow._context.Set<GlobalWhitelistSet>().Remove( 
                     uow._context.Set<GlobalWhitelistSet>()
-                    .Where( x => x.ListName.ToLowerInvariant().Equals(name) ).FirstOrDefault()
+                    .Where( x => x.ListName.ToLowerInvariant().Equals(listName) ).FirstOrDefault()
                 );
                 uow.Complete();
             }
             return true;
         }
-        public bool GetAllNames(int page, out string[] names, out int count)
-        {
-			names = null;
-            using (var uow = _db.UnitOfWork)
-            {
-				count = uow._context.Set<GlobalWhitelistSet>().Count();
-
-				if (count <= 0) return false;
-
-				int numSkip = page*numPerPage;
-				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
-
-				names = uow._context.Set<GlobalWhitelistSet>()
-					.OrderBy(g => g.ListName.ToLowerInvariant())
-					.Skip(numSkip)
-                	.Take(numPerPage)
-					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-					.ToArray();
-
-                uow.Complete();
-            }
-            return true;
-        }
-
-        
-
-        public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
-        {
-            group = null;
-
-            if (string.IsNullOrWhiteSpace(listName)) return false;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                group = uow._context.Set<GlobalWhitelistSet>()
-					.Where(x => x.ListName.ToLowerInvariant().Equals(listName))
-					.Include(x => x.GlobalUnblockedSets)
-					.Include(x => x.GlobalWhitelistItemSets)
-					.FirstOrDefault();
-
-                if (group == null) { return false; }
-                else { return true; }
-            }
-        }
 
 		#endregion General Whitelist Actions
 
-		#region GlobalWhitelist Member Actions
-
-        public bool GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page, out ulong[] results, out int count)
-        {
-            results = null;
-            using (var uow = _db.UnitOfWork)
-            {
-                var anon = group.GlobalWhitelistItemSets
-                	.Join(uow._context.Set<GlobalWhitelistItem>()
-				  		.Where(m => m.Type.Equals(type)), 
-							p => p.ItemPK, 
-							m => m.Id, 
-							(pair,member) => member.ItemId)
-					.OrderBy(id => id);
-                uow.Complete();
-
-				count = anon.Count();
-				if (count <= 0) return false;
-
-				int numSkip = page*numPerPage;
-				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				
-				results = anon.Skip(numSkip).Take(numPerPage).ToArray();
-            }
-            return true;
-        }
-
-        public bool GetMemberByIdType(ulong id, GlobalWhitelistType type, out GlobalWhitelistItem item)
-        {
-            item = null;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                // Retrieve the member item given name
-                item = uow._context.Set<GlobalWhitelistItem>()
-                    .Where( x => x.Type.Equals(type) )
-                    .Where( x => x.ItemId.Equals(id) )
-                    .FirstOrDefault();
-
-                if (item == null) { return false; }
-                else { return true; }
-            }
-        }
+		#region Add/Remove
 
 		public bool AddItemToGroupBulk(ulong[] items, GlobalWhitelistType type, GlobalWhitelistSet group, out ulong[] successList)
 		{
@@ -498,46 +218,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				return false;
 			}
 		}
-
-		#endregion GlobalWhitelist Member Actions
-
-		#region UnblockedCmdOrMdl Actions
-
-		
-
-		public bool ClearGroupUbItems(GlobalWhitelistSet group)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0;";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
-				uow.Complete();
-			}
-			//System.Console.WriteLine("Query Result: ",result);
-			return true;
-		}
-
-        public bool GetUbItemByNameType(string name, UnblockedType type, out UnblockedCmdOrMdl item)
-        {
-            item = null;
-
-            if (string.IsNullOrWhiteSpace(name)) return false;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                // Retrieve the UnblockedCmdOrMdl item given name
-                item = uow._context.Set<UnblockedCmdOrMdl>()
-					.Where( x => x.Name.Equals(name) )
-					.Where( x => x.Type.Equals(type) )
-					.FirstOrDefault();
-
-				uow.Complete();
-
-                if (item == null) { return false; }
-                else { return true; }
-            }
-        }
 
 		public bool AddUbItemToGroupBulk(string[] names, UnblockedType type, GlobalWhitelistSet group, out string[] successList)
 		{
@@ -658,6 +338,442 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
+		#endregion Add/Remove
+
+		#region RoleSync
+
+		// TODO
+
+		#endregion RoleSync
+
+		#region Clear
+
+		public bool ClearAll(GlobalWhitelistSet group)
+		{
+			return ClearMembers(group) && ClearUnblocked(group);
+		}
+
+		public bool ClearMembers(GlobalWhitelistSet group)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0;";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
+				uow.Complete();
+			}
+			//System.Console.WriteLine("Query Result: ",result);
+			return true;
+		}
+
+		public bool ClearMembers(GlobalWhitelistSet group, GlobalWhitelistType type)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = @"DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0 AND GlobalWhitelistItemSet.ItemPK IN
+					(SELECT Id FROM GlobalWhitelistItem WHERE GlobalWhitelistItem.Type = @p1);";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id, type);
+				uow.Complete();
+			}
+			return true;
+		}
+
+		public bool ClearUnblocked(GlobalWhitelistSet group)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0;";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
+				uow.Complete();
+			}
+			//System.Console.WriteLine("Query Result: ",result);
+			return true;
+		}
+		public bool ClearUnblocked(GlobalWhitelistSet group, UnblockedType type)
+		{
+			int result;
+			using (var uow = _db.UnitOfWork)
+			{
+				string sql = @"DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0 AND GlobalUnblockedSet.UnblockedPK IN
+					(SELECT Id FROM UnblockedCmdOrMdl WHERE UnblockedCmdOrMdl.Type = @p1);";
+				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id, type);
+				uow.Complete();
+			}
+			return true;
+		}
+
+		#endregion Clear
+
+		#region Purge
+
+		public bool PurgeMember(GlobalWhitelistType type, ulong id)
+		{
+			using (var uow = _db.UnitOfWork)
+			{
+				uow._context.Set<GlobalWhitelistItem>().Remove( 
+					uow._context.Set<GlobalWhitelistItem>()
+					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.ItemId.Equals(id) )
+					.FirstOrDefault()
+				);
+				uow.Complete();
+			}
+			return true;
+		}
+
+		public bool PurgeUnblocked(UnblockedType type, string name)
+		{
+			using (var uow = _db.UnitOfWork)
+			{
+				// Delete the unblockedcmd record and all relation records
+				uow._context.Set<UnblockedCmdOrMdl>().Remove( 
+					uow._context.Set<UnblockedCmdOrMdl>()
+					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.Name.Equals(name) )
+					.FirstOrDefault()
+				);
+				uow.Complete();
+			}
+			return true;
+		}
+
+		#endregion Purge
+
+		#region IsInGroup
+
+		public bool IsMemberInGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
+        {
+            var result = true;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var temp = uow._context.Set<GlobalWhitelistItem>()
+					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.ItemId.Equals(id) )
+					.Join(
+						uow._context.Set<GlobalWhitelistItemSet>(), 
+						i => i.Id, gi => gi.ItemPK,
+						(i,gi) => new {
+							i.ItemId,
+							gi.ListPK
+						})
+					.Where( y => y.ListPK.Equals(group.Id) )
+					.FirstOrDefault();
+
+                uow.Complete();
+                
+                if (temp != null) {
+                  result = true;
+                } else {
+                  result = false;
+                }
+            }
+            return result;
+        }
+		public bool IsUnblockedInGroup(string name, UnblockedType type, GlobalWhitelistSet group)
+		{
+			var result = true;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var temp = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.Name.Equals(name) )
+					.Join(
+						uow._context.Set<GlobalUnblockedSet>(), 
+						u => u.Id, gu => gu.UnblockedPK,
+						(u,gu) => new {
+							u.Name,
+							gu.ListPK
+						})
+					.Where( y => y.ListPK.Equals(group.Id) )
+					.FirstOrDefault();
+
+                uow.Complete();
+                
+                if (temp != null) {
+                  result = true;
+                } else {
+                  result = false;
+                }
+            }
+            return result;
+		}
+
+		#endregion IsInGroup
+
+		#region CheckUnblocked
+		
+		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, int page, out string[] lists, out int count)
+		{
+			lists = null;
+			using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(ubType))
+					.Where(x => x.Name.Equals(ubName))
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>(),
+						gub => gub, g => g.Id,
+						(gub, g) => g
+						)
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						g => g.Id, gi => gi.ListPK,
+						(g, gi) => new {
+							g,
+							gi.ItemPK
+						})
+					.Join(uow._context.Set<GlobalWhitelistItem>()
+						.Where(x => x.Type.Equals(memType))
+						.Where(x => x.ItemId.Equals(memID)),
+						gi => gi.ItemPK, i => i.Id,
+						(gi, i) => gi.g);
+				
+				uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				lists = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+			}
+			return true;
+		}
+		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+				var result = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(ubType))
+					.Where(x => x.Name.Equals(ubName))
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>()
+						.Where(g => g.IsEnabled.Equals(true)),
+						gubPK => gubPK, g => g.Id,
+						(gubPK, g) => g.Id)
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						gId => gId, gi => gi.ListPK,
+						(gId, gi) => gi.ItemPK)
+					.Join(uow._context.Set<GlobalWhitelistItem>()
+						.Where(x => x.Type.Equals(memType))
+						.Where(x => x.ItemId.Equals(memID)),
+						giPK => giPK, i => i.Id,
+						(giPK, i) => giPK)
+					.Count();
+				
+				uow.Complete();
+
+				// System.Console.WriteLine(result);
+				if (result > 0) return true;
+				return false;
+			}
+		}
+
+		#endregion CheckUnblocked
+
+		#region GetObject
+		public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
+        {
+            group = null;
+
+            if (string.IsNullOrWhiteSpace(listName)) return false;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                group = uow._context.Set<GlobalWhitelistSet>()
+					.Where(x => x.ListName.ToLowerInvariant().Equals(listName))
+					.Include(x => x.GlobalUnblockedSets)
+					.Include(x => x.GlobalWhitelistItemSets)
+					.FirstOrDefault();
+
+                if (group == null) { return false; }
+                else { return true; }
+            }
+        }
+
+		public bool GetMemberByIdType(ulong id, GlobalWhitelistType type, out GlobalWhitelistItem item)
+        {
+            item = null;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                // Retrieve the member item given name
+                item = uow._context.Set<GlobalWhitelistItem>()
+                    .Where( x => x.Type.Equals(type) )
+                    .Where( x => x.ItemId.Equals(id) )
+                    .FirstOrDefault();
+
+                if (item == null) { return false; }
+                else { return true; }
+            }
+        }
+
+		public bool GetUnblockedByNameType(string name, UnblockedType type, out UnblockedCmdOrMdl item)
+        {
+            item = null;
+
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                // Retrieve the UnblockedCmdOrMdl item given name
+                item = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where( x => x.Name.Equals(name) )
+					.Where( x => x.Type.Equals(type) )
+					.FirstOrDefault();
+
+				uow.Complete();
+
+                if (item == null) { return false; }
+                else { return true; }
+            }
+        }
+
+		#endregion GetObject
+
+		#region GetGroupNames
+
+		 public bool GetGroupNames(int page, out string[] names, out int count)
+        {
+			names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				count = uow._context.Set<GlobalWhitelistSet>().Count();
+
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = uow._context.Set<GlobalWhitelistSet>()
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		public bool GetGroupNamesByMember(ulong id, GlobalWhitelistType type, int page, out string[] names, out int count)
+        {
+            names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<GlobalWhitelistItem>()
+					.Where(i => i.Type.Equals(type))
+					.Where(i => i.ItemId.Equals(id))
+					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GlobalWhitelistSet>(),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g);
+				
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		public bool GetGroupNamesByUnblocked(string name, UnblockedType type, int page, out string[] names, out int count)
+		{
+			names = null;
+			count = 0;
+
+			// Get the item
+			UnblockedCmdOrMdl item;
+			bool exists = GetUnblockedByNameType(name, type, out item);
+
+			if (!exists) return false;
+
+			using (var uow = _db.UnitOfWork)
+            {
+                // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
+                var allnames = uow._context.Set<GlobalWhitelistSet>()
+					.Join(
+						uow._context.Set<GlobalUnblockedSet>()
+							.Where(u => u.UnblockedPK.Equals(item.Id)), 
+						g => g.Id, gu => gu.ListPK,
+						(group, relation) => group);
+                uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+            }
+			return true;
+		}
+
+		#endregion GetGroupNames
+
+		#region Get Id/Name Lists
+
+		public bool GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page, out ulong[] results, out int count)
+        {
+            results = null;
+            using (var uow = _db.UnitOfWork)
+            {
+                var anon = group.GlobalWhitelistItemSets
+                	.Join(uow._context.Set<GlobalWhitelistItem>()
+				  		.Where(m => m.Type.Equals(type)), 
+							p => p.ItemPK, 
+							m => m.Id, 
+							(pair,member) => member.ItemId)
+					.OrderBy(id => id);
+                uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				
+				results = anon.Skip(numSkip).Take(numPerPage).ToArray();
+            }
+            return true;
+        }
+
 		public bool GetGroupUnblockedNames(GlobalWhitelistSet group, UnblockedType type, int page, out string[] names, out int count)
 		{
 			names = null;
@@ -761,242 +877,71 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		#endregion UnblockedCmdOrMdl Actions
+		#endregion Get Id/Name Lists
 
-		#region Clear
+		#region Resolve ulong IDs
 
-		public bool ClearAll(GlobalWhitelistSet group)
-		{
-			return ClearMembers(group) && ClearUnblocked(group);
-		}
-
-		public bool ClearMembers(GlobalWhitelistSet group)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0;";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
-				uow.Complete();
-			}
-			//System.Console.WriteLine("Query Result: ",result);
-			return true;
-		}
-
-		public bool ClearMembers(GlobalWhitelistSet group, GlobalWhitelistType type)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = @"DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0 AND GlobalWhitelistItemSet.ItemPK IN
-					(SELECT Id FROM GlobalWhitelistItem WHERE GlobalWhitelistItem.Type = @p1);";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id, type);
-				uow.Complete();
-			}
-			return true;
-		}
-
-		public bool ClearUnblocked(GlobalWhitelistSet group)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = "DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0;";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
-				uow.Complete();
-			}
-			//System.Console.WriteLine("Query Result: ",result);
-			return true;
-		}
-		public bool ClearUnblocked(GlobalWhitelistSet group, UnblockedType type)
-		{
-			int result;
-			using (var uow = _db.UnitOfWork)
-			{
-				string sql = @"DELETE FROM GlobalUnblockedSet WHERE GlobalUnblockedSet.ListPK = @p0 AND GlobalUnblockedSet.UnblockedPK IN
-					(SELECT Id FROM UnblockedCmdOrMdl WHERE UnblockedCmdOrMdl.Type = @p1);";
-				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id, type);
-				uow.Complete();
-			}
-			return true;
-		}
-
-		#endregion Clear
-
-		#region Purge
-
-		public bool PurgeMember(GlobalWhitelistType type, ulong id)
-		{
-			using (var uow = _db.UnitOfWork)
-			{
-				uow._context.Set<GlobalWhitelistItem>().Remove( 
-					uow._context.Set<GlobalWhitelistItem>()
-					.Where( x => x.Type.Equals(type) )
-					.Where( x => x.ItemId.Equals(id) )
-					.FirstOrDefault()
-				);
-				uow.Complete();
-			}
-			return true;
-		}
-
-		public bool PurgeUnblocked(UnblockedType type, string name)
-		{
-			using (var uow = _db.UnitOfWork)
-			{
-				/*var bc = uow.BotConfig.GetOrCreate(set => set.Include(x => x.UnblockedCommands));
-				bc.UnblockedCommands.RemoveWhere(x => x.Name == itemName);
-				uow.Complete();*/ // this only sets the BotConfigId FK to null
-
-				// Delete the unblockedcmd record and all relation records
-				uow._context.Set<UnblockedCmdOrMdl>().Remove( 
-					uow._context.Set<UnblockedCmdOrMdl>()
-					.Where( x => x.Type.Equals(type) )
-					.Where( x => x.Name.Equals(name) )
-					.FirstOrDefault()
-				);
-				uow.Complete();
-			}
-			return true;
-		}
-
-		#endregion Purge
-
-		#region IsInGroup
-
-		public bool IsMemberInGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
+        public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
         {
-            var result = true;
+            string[] str = new string[ids.Length];
 
-            using (var uow = _db.UnitOfWork)
-            {
-                var temp = uow._context.Set<GlobalWhitelistItem>()
-					.Where( x => x.Type.Equals(type) )
-					.Where( x => x.ItemId.Equals(id) )
-					.Join(
-						uow._context.Set<GlobalWhitelistItemSet>(), 
-						i => i.Id, gi => gi.ItemPK,
-						(i,gi) => new {
-							i.ItemId,
-							gi.ListPK
-						})
-					.Where( y => y.ListPK.Equals(group.Id) )
-					.FirstOrDefault();
+            switch (type) {
+                case GlobalWhitelistType.User:
+                    for (var i = 0; i < ids.Length; i++) {
+					  str[i] = MentionUtils.MentionUser(ids[i]) + "\n\t" + ids[i].ToString();
+                    }
+                    break;
 
-                uow.Complete();
-                
-                if (temp != null) {
-                  result = true;
-                } else {
-                  result = false;
-                }
+                case GlobalWhitelistType.Channel:
+                    for (var i = 0; i < ids.Length; i++) {
+					  str[i] = MentionUtils.MentionChannel(ids[i]) + "\n\t" + ids[i].ToString();
+                    }
+                    break;
+
+                case GlobalWhitelistType.Server:
+                    for (var i = 0; i < ids.Length; i++) {
+						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
+                    	string name = (guild != null) ? guild.Name : "Null";
+						str[i] = $"[{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
+                    }
+                    break;
+
+                default:
+                    for (var i = 0; i < ids.Length; i++) {
+                      str[i] = ids[i].ToString();
+                    }
+                    break;
             }
-            return result;
+
+            return str;
         }
-		public bool IsUnblockedInGroup(string name, UnblockedType type, GlobalWhitelistSet group)
-		{
-			var result = true;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                var temp = uow._context.Set<UnblockedCmdOrMdl>()
-					.Where( x => x.Type.Equals(type) )
-					.Where( x => x.Name.Equals(name) )
-					.Join(
-						uow._context.Set<GlobalUnblockedSet>(), 
-						u => u.Id, gu => gu.UnblockedPK,
-						(u,gu) => new {
-							u.Name,
-							gu.ListPK
-						})
-					.Where( y => y.ListPK.Equals(group.Id) )
-					.FirstOrDefault();
-
-                uow.Complete();
-                
-                if (temp != null) {
-                  result = true;
-                } else {
-                  result = false;
-                }
-            }
-            return result;
-		}
-
-		#endregion IsInGroup
-	
-		public bool GetGroupNamesByMember(ulong id, GlobalWhitelistType type, int page, out string[] names, out int count)
+        public string GetNameOrMentionFromId(GlobalWhitelistType type, ulong id)
         {
-            names = null;
-            using (var uow = _db.UnitOfWork)
-            {
-				var allnames = uow._context.Set<GlobalWhitelistItem>()
-					.Where(i => i.Type.Equals(type))
-					.Where(i => i.ItemId.Equals(id))
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
-						i => i.Id, gi => gi.ItemPK,
-						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>(),
-						listPK => listPK, g => g.Id,
-						(listPK, g) => g);
-				
-				count = allnames.Count();
-				if (count <= 0) return false;
+            string str = "";
 
-				int numSkip = page*numPerPage;
-				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+            switch (type) {
+                case GlobalWhitelistType.User:
+					str = MentionUtils.MentionUser(id) + " " + id.ToString();
+                    break;
 
-				names = allnames
-					.OrderBy(g => g.ListName.ToLowerInvariant())
-					.Skip(numSkip)
-                	.Take(numPerPage)
-					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-					.ToArray();
+                case GlobalWhitelistType.Channel:
+					str = MentionUtils.MentionChannel(id) + " " + id.ToString();
+                    break;
 
-                uow.Complete();
+                case GlobalWhitelistType.Server:
+					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
+                    str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
+					break;
+
+                default:
+                    str = id.ToString();
+                    break;
             }
-            return true;
+
+            return str;
         }
-		public bool GetGroupNamesByUnblocked(string name, UnblockedType type, int page, out string[] names, out int count)
-		{
-			names = null;
-			count = 0;
 
-			// Get the item
-			UnblockedCmdOrMdl item;
-			bool exists = GetUbItemByNameType(name, type, out item);
-
-			if (!exists) return false;
-
-			using (var uow = _db.UnitOfWork)
-            {
-                // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
-                var allnames = uow._context.Set<GlobalWhitelistSet>()
-					.Join(
-						uow._context.Set<GlobalUnblockedSet>()
-							.Where(u => u.UnblockedPK.Equals(item.Id)), 
-						g => g.Id, gu => gu.ListPK,
-						// (group, relation) => (group.IsEnabled) ? enabledText + group.ListName : disabledText + group.ListName
-						(group, relation) => group);
-                uow.Complete();
-
-				count = allnames.Count();
-				if (count <= 0) return false;
-
-				int numSkip = page*numPerPage;
-				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
-
-				names = allnames
-					.OrderBy(g => g.ListName.ToLowerInvariant())
-					.Skip(numSkip)
-                	.Take(numPerPage)
-					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-					.ToArray();
-            }
-			return true;
-		}
+		#endregion Resolve ulong IDs
 
 	}
 }

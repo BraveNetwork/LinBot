@@ -734,7 +734,7 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
-                if (_service.GetAllNames(page, out string[] names, out int count)) {
+                if (_service.GetGroupNames(page, out string[] names, out int count)) {
 					int lastPage = (count - 1)/_service.numPerPage;
 					if (page > lastPage) page = lastPage;
                     var embed = new EmbedBuilder()
