@@ -1174,6 +1174,121 @@ namespace NadekoBot.Modules.Permissions
 
 			#endregion Whitelist Queries
 
+			#region User-Oriented
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task ListMyGWL(int page=1)
+            	=> _ListForMember(GlobalWhitelistType.User, Context.User.Id, page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public async Task ListContextGWL(int page=1)
+            {
+				if(--page < 0) return;
+
+				ulong idC = Context.Channel.Id;
+				ulong idS = Context.Guild.Id;
+
+				GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
+				GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+				
+				bool hasC = _service.GetGroupNamesByMember(idC, typeC, page, out string[] namesC, out int countC);
+				bool hasS = _service.GetGroupNamesByMember(idS, typeS, page, out string[] namesS, out int countS);
+
+				string serverStr = "*none*";
+				string channelStr = "*none*";
+
+				if (hasS) { serverStr = string.Join("\n",namesS); }
+				if (hasC) { channelStr = string.Join("\n",namesC); }
+
+				int lastServerPage = (countS - 1)/_service.numPerPage +1;
+				int lastChannelPage = (countC - 1)/_service.numPerPage +1;
+
+				int lastPage = System.Math.Max( lastServerPage, lastChannelPage );
+				page++;
+				if (page > lastPage) page = lastPage;
+				if (page > 1) {
+					if (hasS && page >= lastServerPage) serverStr += GetText("gwl_endlist", lastServerPage);
+					if (hasC && page >= lastChannelPage) channelStr += GetText("gwl_endlist", lastChannelPage);
+				}
+                
+				EmbedBuilder embed = new EmbedBuilder()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("gwl_list_bymember_ctx"))
+					.AddField(GetText("gwl_field_channel_ctx", 
+						countC, 
+						MentionUtils.MentionChannel(idC)), 
+						channelStr, true)
+					.AddField(GetText("gwl_field_server_ctx", 
+						countS, 
+						Context.Guild.Name), 
+						serverStr, true)
+					.WithFooter($"Page {page+1}/{lastPage+1}")
+					.WithOkColor();
+
+				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public Task IsMyGWL(string listName="")
+				=> _HasMember(GlobalWhitelistType.User, Context.User.Id, listName);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            public async Task IsContextGWL(string listName="")
+            {
+				// Return error if whitelist doesn't exist
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GlobalWhitelistSet group))
+                {
+					ulong idC = Context.Channel.Id;
+					ulong idS = Context.Guild.Id;
+
+					GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
+					GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+					
+                    bool hasC = _service.IsMemberInGroup(idC, typeC, group);
+					bool hasS = _service.IsMemberInGroup(idS, typeS, group);
+
+					if (hasC && hasS) {
+						await ReplyConfirmLocalized("gwl_is_member_context", 
+							Format.Code(typeS.ToString()), 
+							Context.Guild.Name, 
+							Format.Code(typeC.ToString()), 
+							MentionUtils.MentionChannel(idC), 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+					} else if (hasC) {
+						await ReplyConfirmLocalized("gwl_is_member", 
+							Format.Code(typeC.ToString()), 
+							MentionUtils.MentionChannel(idC), 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+					} else if (hasS) {
+						await ReplyConfirmLocalized("gwl_is_member", 
+							Format.Code(typeS.ToString()), 
+							Context.Guild.Name, 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+					} else {
+						await ReplyErrorLocalized("gwl_not_member_context", 
+							Format.Code(typeS.ToString()), 
+							Context.Guild.Name, 
+							Format.Code(typeC.ToString()), 
+							MentionUtils.MentionChannel(idC), 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+					}
+
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
+                    return;
+				}
+			}
+
+			#endregion User-Oriented
         }
     }
 }
