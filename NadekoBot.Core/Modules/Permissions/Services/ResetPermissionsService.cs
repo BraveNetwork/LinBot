@@ -48,33 +48,25 @@ namespace NadekoBot.Modules.Permissions.Services
 			try {
 				using (var uow = _db.UnitOfWork)
 				{
-					BotConfig gc;
 					string sql;
 
 					if (purge) { // Delete all members and unblocked
-						gc = uow.BotConfig.GetOrCreate(set => set
-							.Include(x => x.GlobalWhitelistGroups)
-							.Include(x => x.GlobalWhitelistMembers)
+						BotConfig gc = uow.BotConfig.GetOrCreate(set => set
 							.Include(x => x.UnblockedModules)
 							.Include(x => x.UnblockedCommands));
 						sql = "DELETE from GlobalWhitelistSet; DELETE from UnblockedCmdOrMdl; DELETE from GlobalWhitelistItem;";
 						// Unlink the members and unblocked collections
-						gc.GlobalWhitelistMembers.Clear();
 						gc.UnblockedCommands.Clear();
 						gc.UnblockedModules.Clear();
 						_globalPerms.UnblockedCommands.Clear();
 						_globalPerms.UnblockedModules.Clear();
+						// Finish up changes so we can do more things
+						uow._context.SaveChanges();
 
 					} else { // Just delete the groups
-						gc = uow.BotConfig.GetOrCreate(set => set
-							.Include(x => x.GlobalWhitelistGroups));
 						sql = "DELETE from GlobalWhitelistSet;";
 					}
 
-					// Unlink the whitelist groups
-					gc.GlobalWhitelistGroups.Clear();
-					// Finish up changes so we can do more things
-					uow._context.SaveChanges();
 					// Execute the sql query to delete all relevant table data
 					uow._context.Database.ExecuteSqlCommand(sql);
 

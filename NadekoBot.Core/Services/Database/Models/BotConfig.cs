@@ -7,8 +7,6 @@ namespace NadekoBot.Core.Services.Database.Models
     public class BotConfig : DbEntity
     {
         public HashSet<BlacklistItem> Blacklist { get; set; }
-        public HashSet<GlobalWhitelistItem> GlobalWhitelistMembers { get; set; }
-        public HashSet<GlobalWhitelistSet> GlobalWhitelistGroups { get; set; }
         public ulong BufferSize { get; set; } = 4000000;
         public bool ForwardMessages { get; set; } = true;
         public bool ForwardToAllOwners { get; set; } = true;

@@ -214,14 +214,22 @@ namespace NadekoBot.Modules.Permissions.Services
         {
             using (var uow = _db.UnitOfWork)
             {
-                var bc = uow.BotConfig.GetOrCreate(set => set
-                    .Include(x => x.GlobalWhitelistGroups));
+				// Old version that relies on maintaining a HashSet in memory
+                //var bc = uow.BotConfig.GetOrCreate(set => set
+                //    .Include(x => x.GlobalWhitelistGroups));
+				// var group = new GlobalWhitelistSet()
+                // {
+                //     ListName = name
+                // };
+                // bc.GlobalWhitelistGroups.Add(group); // Necessary for setting BotConfigId
 
-                var group = new GlobalWhitelistSet()
-                {
-                    ListName = name
-                };
-                bc.GlobalWhitelistGroups.Add(group); // Necessary for setting BotConfigId
+				// Get the necessary botconfig ID
+				var bcId = uow.BotConfig.GetOrCreate().Id;
+
+				uow._context.Database.ExecuteSqlCommand(
+					"INSERT INTO GlobalWhitelistSet ('BotConfigId', 'DateAdded', 'ListName') VALUES (@p0, datetime('now'), @p1);", 
+					bcId, 
+					name);
 
                 uow.Complete();
             }
