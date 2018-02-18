@@ -20,18 +20,20 @@ namespace NadekoBot.Modules.Permissions
         public class GlobalWhitelistCommands : NadekoSubmodule<GlobalWhitelistService>
         {
 			private GlobalPermissionService _perm;
+			private DiscordSocketClient _client;
 
 			public enum SyncMethod {
-				OR,
-				AND
+				OR = 0,
+				AND = 1
 			};
 
 			public const int MaxNumInput = 30;
 			public const int MaxNameLength = 20;
 
-            public GlobalWhitelistCommands(GlobalPermissionService perm)
+            public GlobalWhitelistCommands(GlobalPermissionService perm, DiscordSocketClient client)
             {
 				_perm = perm;
+				_client = client;
             }
 
 			#region Whitelist Utilities
@@ -448,68 +450,98 @@ namespace NadekoBot.Modules.Permissions
 			#endregion Add/Remove
 
 			#region RoleSync
-			
-			#region RoleSync Bulk
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GWLRoleSync(SyncMethod method, string listName="", params IRole[] roles)
-			{
-				if (roles.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
-                    return;
-				}
-				ulong[] ids = new ulong[roles.Length];
-				for (int i=0; i<roles.Length; i++) {
-					ids[i] = roles[i].Id;
-				}
-				await _RoleSync(method, listName, ids);
-				return;
-			}
+            public Task GWLRoleSync(SyncMethod method=0, string listName="", params IRole[] roles)
+				=> _RoleSync(method, listName, roles);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public Task GWLRoleSync(SyncMethod method, string listName="", params ulong[] ids)
-				=> _RoleSync(method, listName, ids);
-
-			private async Task _RoleSync(SyncMethod method, string listName, params ulong[] ids)
+			public async Task GWLRoleSync(SyncMethod method=0, string listName="", params ulong[] ids)
 			{
-				// If params is empty, report error
-				if (ids.Length < 1) {
-					await ReplyErrorLocalized("gwl_missing_params", Format.Code("Role")).ConfigureAwait(false);
-                    return;
-				}
-				// If params is too long, report error
 				if (ids.Length > MaxNumInput) {
 					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
 
-				await ReplyConfirmLocalized("You used a bulk RoleSync command!").ConfigureAwait(false);
-                return;
+				// Attempt to convert ids to roles
+				IGuild[] guilds = _client.Guilds.ToArray();
+				IRole[] roles = new IRole[ids.Length];
+				for (int i=0; i<ids.Length; i++) {
+					IRole role = null;
+					// Note: this is a terribly slow process when there are many many guilds...						
+					for (int g=0; g<10; g++) {
+						IRole roleMaybe = guilds[g].Roles.Where(r => r.Id.Equals(0)).FirstOrDefault();
+						if (roleMaybe != null) {
+							role = roleMaybe;
+							break;
+						}
+					}
+					if (role == null) {
+						await ReplyErrorLocalized("gwl_role_not_found", ids[i]).ConfigureAwait(false);
+						return;
+					}
+					roles[i] = role;
+				}
+				await _RoleSync(method, listName, roles);
+				return;
 			}
 
-			#endregion RoleSync Bulk
-
-			#region RoleSync Single
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public Task GWLRoleSync(IRole role, string listName="")
-				=> _RoleSync(role.Id, listName);
-			
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public Task GWLRoleSync(ulong id, string listName="")
-				=> _RoleSync(id, listName);
-			
-			private async Task _RoleSync(ulong id, string listName)
+			private async Task _RoleSync(SyncMethod method, string listName, params IRole[] roles)
 			{
-				await ReplyConfirmLocalized("You used a RoleSync command!").ConfigureAwait(false);
-                return;
-			}
+				// If params is empty, report error
+				if (roles.Length < 1) {
+					await ReplyErrorLocalized("gwl_missing_params", Format.Code("Role")).ConfigureAwait(false);
+                    return;
+				}
+				// If params is too long, report error
+				if (roles.Length > MaxNumInput) {
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
 
-			#endregion RoleSync Single
+				string listNameI = listName.ToLowerInvariant();
+				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
+
+					// Get first set of users
+					var userSet = await roles[0].GetMembersAsync();
+
+					// Determine the UserSet from the provided roles and syncmethod
+					if (method.Equals(SyncMethod.AND)) {
+						// Desired UserSet = RoleA.Interesect(RoleB).Intersect(RoleC) etc
+						for (int i=1; i<roles.Length; i++) {
+							var roleUsers = await roles[i].GetMembersAsync();
+							userSet = userSet.Intersect(roleUsers);
+						}
+					} else {
+						// Desired UserSet = RoleA.Union(RoleB).Union(RoleC) etc
+						for (int i=1; i<roles.Length; i++) {
+							var roleUsers = await roles[i].GetMembersAsync();
+							userSet = userSet.Union(roleUsers);
+						}
+					}
+
+					// Extract the IDs from the userSet
+					ulong[] ids = new ulong[userSet.Count()];
+					for (int i=0; i < userSet.Count(); i++) {
+						ids[i] = userSet.ElementAt(i).Id;
+					}
+
+					// Perform the UserSync
+					if (_service.SyncUsersToGroup(group, ids)) {
+						await ReplyConfirmLocalized(GetText("gwl_rolesync_success", Format.Bold(group.ListName), roles.Count())).ConfigureAwait(false);
+						return;
+					} else {
+						await ReplyErrorLocalized(GetText("gwl_rolesync_fail", Format.Bold(group.ListName), roles.Count())).ConfigureAwait(false);
+						return;
+					}
+
+				} else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+					return;
+				}
+			}
 
 			#endregion RoleSync
 
