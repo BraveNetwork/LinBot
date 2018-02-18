@@ -1,4 +1,6 @@
 {
+  "permissions_blocker_embed_title": "Global Permissions (`.cmds perm`)",
+  "permissions_blocker_embed_desc": "The {0} {1} is globally disabled by the bot owners and will not work on any servers managed by this bot.",
   "permissions_gwl_name_error": "Improper Input! A global whitelist name must have at least one character and no more than {1} characters. The name you provided: {0}",
   "permissions_gwl_not_exists": "The whitelist named {0} does not exist!",
   "permissions_gwl_field_invalid_member": "Invalid FieldType! Please use one of the following: Server (s), Channel (c), or User (u).",
