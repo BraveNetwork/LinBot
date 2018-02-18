@@ -45,7 +45,7 @@
   "permissions_gwl_field_unknown": "Unknown ({0})",
   "permissions_gwl_field_status": "Status {0}",
   "permissions_gwl_field_channel_ctx": "Lists for {1} ({0})",
-  "permissions_gwl_field_server_ctx": "Lists for {2} ({0})",
+  "permissions_gwl_field_server_ctx": "Lists for {1} ({0})",
   "permissions_gwl_endlist": "\n**End of List** (Page {0})",
   "permissions_gwl_is_member": "The {0} member {1} does belong to whitelist {2}.",
   "permissions_gwl_not_member": "The {0} member {1} does NOT belong to whitelist {2}. Try `.h .gwladdrm` to change this.",
