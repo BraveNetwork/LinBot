@@ -503,6 +503,8 @@ namespace NadekoBot.Modules.Permissions
 
 				string listNameI = listName.ToLowerInvariant();
 				if (_service.GetGroupByName(listNameI, out GlobalWhitelistSet group)) {
+					
+					// TODO: Ensure that role's user list is not empty when applying set ops
 
 					// Get first set of users
 					var userSet = await roles[0].GetMembersAsync();
@@ -801,15 +803,15 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GlobalWhitelistInfo(GlobalWhitelistService.FieldType field, string listName="", int page=1)
-				=> _GlobalWhitelistInfo(field, listName, page);
+            public Task GWLInfo(GlobalWhitelistService.FieldType field, string listName="", int page=1)
+				=> _Info(field, listName, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GlobalWhitelistInfo(string listName="", int page=1)
-				=> _GlobalWhitelistInfo(GlobalWhitelistService.FieldType.ALL, listName, page);
+            public Task GWLInfo(string listName="", int page=1)
+				=> _Info(GlobalWhitelistService.FieldType.ALL, listName, page);
 
-			private async Task _GlobalWhitelistInfo(GlobalWhitelistService.FieldType field, string listName, int page)
+			private async Task _Info(GlobalWhitelistService.FieldType field, string listName, int page)
 			{
 				if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
@@ -1245,14 +1247,14 @@ namespace NadekoBot.Modules.Permissions
                 
 				EmbedBuilder embed = new EmbedBuilder()
 					.WithTitle(GetText("gwl_title"))
-					.WithDescription(GetText("gwl_list_bymember_ctx"))
-					.AddField(GetText("gwl_field_channel_ctx", 
-						countC, 
-						MentionUtils.MentionChannel(idC)), 
+					.WithDescription(GetText("gwl_list_bymember_ctx",
+						Format.Code(typeS.ToString()),
+						Context.Guild.Name,
+						Format.Code(typeC.ToString()),
+						MentionUtils.MentionChannel(idC)))
+					.AddField(GetText("gwl_field_channel_ctx", countC), 
 						channelStr, true)
-					.AddField(GetText("gwl_field_server_ctx", 
-						countS, 
-						Context.Guild.Name), 
+					.AddField(GetText("gwl_field_server_ctx", countS), 
 						serverStr, true)
 					.WithFooter($"Page {page+1}/{lastPage+1}")
 					.WithOkColor();

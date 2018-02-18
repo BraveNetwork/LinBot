@@ -404,7 +404,7 @@ namespace NadekoBot.Modules.Permissions
 				string desc = "";
 
 				if (yesC && yesS) {
-					desc = GetText("gwl_is_unblocked_ctx", 
+					desc = GetText("gub_is_unblocked_ctx", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
 						Format.Code(typeS.ToString()), 
@@ -412,19 +412,19 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(typeC.ToString()), 
 						MentionUtils.MentionChannel(idC));
 				} else if (yesC) {
-					desc = GetText("gwl_is_unblocked", 
+					desc = GetText("gub_is_unblocked", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
 						Format.Code(typeC.ToString()), 
 						MentionUtils.MentionChannel(idC));
 				} else if (yesS) {
-					desc = GetText("gwl_is_unblocked", 
+					desc = GetText("gub_is_unblocked", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
 						Format.Code(typeS.ToString()), 
 						Context.Guild.Name);
 				} else {
-					await ReplyErrorLocalized("gwl_not_unblocked_ctx", 
+					await ReplyErrorLocalized("gub_not_unblocked_ctx", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
 						Format.Code(typeS.ToString()), 
