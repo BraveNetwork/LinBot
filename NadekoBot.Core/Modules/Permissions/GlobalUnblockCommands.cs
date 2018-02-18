@@ -316,14 +316,18 @@ namespace NadekoBot.Modules.Permissions
 				bool hasMdls = hasMdlsC || hasMdlsS;
 
 				// Combine the lists and remove dupes
-				string[] cmds = cmdsC.Union(cmdsS).ToArray();
-				string[] mdls = mdlsC.Union(mdlsS).ToArray();
+				string[] cmds = (hasCmdsC && hasCmdsS) ? cmdsC.Union(cmdsS).ToArray() :
+					(hasCmdsC) ? cmdsC : 
+					(hasCmdsS) ? cmdsS : new string[] {};
+				string[] mdls = (hasMdlsC && hasMdlsS) ? cmdsC.Union(mdlsS).ToArray() :
+					(hasMdlsC) ? mdlsC : 
+					(hasMdlsS) ? mdlsS : new string[] {};
 
 				int cmdCount = cmds.Length;
 				int mdlCount = mdls.Length;
 
-				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
-				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+				string strCmd = (cmdCount>0) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (mdlCount>0) ? string.Join("\n", mdls) : "*no such modules*";
 
 				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
 				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
