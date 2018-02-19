@@ -43,16 +43,6 @@
       "{0}gwladdrm Rem usr MyListName 123123123 456456456 789789789"
     ]
   },
-  "gwlrolesync": {
-    "cmd": "gwlrole gwlsync",
-    "desc": "Sync the users of the global whitelist named MyListName with the users of the provided @Roles (max of 30 roles at a time). Specify if a user must belong to all roles (AND) or simply any one of the roles (OR). Default is OR. \n**NOTE 1**: Providing Role IDs has the potential to be EXTREMELY SLOW.\n**NOTE 2**: You will need to run this command whenever the role membership changes if you want the whitelist users to always match the role users.",
-    "usage": [
-      "{0}gwlrole MyListName @Role",
-      "{0}gwlrole MyListName 123123123",
-      "{0}gwlrole OR MyListName @RoleA @RoleB @RoleC",
-      "{0}gwlrole AND MyListName 123123123 456456456 789789789"
-    ]
-  },
   "gwlclear": {
     "cmd": "gwlclear",
     "desc": "Remove all @User/#Channel/Server members AND all unblocked .Commands/Modules from the global whitelist named MyListName. If you don't want MyListName to be completely empty, specify the particular data type to remove: Unblocked (ub), Command (cmd), Module (mdl), Member (mem), User (u), Channel (c), Server (s).",

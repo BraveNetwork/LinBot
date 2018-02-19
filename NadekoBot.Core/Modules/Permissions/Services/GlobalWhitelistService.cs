@@ -340,19 +340,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#endregion Add/Remove
 
-		#region RoleSync
-
-		// TODO
-		public bool SyncUsersToGroup(GlobalWhitelistSet group, ulong[] newIDs)
-		{
-			// ExistingUsers is from LINQ op
-			// UsersToAdd = UserSet.Exclude(ExistingUsers)
-			// UsersToRemove = ExistingUsers.Exclude(UserSet)
-			return false;
-		}
-
-		#endregion RoleSync
-
 		#region Clear
 
 		public bool ClearAll(GlobalWhitelistSet group)
