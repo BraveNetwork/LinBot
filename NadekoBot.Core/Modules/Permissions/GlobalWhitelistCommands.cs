@@ -204,6 +204,98 @@ namespace NadekoBot.Modules.Permissions
 
 			#region Add/Remove
 
+			#region Add/Remove FieldType
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public async Task GWLAddRemove(AddRemove action, string listName="", GlobalWhitelistService.FieldType field=0, params ulong[] ids)
+			{
+				// If params is empty, report error
+				if (ids.Length < 1) {
+					await ReplyErrorLocalized("gwl_missing_params", Format.Code(field.ToString())).ConfigureAwait(false);
+                    return;
+				}
+				switch(field) {
+					case GlobalWhitelistService.FieldType.SERVER: 
+						await _AddRemove(action, GWLItemType.Server, listName, ids);
+						return;
+					case GlobalWhitelistService.FieldType.CHANNEL: 
+						await _AddRemove(action, GWLItemType.Channel, listName, ids);
+						return;
+					case GlobalWhitelistService.FieldType.USER: 
+						await _AddRemove(action, GWLItemType.User, listName, ids);
+						return;
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _AddRemoveRoles(action, listName, ids);
+						return;
+					default: 
+						// Not valid
+						await ReplyErrorLocalized("gwl_field_invalid_member", Format.Bold(field.ToString())).ConfigureAwait(false);
+						return;
+				}
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public async Task GWLAddRemove(AddRemove action, string listName="", GlobalWhitelistService.FieldType field=0, params string[] names)
+			{
+				// If params is empty, report error
+				if (names.Length < 1) {
+					await ReplyErrorLocalized("gwl_missing_params", Format.Code(field.ToString())).ConfigureAwait(false);
+                    return;
+				}
+				switch(field) {
+					case GlobalWhitelistService.FieldType.COMMAND: 
+						await _AddRemove(action, UnblockedType.Command, listName, names);
+						return;
+					case GlobalWhitelistService.FieldType.MODULE: 
+						await _AddRemove(action, UnblockedType.Module, listName, names);
+						return;
+					default: 
+						// Not valid
+						await ReplyErrorLocalized("gwl_field_invalid_unblock", Format.Bold(field.ToString())).ConfigureAwait(false);
+						return;
+				}
+			}
+			
+			#endregion Add/Remove FieldType
+
+			#region Add/Rem Unblocked
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public async Task GWLAddRemove(AddRemove action, string listName="", params CommandInfo[] cmds)
+			{
+				if (cmds.Length > MaxNumInput) {
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Command"), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
+				string[] names = new string[cmds.Length];
+				for (int i=0; i<cmds.Length; i++) {
+					names[i] = cmds[i].Name.ToLowerInvariant();
+				}
+				await _AddRemove(action, UnblockedType.Command, listName, names);
+				return;
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public async Task GWLAddRemove(AddRemove action, string listName="", params ModuleInfo[] mdls)
+			{
+				if (mdls.Length > MaxNumInput) {
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Module"), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
+				string[] names = new string[mdls.Length];
+				for (int i=0; i<mdls.Length; i++) {
+					names[i] = mdls[i].Name.ToLowerInvariant();
+				}
+				await _AddRemove(action, UnblockedType.Module, listName, names);
+				return;
+			}
+
+			#endregion Add/Rem Unblocked
+
 			#region Add/Rem Members
 
 			[NadekoCommand, Usage, Description, Aliases]
@@ -275,98 +367,6 @@ namespace NadekoBot.Modules.Permissions
 			}
 
 			#endregion Add/Rem Members
-
-			#region Add/Rem Unblocked
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", params CommandInfo[] cmds)
-			{
-				if (cmds.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Command"), MaxNumInput).ConfigureAwait(false);
-                    return;
-				}
-				string[] names = new string[cmds.Length];
-				for (int i=0; i<cmds.Length; i++) {
-					names[i] = cmds[i].Name.ToLowerInvariant();
-				}
-				await _AddRemove(action, UnblockedType.Command, listName, names);
-				return;
-			}
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", params ModuleInfo[] mdls)
-			{
-				if (mdls.Length > MaxNumInput) {
-					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Module"), MaxNumInput).ConfigureAwait(false);
-                    return;
-				}
-				string[] names = new string[mdls.Length];
-				for (int i=0; i<mdls.Length; i++) {
-					names[i] = mdls[i].Name.ToLowerInvariant();
-				}
-				await _AddRemove(action, UnblockedType.Module, listName, names);
-				return;
-			}
-
-			#endregion Add/Rem Unblocked
-
-			#region Add/Remove FieldType
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", GlobalWhitelistService.FieldType field=0, params ulong[] ids)
-			{
-				// If params is empty, report error
-				if (ids.Length < 1) {
-					await ReplyErrorLocalized("gwl_missing_params", Format.Code(field.ToString())).ConfigureAwait(false);
-                    return;
-				}
-				switch(field) {
-					case GlobalWhitelistService.FieldType.SERVER: 
-						await _AddRemove(action, GWLItemType.Server, listName, ids);
-						return;
-					case GlobalWhitelistService.FieldType.CHANNEL: 
-						await _AddRemove(action, GWLItemType.Channel, listName, ids);
-						return;
-					case GlobalWhitelistService.FieldType.USER: 
-						await _AddRemove(action, GWLItemType.User, listName, ids);
-						return;
-					case GlobalWhitelistService.FieldType.ROLE: 
-						await _AddRemoveRoles(action, listName, ids);
-						return;
-					default: 
-						// Not valid
-						await ReplyErrorLocalized("gwl_field_invalid_member", Format.Bold(field.ToString())).ConfigureAwait(false);
-						return;
-				}
-			}
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-			public async Task GWLAddRemove(AddRemove action, string listName="", GlobalWhitelistService.FieldType field=0, params string[] names)
-			{
-				// If params is empty, report error
-				if (names.Length < 1) {
-					await ReplyErrorLocalized("gwl_missing_params", Format.Code(field.ToString())).ConfigureAwait(false);
-                    return;
-				}
-				switch(field) {
-					case GlobalWhitelistService.FieldType.COMMAND: 
-						await _AddRemove(action, UnblockedType.Command, listName, names);
-						return;
-					case GlobalWhitelistService.FieldType.MODULE: 
-						await _AddRemove(action, UnblockedType.Module, listName, names);
-						return;
-					default: 
-						// Not valid
-						await ReplyErrorLocalized("gwl_field_invalid_unblock", Format.Bold(field.ToString())).ConfigureAwait(false);
-						return;
-				}
-			}
-			
-			#endregion Add/Remove FieldType
 
 			private async Task _AddRemove(AddRemove action, GWLItemType type, string listName="", params ulong[] ids)
 			{
@@ -875,28 +875,29 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
-                if (_service.GetGroupNames(page, out string[] names, out int count)) {
-					int lastPage = (count - 1)/_service.numPerPage;
+				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeMem = _service.GetGroupNames(GWLType.Member, page, out string[] namesM, out int countM);
+				bool hasTypeRole = _service.GetGroupNames(GWLType.Role, page, out string[] namesR, out int countR);
+
+				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
+				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
+				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
+
+                if (hasTypeAll || hasTypeMem || hasTypeRole) {
+					int lastAPage = (countA - 1)/_service.numPerPage;
+					int lastMPage = (countM - 1)/_service.numPerPage;
+					int lastRPage = (countR - 1)/_service.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, System.Math.Max(lastMPage,lastRPage));
 					if (page > lastPage) page = lastPage;
                     var embed = new EmbedBuilder()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list"))
-						.AddField(GetText("gwl_field_title", count), string.Join("\n", names))
+						.AddField(GetText("gwl_field_title_all", countA), strA)
+						.AddField(GetText("gwl_field_title_mem", countM), strM)
+						.AddField(GetText("gwl_field_title_role", countR), strR)
 						.WithFooter($"Page {page+1}/{lastPage+1}")
 						.WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
-
-					// await Context.Channel.SendPaginatedConfirmAsync(
-					// 	(DiscordSocketClient)Context.Client, page,
-					// 	(curPage) => {
-					// 		_service.GetAllNames(curPage, out string[] _names, out int _count);
-					// 		return new EmbedBuilder()
-					// 			.WithTitle(GetText("gwl_title"))
-					// 			.WithDescription(GetText("gwl_list"))
-					// 			.AddField(GetText("gwl_titlefield"), string.Join("\n", _names))
-					// 			.WithOkColor();
-					// 	},
-					// 	count, _service.numPerPage);
 
                     return;
                 } 
@@ -1327,16 +1328,29 @@ namespace NadekoBot.Modules.Permissions
             private async Task _ListForMember(GWLItemType type, ulong id, int page)
             {
                 if(--page < 0) return;
+
+				bool hasTypeAll = _service.GetGroupNamesByMember(id, type, GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeMem = _service.GetGroupNamesByMember(id, type, GWLType.Member, page, out string[] namesM, out int countM);
+				bool hasTypeRole = _service.GetGroupNamesByMember(id, type, GWLType.Role, page, out string[] namesR, out int countR);
+
+				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
+				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
+				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
                 
-                if (_service.GetGroupNamesByMember(id, type, page, out string[] names, out int count)) {
-					int lastPage = (count - 1)/_service.numPerPage;
+                if (hasTypeAll || hasTypeMem || hasTypeRole) {
+					int lastAPage = (countA - 1)/_service.numPerPage;
+					int lastMPage = (countM - 1)/_service.numPerPage;
+					int lastRPage = (countR - 1)/_service.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, System.Math.Max(lastMPage,lastRPage));
 					if (page > lastPage) page = lastPage;
                     EmbedBuilder embed = new EmbedBuilder()
-                      .WithTitle(GetText("gwl_title"))
-                      .WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)))
-                      .AddField(GetText("gwl_field_title", count), string.Join("\n", names))
-                      .WithFooter($"Page {page+1}/{lastPage+1}")
-                      .WithOkColor();
+                      	.WithTitle(GetText("gwl_title"))
+                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)))
+                      	.AddField(GetText("gwl_field_title_all", countA), strA)
+						.AddField(GetText("gwl_field_title_mem", countM), strM)
+						.AddField(GetText("gwl_field_title_role", countR), strR)
+                      	.WithFooter($"Page {page+1}/{lastPage+1}")
+                      	.WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                     return;
                 } else {
@@ -1349,14 +1363,27 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
-				if (_service.GetGroupNamesByUnblocked(name,type,page, out string[] names, out int count)) {
-					int lastPage = (count - 1)/_service.numPerPage;
+				bool hasTypeAll = _service.GetGroupNamesByUnblocked(name, type, GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeMem = _service.GetGroupNamesByUnblocked(name, type, GWLType.Member, page, out string[] namesM, out int countM);
+				bool hasTypeRole = _service.GetGroupNamesByUnblocked(name, type, GWLType.Role, page, out string[] namesR, out int countR);
+
+				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
+				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
+				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
+
+				if (hasTypeAll || hasTypeMem || hasTypeRole) {
+					int lastAPage = (countA - 1)/_service.numPerPage;
+					int lastMPage = (countM - 1)/_service.numPerPage;
+					int lastRPage = (countR - 1)/_service.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, System.Math.Max(lastMPage,lastRPage));
 					if (page > lastPage) page = lastPage;
 					var embed = new EmbedBuilder()
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), Format.Bold(name)))
-						.AddField(GetText("gwl_field_title", count), string.Join("\n", names), true)
+						.AddField(GetText("gwl_field_title_all", countA), strA)
+						.AddField(GetText("gwl_field_title_mem", countM), strM)
+						.AddField(GetText("gwl_field_title_role", countR), strR)
 						.WithFooter($"Page {page+1}/{lastPage+1}");
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1404,10 +1431,6 @@ namespace NadekoBot.Modules.Permissions
 				int lastPage = System.Math.Max( lastServerPage, lastChannelPage );
 				page++;
 				if (page > lastPage) page = lastPage;
-				if (page > 1) {
-					if (hasS && page >= lastServerPage) serverStr += GetText("gwl_endlist", lastServerPage);
-					if (hasC && page >= lastChannelPage) channelStr += GetText("gwl_endlist", lastChannelPage);
-				}
                 
 				EmbedBuilder embed = new EmbedBuilder()
 					.WithTitle(GetText("gwl_title"))
