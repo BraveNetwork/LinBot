@@ -13,8 +13,8 @@ using System;
 namespace NadekoBot.Migrations
 {
     [DbContext(typeof(NadekoContext))]
-    [Migration("20180217185411_Create_GWLModelsNoHashSet")]
-    partial class Create_GWLModelsNoHashSet
+    [Migration("20180220013548_Create_GWLModelsWithType")]
+    partial class Create_GWLModelsWithType
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -615,57 +615,6 @@ namespace NadekoBot.Migrations
                     b.ToTable("GlobalUnblockedSet");
                 });
 
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime?>("DateAdded");
-
-                    b.Property<ulong>("ItemId");
-
-                    b.Property<int>("Type");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GlobalWhitelistItem");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItemSet", b =>
-                {
-                    b.Property<int>("ListPK");
-
-                    b.Property<int>("ItemPK");
-
-                    b.HasKey("ListPK", "ItemPK");
-
-                    b.HasIndex("ItemPK");
-
-                    b.ToTable("GlobalWhitelistItemSet");
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime?>("DateAdded");
-
-                    b.Property<bool>("IsEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("ListName")
-                        .HasMaxLength(20);
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ListName")
-                        .IsUnique();
-
-                    b.ToTable("GlobalWhitelistSet");
-                });
-
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GuildConfig", b =>
                 {
                     b.Property<int>("Id")
@@ -777,6 +726,69 @@ namespace NadekoBot.Migrations
                     b.HasIndex("GuildConfigId");
 
                     b.ToTable("GuildRepeater");
+                });
+
+            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GWLItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime?>("DateAdded")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<ulong>("ItemId");
+
+                    b.Property<ulong>("RoleServerId")
+                        .HasDefaultValue(0ul);
+
+                    b.Property<int>("Type");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GWLItem");
+                });
+
+            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GWLItemSet", b =>
+                {
+                    b.Property<int>("ListPK");
+
+                    b.Property<int>("ItemPK");
+
+                    b.HasKey("ListPK", "ItemPK");
+
+                    b.HasIndex("ItemPK");
+
+                    b.ToTable("GWLItemSet");
+                });
+
+            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GWLSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime?>("DateAdded")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("datetime('now')");
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("ListName")
+                        .IsRequired()
+                        .HasMaxLength(20);
+
+                    b.Property<int>("Type")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ListName")
+                        .IsUnique();
+
+                    b.ToTable("GWLSet");
                 });
 
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.IgnoredLogChannel", b =>
@@ -1495,9 +1507,12 @@ namespace NadekoBot.Migrations
 
                     b.Property<int?>("BotConfigId1");
 
-                    b.Property<DateTime?>("DateAdded");
+                    b.Property<DateTime?>("DateAdded")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("datetime('now')");
 
-                    b.Property<string>("Name");
+                    b.Property<string>("Name")
+                        .IsRequired();
 
                     b.Property<int>("Type");
 
@@ -1949,7 +1964,7 @@ namespace NadekoBot.Migrations
 
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalUnblockedSet", b =>
                 {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", "List")
+                    b.HasOne("NadekoBot.Core.Services.Database.Models.GWLSet", "List")
                         .WithMany("GlobalUnblockedSets")
                         .HasForeignKey("ListPK")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -1957,19 +1972,6 @@ namespace NadekoBot.Migrations
                     b.HasOne("NadekoBot.Core.Services.Database.Models.UnblockedCmdOrMdl", "CmdOrMdl")
                         .WithMany("GlobalUnblockedSets")
                         .HasForeignKey("UnblockedPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItemSet", b =>
-                {
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistItem", "Item")
-                        .WithMany("GlobalWhitelistItemSets")
-                        .HasForeignKey("ItemPK")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("NadekoBot.Core.Services.Database.Models.GlobalWhitelistSet", "List")
-                        .WithMany("GlobalWhitelistItemSets")
-                        .HasForeignKey("ListPK")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -1989,6 +1991,19 @@ namespace NadekoBot.Migrations
                     b.HasOne("NadekoBot.Core.Services.Database.Models.GuildConfig")
                         .WithMany("GuildRepeaters")
                         .HasForeignKey("GuildConfigId");
+                });
+
+            modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.GWLItemSet", b =>
+                {
+                    b.HasOne("NadekoBot.Core.Services.Database.Models.GWLItem", "Item")
+                        .WithMany("GWLItemSets")
+                        .HasForeignKey("ItemPK")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("NadekoBot.Core.Services.Database.Models.GWLSet", "List")
+                        .WithMany("GWLItemSets")
+                        .HasForeignKey("ListPK")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("NadekoBot.Core.Services.Database.Models.IgnoredLogChannel", b =>

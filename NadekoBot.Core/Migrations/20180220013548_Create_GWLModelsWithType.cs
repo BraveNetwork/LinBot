@@ -4,38 +4,40 @@ using System.Collections.Generic;
 
 namespace NadekoBot.Migrations
 {
-    public partial class Create_GWLModelsNoHashSet : Migration
+    public partial class Create_GWLModelsWithType : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "GlobalWhitelistItem",
+                name: "GWLItem",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    DateAdded = table.Column<DateTime>(nullable: true),
+                    DateAdded = table.Column<DateTime>(nullable: true, defaultValueSql: "datetime('now')"),
                     ItemId = table.Column<ulong>(nullable: false),
+                    RoleServerId = table.Column<ulong>(nullable: false, defaultValue: 0ul),
                     Type = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GlobalWhitelistItem", x => x.Id);
+                    table.PrimaryKey("PK_GWLItem", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "GlobalWhitelistSet",
+                name: "GWLSet",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    DateAdded = table.Column<DateTime>(nullable: true),
+                    DateAdded = table.Column<DateTime>(nullable: true, defaultValueSql: "datetime('now')"),
                     IsEnabled = table.Column<bool>(nullable: false, defaultValue: true),
-                    ListName = table.Column<string>(maxLength: 20, nullable: true)
+                    ListName = table.Column<string>(maxLength: 20, nullable: false),
+                    Type = table.Column<int>(nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GlobalWhitelistSet", x => x.Id);
+                    table.PrimaryKey("PK_GWLSet", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -46,8 +48,8 @@ namespace NadekoBot.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     BotConfigId = table.Column<int>(nullable: true),
                     BotConfigId1 = table.Column<int>(nullable: true),
-                    DateAdded = table.Column<DateTime>(nullable: true),
-                    Name = table.Column<string>(nullable: true),
+                    DateAdded = table.Column<DateTime>(nullable: true, defaultValueSql: "datetime('now')"),
+                    Name = table.Column<string>(nullable: false),
                     Type = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -68,7 +70,7 @@ namespace NadekoBot.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "GlobalWhitelistItemSet",
+                name: "GWLItemSet",
                 columns: table => new
                 {
                     ListPK = table.Column<int>(nullable: false),
@@ -76,17 +78,17 @@ namespace NadekoBot.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GlobalWhitelistItemSet", x => new { x.ListPK, x.ItemPK });
+                    table.PrimaryKey("PK_GWLItemSet", x => new { x.ListPK, x.ItemPK });
                     table.ForeignKey(
-                        name: "FK_GlobalWhitelistItemSet_GlobalWhitelistItem_ItemPK",
+                        name: "FK_GWLItemSet_GWLItem_ItemPK",
                         column: x => x.ItemPK,
-                        principalTable: "GlobalWhitelistItem",
+                        principalTable: "GWLItem",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_GlobalWhitelistItemSet_GlobalWhitelistSet_ListPK",
+                        name: "FK_GWLItemSet_GWLSet_ListPK",
                         column: x => x.ListPK,
-                        principalTable: "GlobalWhitelistSet",
+                        principalTable: "GWLSet",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -102,9 +104,9 @@ namespace NadekoBot.Migrations
                 {
                     table.PrimaryKey("PK_GlobalUnblockedSet", x => new { x.ListPK, x.UnblockedPK });
                     table.ForeignKey(
-                        name: "FK_GlobalUnblockedSet_GlobalWhitelistSet_ListPK",
+                        name: "FK_GlobalUnblockedSet_GWLSet_ListPK",
                         column: x => x.ListPK,
-                        principalTable: "GlobalWhitelistSet",
+                        principalTable: "GWLSet",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -121,13 +123,13 @@ namespace NadekoBot.Migrations
                 column: "UnblockedPK");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GlobalWhitelistItemSet_ItemPK",
-                table: "GlobalWhitelistItemSet",
+                name: "IX_GWLItemSet_ItemPK",
+                table: "GWLItemSet",
                 column: "ItemPK");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GlobalWhitelistSet_ListName",
-                table: "GlobalWhitelistSet",
+                name: "IX_GWLSet_ListName",
+                table: "GWLSet",
                 column: "ListName",
                 unique: true);
 
@@ -148,16 +150,16 @@ namespace NadekoBot.Migrations
                 name: "GlobalUnblockedSet");
 
             migrationBuilder.DropTable(
-                name: "GlobalWhitelistItemSet");
+                name: "GWLItemSet");
 
             migrationBuilder.DropTable(
                 name: "UnblockedCmdOrMdl");
 
             migrationBuilder.DropTable(
-                name: "GlobalWhitelistItem");
+                name: "GWLItem");
 
             migrationBuilder.DropTable(
-                name: "GlobalWhitelistSet");
+                name: "GWLSet");
         }
     }
 }

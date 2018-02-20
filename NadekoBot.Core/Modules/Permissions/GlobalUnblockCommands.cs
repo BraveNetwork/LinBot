@@ -78,13 +78,13 @@ namespace NadekoBot.Modules.Permissions
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
-						await _GUBForMember(GlobalWhitelistType.Server, id, page);
+						await _GUBForMember(GWLItemType.Server, id, page);
 						return;
 					case GlobalWhitelistService.FieldType.CHANNEL: 
-						await _GUBForMember(GlobalWhitelistType.Channel, id, page);
+						await _GUBForMember(GWLItemType.Channel, id, page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _GUBForMember(GlobalWhitelistType.User, id, page);
+						await _GUBForMember(GWLItemType.User, id, page);
 						return;
 					default: 
 						// Not valid
@@ -98,21 +98,21 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBForMember(IGuild server, int page=1)
-				=> _GUBForMember(GlobalWhitelistType.Server, server.Id, page);
+				=> _GUBForMember(GWLItemType.Server, server.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBForMember(ITextChannel channel, int page=1)
-				=> _GUBForMember(GlobalWhitelistType.Channel, channel.Id, page);
+				=> _GUBForMember(GWLItemType.Channel, channel.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBForMember(IUser user, int page=1)
-				=> _GUBForMember(GlobalWhitelistType.User, user.Id, page);
+				=> _GUBForMember(GWLItemType.User, user.Id, page);
 
 			#endregion GUBFor Member
 
-			private async Task _GUBForMember(GlobalWhitelistType type, ulong id, int page)
+			private async Task _GUBForMember(GWLItemType type, ulong id, int page)
 			{
 				if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
@@ -166,13 +166,13 @@ namespace NadekoBot.Modules.Permissions
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
-						await _GUBCheck(GlobalWhitelistType.Server, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.Server, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.CHANNEL: 
-						await _GUBCheck(GlobalWhitelistType.Channel, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.Channel, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _GUBCheck(GlobalWhitelistType.User, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.User, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 						return;
 					default: 
 						// Not valid
@@ -187,13 +187,13 @@ namespace NadekoBot.Modules.Permissions
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
-						await _GUBCheck(GlobalWhitelistType.Server, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.Server, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.CHANNEL: 
-						await _GUBCheck(GlobalWhitelistType.Channel, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.Channel, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _GUBCheck(GlobalWhitelistType.User, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+						await _GUBCheck(GWLItemType.User, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 						return;
 					default: 
 						// Not valid
@@ -209,17 +209,17 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(IGuild server, CommandInfo cmd, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.Server, server.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.Server, server.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(ITextChannel channel, CommandInfo cmd, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.Channel, channel.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.Channel, channel.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(IUser user, CommandInfo cmd, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.User, user.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.User, user.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Command
 
@@ -228,21 +228,21 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(IGuild server, ModuleInfo mdl, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.Server, server.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.Server, server.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(ITextChannel channel, ModuleInfo mdl, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.Channel, channel.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.Channel, channel.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBCheck(IUser user, ModuleInfo mdl, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.User, user.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.User, user.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Module
 
-			private async Task _GUBCheck(GlobalWhitelistType memType, ulong memID, UnblockedType ubType, string ubName, int page=1)
+			private async Task _GUBCheck(GWLItemType memType, ulong memID, UnblockedType ubType, string ubName, int page=1)
 			{
 				if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
@@ -285,7 +285,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task ListMyGUB(int page=1)
-            	=> _GUBForMember(GlobalWhitelistType.User, Context.User.Id, page);
+            	=> _GUBForMember(GWLItemType.User, Context.User.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task ListContextGUB(int page=1)
@@ -302,8 +302,8 @@ namespace NadekoBot.Modules.Permissions
 				ulong idC = Context.Channel.Id;
 				ulong idS = Context.Guild.Id;
 
-				GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
-				GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+				GWLItemType typeC = GWLItemType.Channel;
+				GWLItemType typeS = GWLItemType.Server;
 
 				// Send list of all unblocked modules/commands and number of lists for each
 				bool hasCmdsC = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, idC, typeC, page, out string[] cmdsC, out int cmdCountC);
@@ -357,11 +357,11 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsMyGUB(CommandInfo command, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.User, Context.User.Id, UnblockedType.Command, command.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.User, Context.User.Id, UnblockedType.Command, command.Name.ToLowerInvariant(), page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsMyGUB(ModuleInfo module, int page=1)
-				=> _GUBCheck(GlobalWhitelistType.User, Context.User.Id, UnblockedType.Module, module.Name.ToLowerInvariant(), page);
+				=> _GUBCheck(GWLItemType.User, Context.User.Id, UnblockedType.Module, module.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsContextGUB(CommandInfo command, int page=1)
@@ -378,8 +378,8 @@ namespace NadekoBot.Modules.Permissions
 				ulong idC = Context.Channel.Id;
 				ulong idS = Context.Guild.Id;
 
-				GlobalWhitelistType typeC = GlobalWhitelistType.Channel;
-				GlobalWhitelistType typeS = GlobalWhitelistType.Server;
+				GWLItemType typeC = GWLItemType.Channel;
+				GWLItemType typeS = GWLItemType.Server;
 
 				bool yesC = _gwl.CheckIfUnblockedFor(name, type, idC, typeC, page, out string[] listC, out int countC);
 				bool yesS = _gwl.CheckIfUnblockedFor(name, type, idS, typeS, page, out string[] listS, out int countS);

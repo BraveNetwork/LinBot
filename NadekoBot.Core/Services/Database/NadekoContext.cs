@@ -171,29 +171,51 @@ namespace NadekoBot.Core.Services.Database
             #endregion
 
             #region GlobalWhitelistSet Unique ListName
-            modelBuilder.Entity<GlobalWhitelistSet>()
+            modelBuilder.Entity<GWLSet>()
                 //.HasAlternateKey( x => x.ListName ); // prevents us from changing the name
 				.HasIndex(x => x.ListName).IsUnique();
             #endregion
 
-			#region GlobalWhitelistSet Default State Enabled
-            modelBuilder.Entity<GlobalWhitelistSet>()
+			#region GlobalWhitelistSet Default State Enabled and Type All
+            modelBuilder.Entity<GWLSet>()
                 .Property(g => g.IsEnabled)
 				.HasDefaultValue(true);
+			 modelBuilder.Entity<GWLSet>()
+			 	.Property(g=>g.Type)
+				.HasDefaultValue(GWLType.All);
             #endregion
 
+			#region GWLItem ServerRoleId default to 0 (closest to null we can have for ulong)
+			modelBuilder.Entity<GWLItem>()
+				.Property(i=>i.RoleServerId)
+				.HasDefaultValue(0)
+				.ValueGeneratedNever();;
+			#endregion
+
+			#region GWL Default DateAdded
+			modelBuilder.Entity<GWLItem>()
+				.Property(i => i.DateAdded)
+				.HasDefaultValueSql("datetime('now')");
+			modelBuilder.Entity<GWLSet>()
+				.Property(g => g.DateAdded)
+				.HasDefaultValueSql("datetime('now')");
+			modelBuilder.Entity<UnblockedCmdOrMdl>()
+				.Property(u => u.DateAdded)
+				.HasDefaultValueSql("datetime('now')");
+			#endregion
+
             #region Global WhiteList ItemInSet Join ManytoMany            
-            modelBuilder.Entity<GlobalWhitelistItemSet>()
+            modelBuilder.Entity<GWLItemSet>()
                 .HasKey(x => new { x.ListPK, x.ItemPK });
             
-            modelBuilder.Entity<GlobalWhitelistItemSet>()
+            modelBuilder.Entity<GWLItemSet>()
                 .HasOne(x => x.List)
-                .WithMany(x => x.GlobalWhitelistItemSets)
+                .WithMany(x => x.GWLItemSets)
                 .HasForeignKey(x => x.ListPK);
 
-            modelBuilder.Entity<GlobalWhitelistItemSet>()
+            modelBuilder.Entity<GWLItemSet>()
                 .HasOne(x => x.Item)
-                .WithMany(x => x.GlobalWhitelistItemSets)
+                .WithMany(x => x.GWLItemSets)
                 .HasForeignKey(x => x.ItemPK);
             #endregion
 

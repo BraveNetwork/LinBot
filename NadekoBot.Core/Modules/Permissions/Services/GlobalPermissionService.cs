@@ -97,9 +97,9 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		private bool IsUnblocked(string name, UnblockedType type, ulong uid, ulong cid, ulong gid)
 		{
-			return (_gwl.CheckIfUnblocked(name, type, uid, GlobalWhitelistType.User)
-					|| _gwl.CheckIfUnblocked(name, type, cid, GlobalWhitelistType.Channel)
-					|| _gwl.CheckIfUnblocked(name, type, gid, GlobalWhitelistType.Server));
+			return (_gwl.CheckIfUnblocked(name, type, uid, GWLItemType.User)
+					|| _gwl.CheckIfUnblocked(name, type, cid, GWLItemType.Channel)
+					|| _gwl.CheckIfUnblocked(name, type, gid, GWLItemType.Server));
 		}
 
 		private async Task ReportBlockedCmdOrMdl(IMessageChannel channel, ulong gid, UnblockedType type, string name)

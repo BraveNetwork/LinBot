@@ -99,7 +99,8 @@ Nadeko Support Server: https://discord.gg/nadekobot";
 
     public class UnblockedCmdOrMdl : DbEntity 
     {
-        public string Name { get; set; }
+        [Required]
+		public string Name { get; set; }
 		public UnblockedType Type { get; set; }
 
         public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
@@ -141,12 +142,13 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         public BlacklistType Type { get; set; }
     }
 
-    public class GlobalWhitelistItem : DbEntity
+    public class GWLItem : DbEntity
     {
         public ulong ItemId { get; set; }
-        public GlobalWhitelistType Type { get; set; }
+		public ulong RoleServerId { get; set; }
+        public GWLItemType Type { get; set; }
 
-        public ICollection<GlobalWhitelistItemSet> GlobalWhitelistItemSets { get; set; }
+        public ICollection<GWLItemSet> GWLItemSets { get; set; }
     }
 
     public enum BlacklistType
@@ -156,11 +158,18 @@ Nadeko Support Server: https://discord.gg/nadekobot";
         User
     }
 
-    public enum GlobalWhitelistType
+    public enum GWLItemType
     {
         Server,
         Channel,
         User
+    }
+
+	public enum GWLType
+    {
+        All,
+        Member,
+        Role
     }
 
 	public enum UnblockedType
@@ -169,13 +178,15 @@ Nadeko Support Server: https://discord.gg/nadekobot";
 		Module
 	}
 
-    public class GlobalWhitelistSet : DbEntity {
-        [MaxLength(20)]
+    public class GWLSet : DbEntity {
+        [MaxLength(20),Required]
         public string ListName { get; set; }
 
 		public bool IsEnabled { get; set; }
 
-        public ICollection<GlobalWhitelistItemSet> GlobalWhitelistItemSets { get; set; }
+		public GWLType Type { get; set; }
+
+        public ICollection<GWLItemSet> GWLItemSets { get; set; }
 
         public ICollection<GlobalUnblockedSet> GlobalUnblockedSets { get; set; }
 
@@ -186,24 +197,24 @@ Nadeko Support Server: https://discord.gg/nadekobot";
                 return false;
             }
 
-            return ((GlobalWhitelistSet)obj).ListName.ToLowerInvariant() == ListName.ToLowerInvariant();
+            return ((GWLSet)obj).ListName.ToLowerInvariant() == ListName.ToLowerInvariant();
         }
 
         public override int GetHashCode() => ListName.GetHashCode();
     }
 
-    public class GlobalWhitelistItemSet
+    public class GWLItemSet
     {
         public int ListPK { get; set; }
-        public GlobalWhitelistSet List { get; set; }
+        public GWLSet List { get; set; }
         public int ItemPK { get; set; }
-        public GlobalWhitelistItem Item { get; set; }
+        public GWLItem Item { get; set; }
     }
 
     public class GlobalUnblockedSet
     {
         public int ListPK { get; set; }
-        public GlobalWhitelistSet List { get; set; }
+        public GWLSet List { get; set; }
         public int UnblockedPK { get; set; }
         public UnblockedCmdOrMdl CmdOrMdl { get; set; }
     }

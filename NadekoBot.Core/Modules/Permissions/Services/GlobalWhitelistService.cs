@@ -46,7 +46,7 @@ namespace NadekoBot.Modules.Permissions.Services
             using (var uow = _db.UnitOfWork)
             {
 				uow._context.Database.ExecuteSqlCommand(
-					"INSERT INTO GlobalWhitelistSet ('DateAdded', 'ListName') VALUES (datetime('now'), @p0);",
+					"INSERT INTO GWLSet ('DateAdded', 'ListName') VALUES (datetime('now'), @p0);",
 					listName);
 
                 uow.Complete();
@@ -59,7 +59,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		{
 			using (var uow = _db.UnitOfWork)
             {
-                GlobalWhitelistSet group = uow._context.Set<GlobalWhitelistSet>()
+                GWLSet group = uow._context.Set<GWLSet>()
 					.Where(g => g.ListName.ToLowerInvariant().Equals(oldName))
 					.SingleOrDefault();
 
@@ -75,7 +75,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		{
 			using (var uow = _db.UnitOfWork)
             {
-                GlobalWhitelistSet group = uow._context.Set<GlobalWhitelistSet>()
+                GWLSet group = uow._context.Set<GWLSet>()
 					.Where(g => g.ListName.ToLowerInvariant().Equals(listName))
 					.SingleOrDefault();
 
@@ -92,8 +92,8 @@ namespace NadekoBot.Modules.Permissions.Services
             using (var uow = _db.UnitOfWork)
             {
                 // Delete the whitelist record and all relation records
-                uow._context.Set<GlobalWhitelistSet>().Remove( 
-                    uow._context.Set<GlobalWhitelistSet>()
+                uow._context.Set<GWLSet>().Remove( 
+                    uow._context.Set<GWLSet>()
                     .Where( x => x.ListName.ToLowerInvariant().Equals(listName) ).FirstOrDefault()
                 );
                 uow.Complete();
@@ -105,7 +105,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Add/Remove
 
-		public bool AddItemToGroupBulk(ulong[] items, GlobalWhitelistType type, GlobalWhitelistSet group, out ulong[] successList)
+		public bool AddItemToGroupBulk(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
 		{
 			successList = null;
 
@@ -113,7 +113,7 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing member, add it to the database
 				// Fetch all member names already in the database
-				var curItems = uow._context.Set<GlobalWhitelistItem>()
+				var curItems = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Select(x => x.ItemId)
 					.ToArray();
@@ -122,7 +122,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (excludedItems.Count() > 0) {
 					for (int i=0; i<excludedItems.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							"INSERT INTO GlobalWhitelistItem ('ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,datetime('now'));",
+							"INSERT INTO GWLItem ('ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,datetime('now'));",
 							excludedItems.ElementAt(i), 
 							(int)type);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
@@ -132,13 +132,13 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GlobalWhitelistItem>()
+				var curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs already related to group
-				var curRel = uow._context.Set<GlobalWhitelistItemSet>()
+				var curRel = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.ItemPK)
 					.ToArray();
@@ -147,7 +147,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (excludedIDs.Count() > 0) {
 					for (int i=0; i<excludedIDs.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							"INSERT INTO GlobalWhitelistItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
+							"INSERT INTO GWLItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
 							group.Id, 
 							excludedIDs.ElementAt(i));
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
@@ -156,7 +156,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				}				
 
 				// Return list of all newly added relationships
-				successList = uow._context.Set<GlobalWhitelistItem>()
+				successList = uow._context.Set<GWLItem>()
 					.Where(x => excludedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
 					.ToArray();
@@ -167,7 +167,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool RemoveItemFromGroupBulk(ulong[] items, GlobalWhitelistType type, GlobalWhitelistSet group, out ulong[] successList)
+		public bool RemoveItemFromGroupBulk(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
 		{
 			successList = null;
 
@@ -175,13 +175,13 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GlobalWhitelistItem>()
+				var curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs related to the given group BEFORE delete
-				var relIDs = uow._context.Set<GlobalWhitelistItemSet>()
+				var relIDs = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -191,7 +191,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (curIDs.Count() > 0) {
 					for (int i=0; i<curIDs.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							"DELETE FROM GlobalWhitelistItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
+							"DELETE FROM GWLItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
 							group.Id,
 							curIDs[i]);
 						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
@@ -199,7 +199,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					uow._context.SaveChanges();					
 				}
 				// Fetch all member IDs related to the given group AFTER delete
-				var relIDsRemain = uow._context.Set<GlobalWhitelistItemSet>()
+				var relIDsRemain = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -208,7 +208,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				var deletedIDs = relIDs.Except(relIDsRemain);
 
 				// Return list of all deleted relationships
-				successList = uow._context.Set<GlobalWhitelistItem>()
+				successList = uow._context.Set<GWLItem>()
 					.Where(x => deletedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
 					.ToArray();
@@ -219,7 +219,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool AddUbItemToGroupBulk(string[] names, UnblockedType type, GlobalWhitelistSet group, out string[] successList)
+		public bool AddUbItemToGroupBulk(string[] names, UnblockedType type, GWLSet group, out string[] successList)
 		{
 			successList = null;
 
@@ -286,7 +286,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool RemoveUbItemFromGroupBulk(string[] names, UnblockedType type, GlobalWhitelistSet group, out string[] successList)
+		public bool RemoveUbItemFromGroupBulk(string[] names, UnblockedType type, GWLSet group, out string[] successList)
 		{
 			successList = null;
 
@@ -342,17 +342,17 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Clear
 
-		public bool ClearAll(GlobalWhitelistSet group)
+		public bool ClearAll(GWLSet group)
 		{
 			return ClearMembers(group) && ClearUnblocked(group);
 		}
 
-		public bool ClearMembers(GlobalWhitelistSet group)
+		public bool ClearMembers(GWLSet group)
 		{
 			int result;
 			using (var uow = _db.UnitOfWork)
 			{
-				string sql = "DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0;";
+				string sql = "DELETE FROM GWLItemSet WHERE GWLItemSet.ListPK = @p0;";
 				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
 				uow.Complete();
 			}
@@ -360,20 +360,20 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		public bool ClearMembers(GlobalWhitelistSet group, GlobalWhitelistType type)
+		public bool ClearMembers(GWLSet group, GWLItemType type)
 		{
 			int result;
 			using (var uow = _db.UnitOfWork)
 			{
-				string sql = @"DELETE FROM GlobalWhitelistItemSet WHERE GlobalWhitelistItemSet.ListPK = @p0 AND GlobalWhitelistItemSet.ItemPK IN
-					(SELECT Id FROM GlobalWhitelistItem WHERE GlobalWhitelistItem.Type = @p1);";
+				string sql = @"DELETE FROM GWLItemSet WHERE GWLItemSet.ListPK = @p0 AND GWLItemSet.ItemPK IN
+					(SELECT Id FROM GWLItem WHERE GWLItem.Type = @p1);";
 				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id, type);
 				uow.Complete();
 			}
 			return true;
 		}
 
-		public bool ClearUnblocked(GlobalWhitelistSet group)
+		public bool ClearUnblocked(GWLSet group)
 		{
 			int result;
 			using (var uow = _db.UnitOfWork)
@@ -385,7 +385,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			//System.Console.WriteLine("Query Result: ",result);
 			return true;
 		}
-		public bool ClearUnblocked(GlobalWhitelistSet group, UnblockedType type)
+		public bool ClearUnblocked(GWLSet group, UnblockedType type)
 		{
 			int result;
 			using (var uow = _db.UnitOfWork)
@@ -402,12 +402,12 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Purge
 
-		public bool PurgeMember(GlobalWhitelistType type, ulong id)
+		public bool PurgeMember(GWLItemType type, ulong id)
 		{
 			using (var uow = _db.UnitOfWork)
 			{
-				uow._context.Set<GlobalWhitelistItem>().Remove( 
-					uow._context.Set<GlobalWhitelistItem>()
+				uow._context.Set<GWLItem>().Remove( 
+					uow._context.Set<GWLItem>()
 					.Where( x => x.Type.Equals(type) )
 					.Where( x => x.ItemId.Equals(id) )
 					.FirstOrDefault()
@@ -437,17 +437,17 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region IsInGroup
 
-		public bool IsMemberInGroup(ulong id, GlobalWhitelistType type, GlobalWhitelistSet group)
+		public bool IsMemberInGroup(ulong id, GWLItemType type, GWLSet group)
         {
             var result = true;
 
             using (var uow = _db.UnitOfWork)
             {
-                var temp = uow._context.Set<GlobalWhitelistItem>()
+                var temp = uow._context.Set<GWLItem>()
 					.Where( x => x.Type.Equals(type) )
 					.Where( x => x.ItemId.Equals(id) )
 					.Join(
-						uow._context.Set<GlobalWhitelistItemSet>(), 
+						uow._context.Set<GWLItemSet>(), 
 						i => i.Id, gi => gi.ItemPK,
 						(i,gi) => new {
 							i.ItemId,
@@ -466,7 +466,7 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return result;
         }
-		public bool IsUnblockedInGroup(string name, UnblockedType type, GlobalWhitelistSet group)
+		public bool IsUnblockedInGroup(string name, UnblockedType type, GWLSet group)
 		{
 			var result = true;
 
@@ -500,7 +500,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region CheckUnblocked
 		
-		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType, int page, out string[] lists, out int count)
+		public bool CheckIfUnblockedFor(string ubName, UnblockedType ubType, ulong memID, GWLItemType memType, int page, out string[] lists, out int count)
 		{
 			lists = null;
 			using (var uow = _db.UnitOfWork)
@@ -511,17 +511,17 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>(),
+					.Join(uow._context.Set<GWLSet>(),
 						gub => gub, g => g.Id,
 						(gub, g) => g
 						)
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+					.Join(uow._context.Set<GWLItemSet>(),
 						g => g.Id, gi => gi.ListPK,
 						(g, gi) => new {
 							g,
 							gi.ItemPK
 						})
-					.Join(uow._context.Set<GlobalWhitelistItem>()
+					.Join(uow._context.Set<GWLItem>()
 						.Where(x => x.Type.Equals(memType))
 						.Where(x => x.ItemId.Equals(memID)),
 						gi => gi.ItemPK, i => i.Id,
@@ -545,7 +545,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 			return true;
 		}
-		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GlobalWhitelistType memType)
+		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GWLItemType memType)
 		{
 			using (var uow = _db.UnitOfWork)
             {
@@ -555,14 +555,14 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>()
+					.Join(uow._context.Set<GWLSet>()
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+					.Join(uow._context.Set<GWLItemSet>(),
 						gId => gId, gi => gi.ListPK,
 						(gId, gi) => gi.ItemPK)
-					.Join(uow._context.Set<GlobalWhitelistItem>()
+					.Join(uow._context.Set<GWLItem>()
 						.Where(x => x.Type.Equals(memType))
 						.Where(x => x.ItemId.Equals(memID)),
 						giPK => giPK, i => i.Id,
@@ -580,7 +580,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		#endregion CheckUnblocked
 
 		#region GetObject
-		public bool GetGroupByName(string listName, out GlobalWhitelistSet group)
+		public bool GetGroupByName(string listName, out GWLSet group)
         {
             group = null;
 
@@ -588,10 +588,10 @@ namespace NadekoBot.Modules.Permissions.Services
 
             using (var uow = _db.UnitOfWork)
             {
-                group = uow._context.Set<GlobalWhitelistSet>()
+                group = uow._context.Set<GWLSet>()
 					.Where(x => x.ListName.ToLowerInvariant().Equals(listName))
 					.Include(x => x.GlobalUnblockedSets)
-					.Include(x => x.GlobalWhitelistItemSets)
+					.Include(x => x.GWLItemSets)
 					.FirstOrDefault();
 
                 if (group == null) { return false; }
@@ -599,14 +599,14 @@ namespace NadekoBot.Modules.Permissions.Services
             }
         }
 
-		public bool GetMemberByIdType(ulong id, GlobalWhitelistType type, out GlobalWhitelistItem item)
+		public bool GetMemberByIdType(ulong id, GWLItemType type, out GWLItem item)
         {
             item = null;
 
             using (var uow = _db.UnitOfWork)
             {
                 // Retrieve the member item given name
-                item = uow._context.Set<GlobalWhitelistItem>()
+                item = uow._context.Set<GWLItem>()
                     .Where( x => x.Type.Equals(type) )
                     .Where( x => x.ItemId.Equals(id) )
                     .FirstOrDefault();
@@ -646,7 +646,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			names = null;
             using (var uow = _db.UnitOfWork)
             {
-				count = uow._context.Set<GlobalWhitelistSet>().Count();
+				count = uow._context.Set<GWLSet>().Count();
 
 				if (count <= 0) return false;
 
@@ -654,7 +654,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
-				names = uow._context.Set<GlobalWhitelistSet>()
+				names = uow._context.Set<GWLSet>()
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
                 	.Take(numPerPage)
@@ -666,18 +666,18 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		public bool GetGroupNamesByMember(ulong id, GlobalWhitelistType type, int page, out string[] names, out int count)
+		public bool GetGroupNamesByMember(ulong id, GWLItemType type, int page, out string[] names, out int count)
         {
             names = null;
             using (var uow = _db.UnitOfWork)
             {
-				var allnames = uow._context.Set<GlobalWhitelistItem>()
+				var allnames = uow._context.Set<GWLItem>()
 					.Where(i => i.Type.Equals(type))
 					.Where(i => i.ItemId.Equals(id))
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+					.Join(uow._context.Set<GWLItemSet>(),
 						i => i.Id, gi => gi.ItemPK,
 						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>(),
+					.Join(uow._context.Set<GWLSet>(),
 						listPK => listPK, g => g.Id,
 						(listPK, g) => g);
 				
@@ -714,7 +714,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			using (var uow = _db.UnitOfWork)
             {
                 // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
-                var allnames = uow._context.Set<GlobalWhitelistSet>()
+                var allnames = uow._context.Set<GWLSet>()
 					.Join(
 						uow._context.Set<GlobalUnblockedSet>()
 							.Where(u => u.UnblockedPK.Equals(item.Id)), 
@@ -743,13 +743,13 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Get Id/Name Lists
 
-		public bool GetGroupMembers(GlobalWhitelistSet group, GlobalWhitelistType type, int page, out ulong[] results, out int count)
+		public bool GetGroupMembers(GWLSet group, GWLItemType type, int page, out ulong[] results, out int count)
         {
             results = null;
             using (var uow = _db.UnitOfWork)
             {
-                var anon = group.GlobalWhitelistItemSets
-                	.Join(uow._context.Set<GlobalWhitelistItem>()
+                var anon = group.GWLItemSets
+                	.Join(uow._context.Set<GWLItem>()
 				  		.Where(m => m.Type.Equals(type)), 
 							p => p.ItemPK, 
 							m => m.Id, 
@@ -768,7 +768,7 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		public bool GetGroupUnblockedNames(GlobalWhitelistSet group, UnblockedType type, int page, out string[] names, out int count)
+		public bool GetGroupUnblockedNames(GWLSet group, UnblockedType type, int page, out string[] names, out int count)
 		{
 			names = null;
 			using (var uow = _db.UnitOfWork)
@@ -835,18 +835,18 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		public bool GetUnblockedNamesForMember(UnblockedType type, ulong id, GlobalWhitelistType memType, int page, out string[] names, out int count)
+		public bool GetUnblockedNamesForMember(UnblockedType type, ulong id, GWLItemType memType, int page, out string[] names, out int count)
 		{
 			names= null;
 			using (var uow = _db.UnitOfWork)
             {
-                var anon = uow._context.Set<GlobalWhitelistItem>()
+                var anon = uow._context.Set<GWLItem>()
 					.Where(x => x.ItemId.Equals(id))
 					.Where(x => x.Type.Equals(memType))
-					.Join(uow._context.Set<GlobalWhitelistItemSet>(),
+					.Join(uow._context.Set<GWLItemSet>(),
 						i => i.Id, gi => gi.ItemPK,
 						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GlobalWhitelistSet>()
+					.Join(uow._context.Set<GWLSet>()
 						.Where(g => g.IsEnabled.Equals(true)),
 						listPK => listPK, g => g.Id,
 						(listPK, g) => g.Id)
@@ -875,24 +875,24 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Resolve ulong IDs
 
-        public string[] GetNameOrMentionFromId(GlobalWhitelistType type, ulong[] ids)
+        public string[] GetNameOrMentionFromId(GWLItemType type, ulong[] ids)
         {
             string[] str = new string[ids.Length];
 
             switch (type) {
-                case GlobalWhitelistType.User:
+                case GWLItemType.User:
                     for (var i = 0; i < ids.Length; i++) {
 					  str[i] = MentionUtils.MentionUser(ids[i]) + "\n\t" + ids[i].ToString();
                     }
                     break;
 
-                case GlobalWhitelistType.Channel:
+                case GWLItemType.Channel:
                     for (var i = 0; i < ids.Length; i++) {
 					  str[i] = MentionUtils.MentionChannel(ids[i]) + "\n\t" + ids[i].ToString();
                     }
                     break;
 
-                case GlobalWhitelistType.Server:
+                case GWLItemType.Server:
                     for (var i = 0; i < ids.Length; i++) {
 						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
                     	string name = (guild != null) ? guild.Name : "Null";
@@ -909,20 +909,20 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return str;
         }
-        public string GetNameOrMentionFromId(GlobalWhitelistType type, ulong id)
+        public string GetNameOrMentionFromId(GWLItemType type, ulong id)
         {
             string str = "";
 
             switch (type) {
-                case GlobalWhitelistType.User:
+                case GWLItemType.User:
 					str = MentionUtils.MentionUser(id) + " " + id.ToString();
                     break;
 
-                case GlobalWhitelistType.Channel:
+                case GWLItemType.Channel:
 					str = MentionUtils.MentionChannel(id) + " " + id.ToString();
                     break;
 
-                case GlobalWhitelistType.Server:
+                case GWLItemType.Server:
 					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
                     str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
 					break;
