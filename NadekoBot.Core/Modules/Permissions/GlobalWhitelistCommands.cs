@@ -871,79 +871,75 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GWLInfo(GlobalWhitelistService.FieldType field, string listName="", int page=1)
+            public Task GWLInfo(string listName="", GlobalWhitelistService.FieldType field=0, int page=1)
 				=> _Info(field, listName, page);
-
-			[NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public Task GWLInfo(string listName="", int page=1)
-				=> _Info(GlobalWhitelistService.FieldType.ALL, listName, page);
 
 			private async Task _Info(GlobalWhitelistService.FieldType field, string listName, int page)
 			{
 				if(--page < 0) return; // ensures page is 0-indexed and non-negative
 
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
-                {					
+                {
+					// Ensure the group type is compatible!
+					if (!field.Equals(GlobalWhitelistService.FieldType.ALL) 
+						&& !IsCompatible(group.Type, field)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(field.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+
 					var embed = new EmbedBuilder()
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"));
 					
-					if (field != GlobalWhitelistService.FieldType.ALL) {
+					if (!field.Equals(GlobalWhitelistService.FieldType.ALL)) {
 						// This alters embed to have the data we need for the desired fieldType
 						getFieldInfo(embed, group, field, page);
 					}
 					else {
+
 						// Get modules/commands
-						bool hasCmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command, page, out string[] cmds, out int cmdCount);
-						bool hasMdls = _service.GetGroupUnblockedNames(group, UnblockedType.Module, page, out string[] mdls, out int mdlCount);
+						int numCmd = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.COMMAND, page);
+						int numMdl = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.MODULE, page);
 
-						string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
-						string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
-						
-						// Get member lists
-						bool hasServers = _service.GetGroupMembers(group, GWLItemType.Server, page, out ulong[] servers, out int serverCount);
-						bool hasChannels = _service.GetGroupMembers(group, GWLItemType.Channel, page, out ulong[] channels, out int channelCount);
-						bool hasUsers = _service.GetGroupMembers(group, GWLItemType.User, page, out ulong[] users, out int userCount);
+						int lastCmdPage = (numCmd - 1)/_service.numPerPage +1;
+						int lastMdlPage = (numMdl - 1)/_service.numPerPage +1;
 
-						string serverStr = "*none*";
-						string channelStr = "*none*";
-						string userStr = "*none*";
+						int lastPage = System.Math.Max(lastCmdPage,lastMdlPage);
 
-						if (hasServers) { serverStr = string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Server, servers)); }
-						if (hasChannels) { channelStr = string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Channel, channels)); }
-						if (hasUsers) { userStr = string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.User, users)); }
-						
+						// Some important embed info
 						string statusText = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") :  GetText("gwl_status_disabled_emoji");
+						embed.WithDescription(GetText("gwl_info", Format.Bold(group.ListName), Format.Code(group.Type.ToString())))
+							.AddField(GetText("gwl_field_status"), statusText, true);
 
-						// Paginated Embed
-						int lastCmdPage = (cmdCount - 1)/_service.numPerPage +1;
-						int lastMdlPage = (mdlCount - 1)/_service.numPerPage +1;
-						int lastServerPage = (serverCount - 1)/_service.numPerPage +1;
-						int lastChannelPage = (channelCount - 1)/_service.numPerPage +1;
-						int lastUserPage = (userCount - 1)/_service.numPerPage +1;
-						int lastPage = System.Math.Max( lastCmdPage, 
-							System.Math.Max( lastMdlPage, 
-								System.Math.Max( lastServerPage,
-									System.Math.Max( lastChannelPage, lastUserPage ) ) ) );
-						page++;
-						if (page > lastPage) page = lastPage;
-						if (page > 1) {
-							if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
-							if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
-							if (hasServers && page >= lastServerPage) serverStr += GetText("gwl_endlist", lastServerPage);
-							if (hasChannels && page >= lastChannelPage) channelStr += GetText("gwl_endlist", lastChannelPage);
-							if (hasUsers && page >= lastUserPage) userStr += GetText("gwl_endlist", lastUserPage);
+						switch (group.Type) {
+							case GWLType.Member:
+								// Get Member lists
+								int numU = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.USER, page);
+								int numC = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.CHANNEL, page);
+								int numS = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.SERVER, page);
+								// Do Page Calcs
+								int lastUPage = (numU - 1)/_service.numPerPage +1;
+								int lastCPage = (numC - 1)/_service.numPerPage +1;
+								int lastSPage = (numS - 1)/_service.numPerPage +1;
+								lastPage = System.Math.Max(lastPage,
+									System.Math.Max(lastUPage,
+									System.Math.Max(lastCPage,lastSPage)));
+								break;
+							case GWLType.Role:
+								// Get Role lists
+								int numRole = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.ROLE, page);
+								// Do Page Calcs
+								int lastRolePage = (numRole - 1)/_service.numPerPage +1;
+								lastPage = System.Math.Max(lastPage,lastRolePage);
+								break;
+							case GWLType.All:
+							default:
+								break;
 						}
-
-						embed.WithDescription(GetText("gwl_info", Format.Bold(group.ListName)))
-							.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
-							.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
-							.AddField("gwl_field_status", statusText, true)
-							.AddField(GetText("gwl_field_users", userCount), userStr, true)
-							.AddField(GetText("gwl_field_channels", channelCount), channelStr, true)
-							.AddField(GetText("gwl_field_servers", serverCount), serverStr, true)
-							.WithFooter($"Page {page}/{lastPage}");
+						// Paginated Embed
+						page++;
+						if (page > lastPage) page = lastPage;						
+						embed.WithFooter($"Page {page}/{lastPage}");
 					}
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -998,6 +994,13 @@ namespace NadekoBot.Modules.Permissions
 						fieldLabel = "Users";
 					break;
 
+					case GlobalWhitelistService.FieldType.ROLE:
+						bool hasRoles = _service.GetGroupMembers(group, GWLItemType.Role, page, out ulong[] roles, out fieldCount);
+						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Role, roles));
+						fieldTitle = "gwl_field_roles";
+						fieldLabel = "Roles";
+					break;
+
 					default:
 						fieldStr = "*none*";
 						fieldTitle = "gwl_field_unknown";
@@ -1012,6 +1015,60 @@ namespace NadekoBot.Modules.Permissions
 				embed.WithDescription(GetText("gwl_info_field", Format.Code(fieldLabel), Format.Bold(group.ListName)))
 					.AddField(GetText(fieldTitle, fieldCount), fieldStr, false)
 					.WithFooter($"Page {page+1}/{lastPage+1}");
+			}
+
+			private int getPartialFieldInfo(EmbedBuilder embed, GWLSet group, GlobalWhitelistService.FieldType field, int page)
+			{
+				string fieldTitle = "";
+				string fieldStr = "";
+				int fieldCount = 0;
+
+				switch(field) {
+					case GlobalWhitelistService.FieldType.COMMAND:
+						bool hasCmds = _service.GetGroupUnblockedNames(group, UnblockedType.Command, page, out string[] cmds, out fieldCount);
+						fieldStr = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+						fieldTitle = "gwl_field_commands";
+					break;
+
+					case GlobalWhitelistService.FieldType.MODULE:
+						bool hasMdls = _service.GetGroupUnblockedNames(group, UnblockedType.Module, page, out string[] mdls, out fieldCount);
+						fieldStr = (hasMdls) ? string.Join("\n", mdls) : "*no such commands*";
+						fieldTitle = "gwl_field_modules";
+					break;
+
+					case GlobalWhitelistService.FieldType.SERVER:
+						bool hasServers = _service.GetGroupMembers(group, GWLItemType.Server, page, out ulong[] servers, out fieldCount);
+						fieldStr = (!hasServers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Server, servers));
+						fieldTitle = "gwl_field_servers";
+					break;
+
+					case GlobalWhitelistService.FieldType.CHANNEL:
+						bool hasChannels = _service.GetGroupMembers(group, GWLItemType.Channel, page, out ulong[] channels, out fieldCount);
+						fieldStr = (!hasChannels) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Channel, channels));
+						fieldTitle = "gwl_field_channels";
+					break;
+
+					case GlobalWhitelistService.FieldType.USER:
+						bool hasUsers = _service.GetGroupMembers(group, GWLItemType.User, page, out ulong[] users, out fieldCount);
+						fieldStr = (!hasUsers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.User, users));
+						fieldTitle = "gwl_field_users";
+					break;
+
+					case GlobalWhitelistService.FieldType.ROLE:
+						bool hasRoles = _service.GetGroupMembers(group, GWLItemType.Role, page, out ulong[] roles, out fieldCount);
+						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Role, roles));
+						fieldTitle = "gwl_field_roles";
+					break;
+
+					default:
+						fieldStr = "*none*";
+						fieldTitle = "gwl_field_unknown";
+					break;
+				}
+
+				// Alter the object stored in memory, pointed to by the provided embed argument
+				embed.AddField(GetText(fieldTitle, fieldCount), fieldStr, true);
+				return fieldCount;
 			}
 
 			#endregion Info
