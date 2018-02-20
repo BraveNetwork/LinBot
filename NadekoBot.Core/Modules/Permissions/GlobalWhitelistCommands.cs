@@ -32,7 +32,7 @@ namespace NadekoBot.Modules.Permissions
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GWLCreate(string listName="", GWLType type=GWLType.All)
+            public async Task GWLCreate(string listName="", GlobalWhitelistService.FieldType field=0)
             {
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > MaxNameLength) {
 					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
@@ -41,6 +41,25 @@ namespace NadekoBot.Modules.Permissions
 
 				// Ensure a similar name doesnt already exist
 				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group);
+
+				// Get the type
+				GWLType type; 
+				switch(field) {
+					case GlobalWhitelistService.FieldType.ALL:
+						type = GWLType.All;
+						break;
+					case GlobalWhitelistService.FieldType.MEMBER:
+						type = GWLType.Member;
+						break;
+					case GlobalWhitelistService.FieldType.ROLE:
+						type = GWLType.Role;
+						break;
+					default:
+						// Not valid
+						await ReplyErrorLocalized("gwl_field_invalid_gwltype", Format.Bold(field.ToString())).ConfigureAwait(false);
+						return;
+				}
+
                 if (exists) {
 					await ReplyErrorLocalized("gwl_create_dupe", Format.Bold(listName), Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
                 	return;

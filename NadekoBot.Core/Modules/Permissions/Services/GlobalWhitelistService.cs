@@ -22,15 +22,16 @@ namespace NadekoBot.Modules.Permissions.Services
 		public readonly int numPerPage = 5;
 
 		public enum FieldType {
-			ALL = 0, EVERYTHING = ALL,
+			A = 0, ALL = A, EVERYTHING = A,
 			CMD = 1, COMMAND = CMD, COMMANDS = CMD, CMDS = CMD,
 			MOD = 2, MODULE = MOD, MODULES = MOD, MODS = MOD, MDL = MOD, MDLS = MOD,
 			S = 3, SRVR = S, SERVER = S, SERVERS = S, SRVRS = S, 
 			G = S, GUILD = G, GUILDS = G,
 			C = 4, CHNL = C, CHANNEL = C, CHANNELS = C, CHNLS = C,
 			U = 5, USR = U, USER = U, USERS = U, USRS = U,
-			UB = 6, UNBLOCK = UB, UNBLOCKED = UB,
-			MEM = 7, MEMBER = MEM, MEMBERS = MEM
+			R = 6, ROLE = R, ROLES = R,
+			UB = 7, UNBLOCK = UB, UNBLOCKED = UB,
+			M = 8, MEM = M, MEMBER = M, MEMBERS = M
 		};
 
         public GlobalWhitelistService(DiscordSocketClient client, DbService db)
