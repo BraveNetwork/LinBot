@@ -41,13 +41,14 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region General Whitelist Actions
 
-        public bool CreateWhitelist(string listName)
+        public bool CreateWhitelist(string listName, GWLType type)
         {
             using (var uow = _db.UnitOfWork)
             {
 				uow._context.Database.ExecuteSqlCommand(
-					"INSERT INTO GWLSet ('DateAdded', 'ListName') VALUES (datetime('now'), @p0);",
-					listName);
+					"INSERT INTO GWLSet ('ListName', 'Type') VALUES (@p0,@p1);",
+					listName,
+					type);
 
                 uow.Complete();
             }

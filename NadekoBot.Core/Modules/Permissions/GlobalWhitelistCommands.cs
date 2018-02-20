@@ -20,27 +20,19 @@ namespace NadekoBot.Modules.Permissions
         public class GlobalWhitelistCommands : NadekoSubmodule<GlobalWhitelistService>
         {
 			private GlobalPermissionService _perm;
-			private DiscordSocketClient _client;
-
-			public enum SyncMethod {
-				OR = 0,
-				AND = 1
-			};
-
 			public const int MaxNumInput = 30;
 			public const int MaxNameLength = 20;
 
-            public GlobalWhitelistCommands(GlobalPermissionService perm, DiscordSocketClient client)
+            public GlobalWhitelistCommands(GlobalPermissionService perm)
             {
 				_perm = perm;
-				_client = client;
             }
 
 			#region Whitelist Utilities
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GWLCreate(string listName="")
+            public async Task GWLCreate(string listName="", GWLType type=GWLType.All)
             {
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > MaxNameLength) {
 					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
@@ -50,17 +42,17 @@ namespace NadekoBot.Modules.Permissions
 				// Ensure a similar name doesnt already exist
 				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group);
                 if (exists) {
-					await ReplyErrorLocalized("gwl_create_dupe", Format.Bold(listName), Format.Bold(group.ListName)).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_create_dupe", Format.Bold(listName), Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
                 	return;
 				}
 				// Create new list
-				if (_service.CreateWhitelist(listName))
+				if (_service.CreateWhitelist(listName, type))
                 {
-                    await ReplyConfirmLocalized("gwl_create_success", Format.Bold(listName)).ConfigureAwait(false);
+                    await ReplyConfirmLocalized("gwl_create_success", Format.Bold(listName), Format.Code(type.ToString())).ConfigureAwait(false);
                 	return;
                 }
 				// Failure
-				await ReplyErrorLocalized("gwl_create_fail", Format.Bold(listName)).ConfigureAwait(false);
+				await ReplyErrorLocalized("gwl_create_fail", Format.Bold(listName), Format.Code(type.ToString())).ConfigureAwait(false);
                 return;
             }
 
@@ -129,7 +121,7 @@ namespace NadekoBot.Modules.Permissions
 				string listNameI = listName.ToLowerInvariant();
 				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
 					string statusTxt = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") : GetText("gwl_status_disabled_emoji");
-					await ReplyConfirmLocalized("gwl_status", Format.Bold(group.ListName), Format.Code(statusTxt)).ConfigureAwait(false);
+					await ReplyConfirmLocalized("gwl_status", Format.Bold(group.ListName), Format.Code(statusTxt), Format.Code(group.Type.ToString())).ConfigureAwait(false);
 					return;
 				} else {
 					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
