@@ -13,8 +13,8 @@ using System;
 namespace NadekoBot.Migrations
 {
     [DbContext(typeof(NadekoContext))]
-    [Migration("20180220013548_Create_GWLModelsWithType")]
-    partial class Create_GWLModelsWithType
+    [Migration("20180220021209_Create_GWLModelsWithRoleType")]
+    partial class Create_GWLModelsWithRoleType
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

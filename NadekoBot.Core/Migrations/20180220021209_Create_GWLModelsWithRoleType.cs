@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace NadekoBot.Migrations
 {
-    public partial class Create_GWLModelsWithType : Migration
+    public partial class Create_GWLModelsWithRoleType : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
