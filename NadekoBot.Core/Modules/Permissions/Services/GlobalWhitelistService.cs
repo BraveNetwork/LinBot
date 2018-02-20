@@ -107,7 +107,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Add/Remove
 
-		public bool AddItemToGroupBulk(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
+		public bool AddMemberToGroup(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
 		{
 			successList = null;
 
@@ -124,7 +124,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (excludedItems.Count() > 0) {
 					for (int i=0; i<excludedItems.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							"INSERT INTO GWLItem ('ItemId', 'Type', 'DateAdded') VALUES (@p0,@p1,datetime('now'));",
+							"INSERT INTO GWLItem ('ItemId', 'Type') VALUES (@p0,@p1);",
 							excludedItems.ElementAt(i), 
 							(int)type);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
@@ -169,7 +169,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool RemoveItemFromGroupBulk(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
+		public bool RemoveMemberFromGroup(ulong[] items, GWLItemType type, GWLSet group, out ulong[] successList)
 		{
 			successList = null;
 
@@ -221,7 +221,129 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool AddUbItemToGroupBulk(string[] names, UnblockedType type, GWLSet group, out string[] successList)
+		public bool AddRoleToGroup(ulong serverID, ulong[] items, GWLSet group, out ulong[] successList)
+		{
+			GWLItemType type = GWLItemType.Role;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// For each non-existing member, add it to the database
+				// Fetch all member names already in the database
+				var curItems = uow._context.Set<GWLItem>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => x.RoleServerId.Equals(serverID))
+					.Select(x => x.ItemId)
+					.ToArray();
+				// Focus only on given names that aren't yet in the database, while simultaneously removing dupes
+				var excludedItems = items.Except(curItems);
+				if (excludedItems.Count() > 0) {
+					for (int i=0; i<excludedItems.Count(); i++) {
+						uow._context.Database.ExecuteSqlCommand(
+							"INSERT INTO GWLItem ('ItemId', 'Type', 'RoleServerId') VALUES (@p0,@p1,@p2);",
+							excludedItems.ElementAt(i), 
+							(int)type,
+							serverID);
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
+					}
+					uow._context.SaveChanges();
+				}
+
+				// For each non-existing relationship, add it to the database
+				// Fetch all member IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<GWLItem>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => x.RoleServerId.Equals(serverID))
+					.Where(x => items.Contains(x.ItemId))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all member IDs already related to group
+				var curRel = uow._context.Set<GWLItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Select(x => x.ItemPK)
+					.ToArray();
+				// Focus only on given IDs that aren't yet related to group (automatically removes dupes)
+				var excludedIDs = curIDs.Except(curRel);			
+				if (excludedIDs.Count() > 0) {
+					for (int i=0; i<excludedIDs.Count(); i++) {
+						uow._context.Database.ExecuteSqlCommand(
+							"INSERT INTO GWLItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
+							group.Id, 
+							excludedIDs.ElementAt(i));
+						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
+					}
+					uow._context.SaveChanges();
+				}				
+
+				// Return list of all newly added relationships
+				successList = uow._context.Set<GWLItem>()
+					.Where(x => x.RoleServerId.Equals(serverID))
+					.Where(x => excludedIDs.Contains(x.Id))
+					.Select(x => x.ItemId)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
+		}
+
+		public bool RemoveRoleFromGroup(ulong serverID, ulong[] items, GWLSet group, out ulong[] successList)
+		{
+			GWLItemType type = GWLItemType.Role;
+			successList = null;
+
+			using (var uow = _db.UnitOfWork)
+            {
+				// For each non-existing relationship, add it to the database
+				// Fetch all member IDs existing in DB with given type and name in list
+				var curIDs = uow._context.Set<GWLItem>()
+					.Where(x => x.Type.Equals(type))
+					.Where(x => x.RoleServerId.Equals(serverID))
+					.Where(x => items.Contains(x.ItemId))
+					.Select(x => x.Id)
+					.ToArray();
+				// Fetch all member IDs related to the given group BEFORE delete
+				var relIDs = uow._context.Set<GWLItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.ItemPK))
+					.Select(x => x.ItemPK)
+					.ToArray();
+
+				// Delete all existing IDs where type and name matches (above lines ensure no dupes)	
+				if (curIDs.Count() > 0) {
+					for (int i=0; i<curIDs.Count(); i++) {
+						uow._context.Database.ExecuteSqlCommand(
+							"DELETE FROM GWLItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
+							group.Id,
+							curIDs[i]);
+						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
+					}
+					uow._context.SaveChanges();					
+				}
+				// Fetch all member IDs related to the given group AFTER delete
+				var relIDsRemain = uow._context.Set<GWLItemSet>()
+					.Where(x => x.ListPK.Equals(group.Id))
+					.Where(x => curIDs.Contains(x.ItemPK))
+					.Select(x => x.ItemPK)
+					.ToArray();
+
+				var deletedIDs = relIDs.Except(relIDsRemain);
+
+				// Return list of all deleted relationships
+				successList = uow._context.Set<GWLItem>()
+					.Where(x => x.RoleServerId.Equals(serverID))
+					.Where(x => deletedIDs.Contains(x.Id))
+					.Select(x => x.ItemId)
+					.ToArray();
+
+				uow.Complete();
+				if (successList.Count() > 0) return true;
+				return false;
+			}
+		}
+
+		public bool AddUnblockedToGroup(string[] names, UnblockedType type, GWLSet group, out string[] successList)
 		{
 			successList = null;
 
@@ -242,7 +364,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				if (excludedNames.Count() > 0) {
 					for (int i=0; i<excludedNames.Count(); i++) {
 						uow._context.Database.ExecuteSqlCommand(
-							$"INSERT INTO UnblockedCmdOrMdl ('{bcField}', 'Name', 'Type', 'DateAdded') VALUES (@p0,@p1,@p2,datetime('now'));", 
+							$"INSERT INTO UnblockedCmdOrMdl ('{bcField}', 'Name', 'Type') VALUES (@p0,@p1,@p2);", 
 							bc.Id,
 							excludedNames.ElementAt(i),
 							(int)type);
@@ -288,7 +410,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		public bool RemoveUbItemFromGroupBulk(string[] names, UnblockedType type, GWLSet group, out string[] successList)
+		public bool RemoveUnblockedFromGroup(string[] names, UnblockedType type, GWLSet group, out string[] successList)
 		{
 			successList = null;
 

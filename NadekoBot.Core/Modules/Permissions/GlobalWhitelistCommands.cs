@@ -28,6 +28,43 @@ namespace NadekoBot.Modules.Permissions
 				_perm = perm;
             }
 
+			#region Type Compatibility
+			private bool IsCompatible(GWLType type, GlobalWhitelistService.FieldType field)
+			{
+				int val = (int)field;
+
+				bool isCmdOrMdl = field.Equals(GlobalWhitelistService.FieldType.COMMAND) 
+					|| field.Equals(GlobalWhitelistService.FieldType.MODULE);
+
+				switch(type) {
+					case GWLType.All:
+						return isCmdOrMdl;
+
+					case GWLType.Member:
+						return isCmdOrMdl || (val >= (int)GlobalWhitelistService.FieldType.SERVER 
+							&& val <= (int)GlobalWhitelistService.FieldType.USER);
+
+					case GWLType.Role:
+						return isCmdOrMdl || val == (int)GlobalWhitelistService.FieldType.ROLE;
+
+					default:
+						return false;
+				}
+			}
+
+			private bool IsCompatible(GWLType type, GWLItemType item)
+			{
+				bool isRole = item.Equals(GWLItemType.Role);
+				return (type.Equals(GWLType.Member) && !isRole) 
+					|| (type.Equals(GWLType.Role) && isRole);
+			}
+
+			private bool IsCompatible(GWLType type, UnblockedType ub)
+			{
+				return true;
+			}
+			#endregion Type Compatibility
+
 			#region Whitelist Utilities
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -181,6 +218,9 @@ namespace NadekoBot.Modules.Permissions
 					case GlobalWhitelistService.FieldType.USER: 
 						await _AddRemove(action, GWLItemType.User, listName, ids);
 						return;
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _AddRemoveRoles(action, listName, ids);
+						return;
 					default: 
 						// Not valid
 						await ReplyErrorLocalized("gwl_field_invalid_member", Format.Bold(field.ToString())).ConfigureAwait(false);
@@ -258,6 +298,26 @@ namespace NadekoBot.Modules.Permissions
 				return;
 			}
 
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+			public async Task GWLAddRemove(AddRemove action, string listName="", params IRole[] roles)
+			{
+				if (roles.Length > MaxNumInput) {
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code("Role"), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
+
+				// Ensure that the current serverID is included
+				ulong[] ids = new ulong[roles.Length+1];
+				ids[0] = Context.Guild.Id;
+				for (int i=0; i<roles.Length; i++) {
+					ids[i+1] = roles[i].Id;
+				}
+
+				await _AddRemoveRoles(action, listName, ids);
+				return;
+			}
+
 			#endregion Add/Rem Members
 
 			#region Add/Rem Unblocked
@@ -311,18 +371,23 @@ namespace NadekoBot.Modules.Permissions
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Ensure the group type is compatible!
+					if (!IsCompatible(group.Type, type)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
 					// Get string list of name/mention from ids
 					string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
 
 					// Process Add ID to Whitelist of ListName
 					if (action == AddRemove.Add) 
 					{
-						if(_service.AddItemToGroupBulk(ids,type,group, out ulong[] successList))
+						if(_service.AddMemberToGroup(ids,type,group, out ulong[] successList))
 						{
 							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
 							await ReplyConfirmLocalized("gwl_add_success",
 								successList.Count(), ids.Count(),
-								Format.Code(type.ToString()+"s"),
+								Format.Code(type.ToString()),
 								Format.Bold(group.ListName),
 								strList)
 								.ConfigureAwait(false);
@@ -331,7 +396,7 @@ namespace NadekoBot.Modules.Permissions
 						else {
 							await ReplyErrorLocalized("gwl_add_fail",
 								successList.Count(), ids.Count(),
-								Format.Code(type.ToString()+"s"), 
+								Format.Code(type.ToString()), 
 								Format.Bold(group.ListName),
 								idList)
 								.ConfigureAwait(false);
@@ -341,12 +406,12 @@ namespace NadekoBot.Modules.Permissions
 					// Process Remove ID from Whitelist of ListName
 					else
 					{
-						if(_service.RemoveItemFromGroupBulk(ids,type,group, out ulong[] successList))
+						if(_service.RemoveMemberFromGroup(ids,type,group, out ulong[] successList))
 						{
 							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
 							await ReplyConfirmLocalized("gwl_remove_success", 
 								successList.Count(), ids.Count(),
-								Format.Code(type.ToString()+"s"),
+								Format.Code(type.ToString()),
 								Format.Bold(group.ListName),
 								strList)
 								.ConfigureAwait(false);
@@ -355,8 +420,92 @@ namespace NadekoBot.Modules.Permissions
 						else {
 							await ReplyErrorLocalized("gwl_remove_fail", 
 								successList.Count(), ids.Count(),
-								Format.Code(type.ToString()+"s"),
+								Format.Code(type.ToString()),
 								Format.Bold(group.ListName),
+								idList)
+								.ConfigureAwait(false);
+							return;
+						}
+					}
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
+                    return;
+				}
+			}
+
+			private async Task _AddRemoveRoles(AddRemove action, string listName="", params ulong[] ids)
+			{
+				GWLItemType type = GWLItemType.Role;
+
+				// If params is empty, report error
+				if (ids.Length < 1) {
+					await ReplyErrorLocalized("gwl_missing_params", Format.Code(type.ToString())).ConfigureAwait(false);
+                    return;
+				}
+
+				// Get the server ID
+				var serverID = ids.FirstOrDefault();
+				ids = ids.Skip(1).ToArray();
+
+				// If params is too long, report error
+				if (ids.Length > MaxNumInput) {
+					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString()), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
+				// If the listName doesn't exist, return an error message
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
+                {
+					// Ensure the group type is compatible!
+					if (!group.Type.Equals(GWLType.Role)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+					// Get string list of name/mention from ids
+					string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
+
+					// Process Add ID to Whitelist of ListName
+					if (action == AddRemove.Add) 
+					{
+						if(_service.AddRoleToGroup(serverID, ids, group, out ulong[] successList))
+						{
+							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							await ReplyConfirmLocalized("gwl_add_role_success",
+								successList.Count(), ids.Count(),
+								Format.Bold(group.ListName),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								strList)
+								.ConfigureAwait(false);
+							return;
+						}
+						else {
+							await ReplyErrorLocalized("gwl_add_role_fail",
+								successList.Count(), ids.Count(),
+								Format.Bold(group.ListName),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								idList)
+								.ConfigureAwait(false);
+							return;
+						}
+					}
+					// Process Remove ID from Whitelist of ListName
+					else
+					{
+						if(_service.RemoveRoleFromGroup(serverID, ids, group, out ulong[] successList))
+						{
+							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							await ReplyConfirmLocalized("gwl_remove_role_success", 
+								successList.Count(), ids.Count(),
+								Format.Bold(group.ListName),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								strList)
+								.ConfigureAwait(false);
+							return;
+						}
+						else {
+							await ReplyErrorLocalized("gwl_remove_role_fail", 
+								successList.Count(), ids.Count(),
+								Format.Bold(group.ListName),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
 								idList)
 								.ConfigureAwait(false);
 							return;
@@ -383,6 +532,12 @@ namespace NadekoBot.Modules.Permissions
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Ensure the group type is compatible!
+					if (!IsCompatible(group.Type, type)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+
                     // Get itemlist string
 					string itemList = string.Join("\n",names);
 
@@ -408,7 +563,7 @@ namespace NadekoBot.Modules.Permissions
 						System.Console.WriteLine("Added {0} items to GlobalPermissionService Unblocked HashSet", delta);
 
 						// Add to a whitelist
-						if(_service.AddUbItemToGroupBulk(names,type,group, out string[] successList))
+						if(_service.AddUnblockedToGroup(names,type,group, out string[] successList))
 						{
 							await ReplyConfirmLocalized("gwl_add_success",
 								successList.Count(), names.Count(),
@@ -432,7 +587,7 @@ namespace NadekoBot.Modules.Permissions
 					else
 					{
 						// Remove from whitelist
-						if(_service.RemoveUbItemFromGroupBulk(names,type,group, out string[] successList))
+						if(_service.RemoveUnblockedFromGroup(names,type,group, out string[] successList))
 						{
 							await ReplyConfirmLocalized("gwl_remove_success",
 								successList.Count(), names.Count(),
