@@ -900,6 +900,12 @@ namespace NadekoBot.Modules.Permissions.Services
                     }
                     break;
 
+				case GWLItemType.Role:
+                    for (var i = 0; i < ids.Length; i++) {
+					  str[i] = MentionUtils.MentionRole(ids[i]) + "\n\t" + ids[i].ToString();
+                    }
+                    break;
+
                 default:
                     for (var i = 0; i < ids.Length; i++) {
                       str[i] = ids[i].ToString();
@@ -927,6 +933,10 @@ namespace NadekoBot.Modules.Permissions.Services
                     str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
 					break;
 
+				case GWLItemType.Role:
+					str = MentionUtils.MentionRole(id) + " " + id.ToString();
+                    break;
+				
                 default:
                     str = id.ToString();
                     break;
