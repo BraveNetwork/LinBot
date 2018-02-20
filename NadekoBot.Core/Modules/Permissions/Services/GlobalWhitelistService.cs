@@ -22,7 +22,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		public readonly int numPerPage = 5;
 
 		public enum FieldType {
-			A = 0, ALL = A, EVERYTHING = A,
+			A = 0, ALL = A, EVERYTHING = A, GENERAL = A, GEN = A,
 			CMD = 1, COMMAND = CMD, COMMANDS = CMD, CMDS = CMD,
 			MOD = 2, MODULE = MOD, MODULES = MOD, MODS = MOD, MDL = MOD, MDLS = MOD,
 			S = 3, SRVR = S, SERVER = S, SERVERS = S, SRVRS = S, 
@@ -765,25 +765,90 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region GetGroupNames
 
-		 public bool GetGroupNames(int page, out string[] names, out int count)
+		 public bool GetGroupNames(GWLType type, int page, out string[] names, out int count)
         {
 			names = null;
             using (var uow = _db.UnitOfWork)
             {
-				count = uow._context.Set<GWLSet>().Count();
-
+				var allnames = uow._context.Set<GWLSet>()
+					.Where(g => g.Type.Equals(type));
+				
+				count = allnames.Count();
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
-				names = uow._context.Set<GWLSet>()
+				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
                 	.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
 					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		public bool GetGroupNamesByMember(ulong id, GWLItemType type, GWLType typeG, int page, out string[] names, out int count)
+        {
+            names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				if (type.Equals(GWLItemType.User) && typeG.Equals(GWLType.Role)) {
+					// TODO: Be sure to check the user's roles!
+					var allnames = uow._context.Set<GWLItem>()
+					.Where(i => i.Type.Equals(type))
+					.Where(i => i.ItemId.Equals(id))
+					.Join(uow._context.Set<GWLItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g=>g.Type.Equals(typeG)),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g);
+
+					count = allnames.Count();
+					if (count <= 0) return false;
+
+					int numSkip = page*numPerPage;
+					if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+					// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+					names = allnames
+						.OrderBy(g => g.ListName.ToLowerInvariant())
+						.Skip(numSkip)
+						.Take(numPerPage)
+						.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+						.ToArray();
+
+				} else {
+					var allnames = uow._context.Set<GWLItem>()
+					.Where(i => i.Type.Equals(type))
+					.Where(i => i.ItemId.Equals(id))
+					.Join(uow._context.Set<GWLItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i, gi) => gi.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g=>g.Type.Equals(typeG)),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g);
+					count = allnames.Count();
+					if (count <= 0) return false;
+
+					int numSkip = page*numPerPage;
+					if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+					// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+					names = allnames
+						.OrderBy(g => g.ListName.ToLowerInvariant())
+						.Skip(numSkip)
+						.Take(numPerPage)
+						.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+						.ToArray();
+				}
 
                 uow.Complete();
             }
@@ -824,7 +889,7 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		public bool GetGroupNamesByUnblocked(string name, UnblockedType type, int page, out string[] names, out int count)
+		public bool GetGroupNamesByUnblocked(string name, UnblockedType type, GWLType typeG, int page, out string[] names, out int count)
 		{
 			names = null;
 			count = 0;
@@ -839,6 +904,7 @@ namespace NadekoBot.Modules.Permissions.Services
             {
                 // Retrieve a list of set names linked to GlobalUnblockedSets.ListPK
                 var allnames = uow._context.Set<GWLSet>()
+						.Where(g=>g.Type.Equals(typeG))
 					.Join(
 						uow._context.Set<GlobalUnblockedSet>()
 							.Where(u => u.UnblockedPK.Equals(item.Id)), 
