@@ -458,11 +458,17 @@ namespace NadekoBot.Modules.Permissions
 
 				// Get the server ID
 				var serverID = ids.FirstOrDefault();
-				ids = ids.Skip(1).ToArray();
+				// Skip the server ID and remove @everyone if it is in the list
+				ids = ids.Skip(1).Where(i => !i.Equals(serverID)).ToArray();
 
 				// If params is too long, report error
 				if (ids.Length > MaxNumInput) {
 					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString()), MaxNumInput).ConfigureAwait(false);
+                    return;
+				}
+				// If params is now empty, report error
+				if (ids.Length < 1) {
+					await ReplyErrorLocalized("gwl_missing_params", Format.Code(type.ToString())).ConfigureAwait(false);
                     return;
 				}
 				// If the listName doesn't exist, return an error message
@@ -893,9 +899,9 @@ namespace NadekoBot.Modules.Permissions
                     var embed = new EmbedBuilder()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list"))
-						.AddField(GetText("gwl_field_title_all", countA), strA)
-						.AddField(GetText("gwl_field_title_mem", countM), strM)
-						.AddField(GetText("gwl_field_title_role", countR), strR)
+						.AddField(GetText("gwl_field_title_all", countA), strA, true)
+						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
+						.AddField(GetText("gwl_field_title_role", countR), strR, true)
 						.WithFooter($"Page {page+1}/{lastPage+1}")
 						.WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1506,8 +1512,8 @@ namespace NadekoBot.Modules.Permissions
                 
                 if (hasTypeAll || hasS || hasC || hasTypeRole) {
 					int lastAPage = (countA - 1)/_service.numPerPage;
-					int lastServerPage = (countS - 1)/_service.numPerPage +1;
-					int lastChannelPage = (countC - 1)/_service.numPerPage +1;
+					int lastServerPage = (countS - 1)/_service.numPerPage;
+					int lastChannelPage = (countC - 1)/_service.numPerPage;
 					int lastRPage = (countR - 1)/_service.numPerPage;
 					int lastPage = System.Math.Max(lastAPage, 
 						System.Math.Max(lastRPage,
