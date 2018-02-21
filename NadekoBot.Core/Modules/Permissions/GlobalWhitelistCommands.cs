@@ -68,6 +68,45 @@ namespace NadekoBot.Modules.Permissions
 			}
 			#endregion Type Compatibility
 
+			#region Cmd or Mdl Name
+			private string GetTrueName(UnblockedType type, string name)
+			{
+				string truename = "";
+				name = name.ToLowerInvariant();
+				if (type.Equals(UnblockedType.Command)) {					
+					if (name.StartsWith(Prefix)) name = name.Substring(Prefix.Length);
+					var cmd = _cmds.Commands.FirstOrDefault(c => c.Aliases.Select(a => a.ToLowerInvariant()).Contains(name));
+					if (cmd != null) truename = cmd.Name.ToLowerInvariant();
+				} else {
+					var mdl = _cmds.Modules.GroupBy(m => m.GetTopLevelModule()).FirstOrDefault(m => m.Key.Name.ToLowerInvariant() == name)?.Key;
+					if (mdl != null) truename = mdl.Name.ToLowerInvariant();
+				}
+				return truename;
+			}
+			private string[] GetTrueNames(UnblockedType type, string[] names)
+			{
+				string[] truenames = new string[names.Length];
+				if (type.Equals(UnblockedType.Command)) {
+					for (int i=0; i<names.Length; i++) {
+						string name = names[i].ToLowerInvariant();
+						if (names[i].StartsWith(Prefix)) name = name.Substring(Prefix.Length);
+						var cmd = _cmds.Commands.FirstOrDefault(c => 
+							c.Aliases.Select(a => a.ToLowerInvariant()).Contains(name));
+						if (cmd != null) truenames[i] = cmd.Name.ToLowerInvariant();
+					}
+				} else {
+					for (int i=0; i<names.Length; i++) {
+						string name = names[i].ToLowerInvariant();
+						var mdl = _cmds.Modules.GroupBy(m => m.GetTopLevelModule()).FirstOrDefault(m => m.Key.Name.ToLowerInvariant() == name)?.Key;
+						if (mdl != null) truenames[i] = mdl.Name.ToLowerInvariant();
+					}
+				}
+
+				// Remove empty in truenames (faster than remaking truenames each iteration)
+				return truenames.Where(x=>!string.IsNullOrEmpty(x)).ToArray();
+			}
+			#endregion Cmd or Mdl Name
+
 			#region Whitelist Utilities
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -247,10 +286,10 @@ namespace NadekoBot.Modules.Permissions
 				}
 				switch(field) {
 					case GlobalWhitelistService.FieldType.COMMAND: 
-						await _AddRemove(action, UnblockedType.Command, listName, names);
+						await _AddRemove(action, UnblockedType.Command, listName, GetTrueNames(UnblockedType.Command,names));
 						return;
 					case GlobalWhitelistService.FieldType.MODULE: 
-						await _AddRemove(action, UnblockedType.Module, listName, names);
+						await _AddRemove(action, UnblockedType.Module, listName, GetTrueNames(UnblockedType.Module,names));
 						return;
 					default: 
 						// Not valid
@@ -549,32 +588,6 @@ namespace NadekoBot.Modules.Permissions
                     return;
 				}
 
-				// Verify type
-				string[] truenames = new string[names.Length];
-				if (type.Equals(UnblockedType.Command)) {
-					for (int i=0; i<names.Length; i++) {
-						string name = names[i].ToLowerInvariant();
-						if (names[i].StartsWith(Prefix)) name = name.Substring(Prefix.Length);
-						var cmd = _cmds.Commands.FirstOrDefault(c => 
-							c.Aliases.Select(a => a.ToLowerInvariant()).Contains(name));
-						if (cmd != null) truenames[i] = cmd.Name.ToLowerInvariant();
-					}
-				} else {
-					for (int i=0; i<names.Length; i++) {
-						string name = names[i].ToLowerInvariant();
-						var mdl = _cmds.Modules.GroupBy(m => m.GetTopLevelModule()).FirstOrDefault(m => m.Key.Name.ToLowerInvariant() == name)?.Key;
-						if (mdl != null) truenames[i] = mdl.Name.ToLowerInvariant();
-					}
-				}
-
-				// Remove empty in truenames (faster than remaking truenames each iteration)
-				truenames = truenames.Where(x=>!string.IsNullOrEmpty(x)).ToArray();
-
-				if (truenames.Length < 1) {
-					await ReplyErrorLocalized("gwl_missing_params", Format.Code(type.ToString())).ConfigureAwait(false);
-                    return;
-				}				
-
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -585,7 +598,7 @@ namespace NadekoBot.Modules.Permissions
 					}
 
                     // Get itemlist string
-					string itemList = string.Join("\n",truenames);
+					string itemList = string.Join("\n",names);
 
 					// Process Add Command/Module
 					if (action == AddRemove.Add) 
@@ -597,22 +610,22 @@ namespace NadekoBot.Modules.Permissions
 						if (type == UnblockedType.Command)
 						{
 							int pre = _perm.UnblockedCommands.Count;
-							_perm.UnblockedCommands.AddRange(truenames);
+							_perm.UnblockedCommands.AddRange(names);
 							delta = _perm.UnblockedCommands.Count - pre;
 						}
 						else {
 							int pre = _perm.UnblockedModules.Count;
-							_perm.UnblockedModules.AddRange(truenames);
+							_perm.UnblockedModules.AddRange(names);
 							delta = _perm.UnblockedModules.Count - pre;
 						}
 
 						System.Console.WriteLine("Added {0} items to GlobalPermissionService Unblocked HashSet", delta);
 
 						// Add to a whitelist
-						if(_service.AddUnblockedToGroup(truenames,type,group, out string[] successList))
+						if(_service.AddUnblockedToGroup(names,type,group, out string[] successList))
 						{
 							await ReplyConfirmLocalized("gwl_add_success",
-								successList.Count(), truenames.Count(),
+								successList.Count(), names.Count(),
 								Format.Code(type.ToString()+"s"), 
 								Format.Bold(group.ListName), 
 								Format.Bold(string.Join("\n", successList)))
@@ -621,7 +634,7 @@ namespace NadekoBot.Modules.Permissions
 						}
 						else {
 							await ReplyErrorLocalized("gwl_add_fail",
-								successList.Count(), truenames.Count(),
+								successList.Count(), names.Count(),
 								Format.Code(type.ToString()+"s"), 
 								Format.Bold(group.ListName), 
 								Format.Bold(itemList))
@@ -633,10 +646,10 @@ namespace NadekoBot.Modules.Permissions
 					else
 					{
 						// Remove from whitelist
-						if(_service.RemoveUnblockedFromGroup(truenames,type,group, out string[] successList))
+						if(_service.RemoveUnblockedFromGroup(names,type,group, out string[] successList))
 						{
 							await ReplyConfirmLocalized("gwl_remove_success",
-								successList.Count(), truenames.Count(),
+								successList.Count(), names.Count(),
 								Format.Code(type.ToString()+"s"),
 								Format.Bold(group.ListName),
 								Format.Bold(string.Join("\n", successList)))
@@ -645,7 +658,7 @@ namespace NadekoBot.Modules.Permissions
 						}
 						else {
 							await ReplyErrorLocalized("gwl_remove_fail",
-								successList.Count(), truenames.Count(),
+								successList.Count(), names.Count(),
 								Format.Code(type.ToString()+"s"),
 								Format.Bold(group.ListName),
 								Format.Bold(itemList))
@@ -1021,29 +1034,29 @@ namespace NadekoBot.Modules.Permissions
 					break;
 
 					case GlobalWhitelistService.FieldType.SERVER:
-						bool hasServers = _service.GetGroupMembers(group, GWLItemType.Server, page, out ulong[] servers, out fieldCount);
-						fieldStr = (!hasServers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Server, servers));
+						bool hasServers = _service.GetGroupMembers(group, GWLItemType.Server, Context.Guild.Id, page, out string[] servers, out fieldCount);
+						fieldStr = (!hasServers) ? "*none*" : string.Join("\n",servers);
 						fieldTitle = "gwl_field_servers";
 						fieldLabel = "Servers";
 					break;
 
 					case GlobalWhitelistService.FieldType.CHANNEL:
-						bool hasChannels = _service.GetGroupMembers(group, GWLItemType.Channel, page, out ulong[] channels, out fieldCount);
-						fieldStr = (!hasChannels) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Channel, channels));
+						bool hasChannels = _service.GetGroupMembers(group, GWLItemType.Channel, Context.Guild.Id, page, out string[] channels, out fieldCount);
+						fieldStr = (!hasChannels) ? "*none*" : string.Join("\n",channels);
 						fieldTitle = "gwl_field_channels";
 						fieldLabel = "Channels";
 					break;
 
 					case GlobalWhitelistService.FieldType.USER:
-						bool hasUsers = _service.GetGroupMembers(group, GWLItemType.User, page, out ulong[] users, out fieldCount);
-						fieldStr = (!hasUsers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.User, users));
+						bool hasUsers = _service.GetGroupMembers(group, GWLItemType.User, Context.Guild.Id, page, out string[] users, out fieldCount);
+						fieldStr = (!hasUsers) ? "*none*" : string.Join("\n",users);
 						fieldTitle = "gwl_field_users";
 						fieldLabel = "Users";
 					break;
 
 					case GlobalWhitelistService.FieldType.ROLE:
-						bool hasRoles = _service.GetGroupMembers(group, GWLItemType.Role, page, out ulong[] roles, out fieldCount);
-						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Role, roles));
+						bool hasRoles = _service.GetGroupRoles(group, Context.Guild.Id, page, out string[] roles, out fieldCount);
+						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n", roles);
 						fieldTitle = "gwl_field_roles";
 						fieldLabel = "Roles";
 					break;
@@ -1085,25 +1098,25 @@ namespace NadekoBot.Modules.Permissions
 
 					case GlobalWhitelistService.FieldType.SERVER:
 						bool hasServers = _service.GetGroupMembers(group, GWLItemType.Server, page, out ulong[] servers, out fieldCount);
-						fieldStr = (!hasServers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Server, servers));
+						fieldStr = (!hasServers) ? "*none*" : string.Join("\n", _service.GetNameOrMentionFromId(GWLItemType.Server, servers));
 						fieldTitle = "gwl_field_servers";
 					break;
 
 					case GlobalWhitelistService.FieldType.CHANNEL:
 						bool hasChannels = _service.GetGroupMembers(group, GWLItemType.Channel, page, out ulong[] channels, out fieldCount);
-						fieldStr = (!hasChannels) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Channel, channels));
+						fieldStr = (!hasChannels) ? "*none*" : string.Join("\n", _service.GetNameOrMentionFromId(GWLItemType.Channel, channels));
 						fieldTitle = "gwl_field_channels";
 					break;
 
 					case GlobalWhitelistService.FieldType.USER:
 						bool hasUsers = _service.GetGroupMembers(group, GWLItemType.User, page, out ulong[] users, out fieldCount);
-						fieldStr = (!hasUsers) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.User, users));
+						fieldStr = (!hasUsers) ? "*none*" : string.Join("\n", _service.GetNameOrMentionFromId(GWLItemType.User, users));
 						fieldTitle = "gwl_field_users";
 					break;
 
 					case GlobalWhitelistService.FieldType.ROLE:
-						bool hasRoles = _service.GetGroupMembers(group, GWLItemType.Role, page, out ulong[] roles, out fieldCount);
-						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n",_service.GetNameOrMentionFromId(GWLItemType.Role, roles));
+						bool hasRoles = _service.GetGroupRoles(group, page, out ulong[] roles, out fieldCount);
+						fieldStr = (!hasRoles) ? "*none*" : string.Join("\n", _service.GetNameOrMentionFromId(GWLItemType.Role, roles));
 						fieldTitle = "gwl_field_roles";
 					break;
 
@@ -1126,6 +1139,21 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+            public async Task GWLHasMember(GlobalWhitelistService.FieldType field, IGuild guild, ulong id, string listName="")
+			{
+				switch(field) {
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _HasMemberRole(guild.Id, id, listName);
+						return;
+					default: 
+						// Not valid
+						await ReplyErrorLocalized("gwl_field_invalid_role", Format.Bold(field.ToString())).ConfigureAwait(false);
+						return;
+				}
+			}
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
             public async Task GWLHasMember(GlobalWhitelistService.FieldType field, ulong id, string listName="")
 			{
 				switch(field) {
@@ -1137,6 +1165,9 @@ namespace NadekoBot.Modules.Permissions
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
 						await _HasMember(GWLItemType.User, id, listName);
+						return;
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _HasMemberRole(Context.Guild.Id, id, listName);
 						return;
 					default: 
 						// Not valid
@@ -1151,10 +1182,10 @@ namespace NadekoBot.Modules.Permissions
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.COMMAND: 
-						await _HasMember(UnblockedType.Command, name, listName);
+						await _HasMember(UnblockedType.Command, GetTrueName(UnblockedType.Command,name), listName);
 						return;
 					case GlobalWhitelistService.FieldType.MODULE: 
-						await _HasMember(UnblockedType.Module, name, listName);
+						await _HasMember(UnblockedType.Module, GetTrueName(UnblockedType.Module,name), listName);
 						return;
 					default: 
 						// Not valid
@@ -1166,6 +1197,16 @@ namespace NadekoBot.Modules.Permissions
 			#endregion Has FieldType
 
 			#region Has Member
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GWLHasMember(IGuild server, IRole role, string listName="")
+				=> _HasMemberRole(server.Id, role.Id, listName);
+			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GWLHasMember(IGuild server, ulong id, string listName="")
+				=> _HasMemberRole(server.Id, id, listName);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -1181,6 +1222,11 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public Task GWLHasMember(IUser user, string listName="")
 				=> _HasMember(GWLItemType.User, user.Id, listName);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GWLHasMember(IRole role, string listName="")
+				=> _HasMemberRole(Context.Guild.Id, role.Id, listName);
 
 			#endregion Has Member
 
@@ -1203,8 +1249,43 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Ensure the group type is compatible!
+					if (!IsCompatible(group.Type, type)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+
                     // Return result of IsMemberInList()
                     if(!_service.IsMemberInGroup(id,type,group)) {
+						await ReplyErrorLocalized("gwl_not_member", 
+							Format.Code(type.ToString()), 
+							_service.GetNameOrMentionFromId(type,id), 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+                    } else {
+                        await ReplyConfirmLocalized("gwl_is_member", 
+							Format.Code(type.ToString()), 
+							_service.GetNameOrMentionFromId(type,id), 
+							Format.Bold(group.ListName))
+							.ConfigureAwait(false);
+                        return;
+                    }
+                } else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);    
+                    return;
+				}
+			}
+
+			private async Task _HasMemberRole(ulong sid, ulong id, string listName)
+			{
+				GWLItemType type = GWLItemType.Role;
+
+				// Return error if whitelist doesn't exist
+                if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
+                {
+                    // Return result of IsMemberInListRole()
+                    if(!_service.IsRoleInGroup(sid, id, group)) {
 						await ReplyErrorLocalized("gwl_not_member", 
 							Format.Code(type.ToString()), 
 							_service.GetNameOrMentionFromId(type,id), 
@@ -1260,11 +1341,11 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GWLForMember(GlobalWhitelistService.FieldType field, ulong sid, ulong rid, int page=1)
+            public async Task GWLForMember(GlobalWhitelistService.FieldType field, IGuild guild, ulong id, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.ROLE: 
-						await _ListForMemberRole(sid, rid, page);
+						await _ListForMemberRole(guild.Id, id, page);
 						return;
 					default: 
 						// Not valid
@@ -1303,10 +1384,10 @@ namespace NadekoBot.Modules.Permissions
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.COMMAND: 
-						await _ListForMember(UnblockedType.Command, name, page);
+						await _ListForMember(UnblockedType.Command, GetTrueName(UnblockedType.Command,name), page);
 						return;
 					case GlobalWhitelistService.FieldType.MODULE: 
-						await _ListForMember(UnblockedType.Module, name, page);
+						await _ListForMember(UnblockedType.Module, GetTrueName(UnblockedType.Module,name), page);
 						return;
 					default: 
 						// Not valid
@@ -1563,6 +1644,12 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Ensure the group type is compatible!
+					if (!group.Type.Equals(GWLType.Member)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code("Server|Channel"), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+
 					ulong idC = Context.Channel.Id;
 					ulong idS = Context.Guild.Id;
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using NadekoBot.Common.Collections;
 using NadekoBot.Common.ModuleBehaviors;
 using NadekoBot.Core.Services;
+using NadekoBot.Core.Services.Impl;
 using NadekoBot.Core.Services.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,7 @@ namespace NadekoBot.Modules.Permissions.Services
     {
         private readonly DbService _db;
 		private readonly DiscordSocketClient _client;
+		private readonly NadekoStrings _strs;
 
 		private string enabledText = Format.Code("✅");
 		private string disabledText = Format.Code("❌");
@@ -34,10 +36,11 @@ namespace NadekoBot.Modules.Permissions.Services
 			M = 8, MEM = M, MEMBER = M, MEMBERS = M
 		};
 
-        public GlobalWhitelistService(DiscordSocketClient client, DbService db)
+        public GlobalWhitelistService(DiscordSocketClient client, DbService db, NadekoStrings strings)
         {
             _db = db;
 			_client = client;
+			_strs = strings;
 		}
 
 		#region General Whitelist Actions
@@ -569,6 +572,39 @@ namespace NadekoBot.Modules.Permissions.Services
             {
                 var temp = uow._context.Set<GWLItem>()
 					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.RoleServerId.Equals(0) )
+					.Where( x => x.ItemId.Equals(id) )
+					.Join(
+						uow._context.Set<GWLItemSet>(), 
+						i => i.Id, gi => gi.ItemPK,
+						(i,gi) => new {
+							i.ItemId,
+							gi.ListPK
+						})
+					// Don't need to verify GWLType since the caller should've checked IsCompat
+					.Where( y => y.ListPK.Equals(group.Id) )
+					.FirstOrDefault();
+
+                uow.Complete();
+                
+                if (temp != null) {
+                  result = true;
+                } else {
+                  result = false;
+                }
+            }
+            return result;
+        }
+
+		public bool IsRoleInGroup(ulong sid, ulong id, GWLSet group)
+        {
+            var result = true;
+
+            using (var uow = _db.UnitOfWork)
+            {
+                var temp = uow._context.Set<GWLItem>()
+					.Where( x => x.Type.Equals(GWLItemType.Role) )
+					.Where( x => x.RoleServerId.Equals(sid) )
 					.Where( x => x.ItemId.Equals(id) )
 					.Join(
 						uow._context.Set<GWLItemSet>(), 
@@ -590,6 +626,7 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return result;
         }
+
 		public bool IsUnblockedInGroup(string name, UnblockedType type, GWLSet group)
 		{
 			var result = true;
@@ -1023,7 +1060,8 @@ namespace NadekoBot.Modules.Permissions.Services
             {
                 var anon = group.GWLItemSets
                 	.Join(uow._context.Set<GWLItem>()
-				  		.Where(m => m.Type.Equals(type)), 
+				  		.Where(m => m.Type.Equals(type))
+						.Where(m => m.RoleServerId.Equals(0)), 
 							p => p.ItemPK, 
 							m => m.Id, 
 							(pair,member) => member.ItemId)
@@ -1035,8 +1073,98 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				
+
 				results = anon.Skip(numSkip).Take(numPerPage).ToArray();
+            }
+            return true;
+        }
+
+		public bool GetGroupRoles(GWLSet group, int page, out ulong[] results, out int count)
+        {
+            results = null;
+            using (var uow = _db.UnitOfWork)
+            {
+                var anon = group.GWLItemSets
+                	.Join(uow._context.Set<GWLItem>()
+				  		.Where(m => m.Type.Equals(GWLItemType.Role))
+						.Where(m => !m.RoleServerId.Equals(0)), 
+							p => p.ItemPK, 
+							m => m.Id, 
+							(pair,member) => member.ItemId)
+					.OrderBy(id => id);
+                uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+
+				results = anon.Skip(numSkip).Take(numPerPage).ToArray();
+			}
+            return true;
+        }
+
+		public bool GetGroupMembers(GWLSet group, GWLItemType type, ulong ctx, int page, out string[] results, out int count)
+        {
+            results = null;
+            using (var uow = _db.UnitOfWork)
+            {
+                var anon = group.GWLItemSets
+                	.Join(uow._context.Set<GWLItem>()
+				  		.Where(m => m.Type.Equals(type))
+						.Where(m => m.RoleServerId.Equals(0)), 
+							p => p.ItemPK, 
+							m => m.Id, 
+							(pair,member) => member.ItemId)
+					.OrderBy(id => id);
+                uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+
+				var anon2 = anon.Skip(numSkip).Take(numPerPage).ToArray();
+
+				results = new string[anon2.Count()];
+				for (int i=0; i<anon2.Count(); i++) {
+					var m = anon2.ElementAt(i);
+					results[i] = GetMemberNameMention(type, m, ctx);
+				}
+            }
+            return true;
+        }
+
+		public bool GetGroupRoles(GWLSet group, ulong ctx, int page, out string[] results, out int count)
+        {
+            results = null;
+            using (var uow = _db.UnitOfWork)
+            {
+                var anon = group.GWLItemSets
+                	.Join(uow._context.Set<GWLItem>()
+				  		.Where(m => m.Type.Equals(GWLItemType.Role))
+						.Where(m => !m.RoleServerId.Equals(0)), 
+							p => p.ItemPK, 
+							m => m.Id, 
+							(pair,member) => new { member.ItemId, member.RoleServerId } )
+					.OrderBy(r => r.ItemId);
+                uow.Complete();
+
+				count = anon.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+
+				var anon2 = anon.Skip(numSkip).Take(numPerPage).ToArray();
+
+				results = new string[anon2.Count()];
+				for (int i=0; i<anon2.Count(); i++) {
+					var role = anon2.ElementAt(i);
+					results[i] = GetRoleNameMention(role.ItemId, role.RoleServerId, ctx);
+				}
             }
             return true;
         }
@@ -1148,34 +1276,36 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#region Resolve ulong IDs
 
-        public string[] GetNameOrMentionFromId(GWLItemType type, ulong[] ids)
+        public string[] GetNameOrMentionFromId(GWLItemType type, ulong[] ids, bool inline=false)
         {
             string[] str = new string[ids.Length];
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
 
             switch (type) {
                 case GWLItemType.User:
                     for (var i = 0; i < ids.Length; i++) {
-					  str[i] = MentionUtils.MentionUser(ids[i]) + "\n\t" + ids[i].ToString();
+					  str[i] = $"{MentionUtils.MentionUser(ids[i])}{sep}{ids[i]}";
                     }
                     break;
 
                 case GWLItemType.Channel:
                     for (var i = 0; i < ids.Length; i++) {
-					  str[i] = MentionUtils.MentionChannel(ids[i]) + "\n\t" + ids[i].ToString();
+					  str[i] = $"{MentionUtils.MentionChannel(ids[i])}{sep}{ids[i]}";
                     }
                     break;
 
                 case GWLItemType.Server:
                     for (var i = 0; i < ids.Length; i++) {
 						var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
-                    	string name = (guild != null) ? guild.Name : "Null";
-						str[i] = $"[{name}](https://discordapp.com/channels/{ids[i]}/ '{ids[i]}')\n\t{ids[i]}";
+                    	string name = (guild != null) ? guild.Name : noName;
+						str[i] = $"[{name}](https://discordapp.com/channels/{ids[i]}/ '{name}'){sep}{ids[i]}";
                     }
                     break;
 
 				case GWLItemType.Role:
                     for (var i = 0; i < ids.Length; i++) {
-					  str[i] = MentionUtils.MentionRole(ids[i]) + "\n\t" + ids[i].ToString();
+					  str[i] = $"{MentionUtils.MentionRole(ids[i])}{sep}{ids[i]}";
                     }
                     break;
 
@@ -1188,26 +1318,29 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return str;
         }
-        public string GetNameOrMentionFromId(GWLItemType type, ulong id)
+        public string GetNameOrMentionFromId(GWLItemType type, ulong id, bool inline=false)
         {
-            string str = "";
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
+			string str = $"{noName}{sep}{id}";
 
             switch (type) {
                 case GWLItemType.User:
-					str = MentionUtils.MentionUser(id) + " " + id.ToString();
+					str = $"{MentionUtils.MentionUser(id)}{sep}{id}";
                     break;
 
                 case GWLItemType.Channel:
-					str = MentionUtils.MentionChannel(id) + " " + id.ToString();
+					str = $"{MentionUtils.MentionChannel(id)}{sep}{id}";
                     break;
 
                 case GWLItemType.Server:
 					var guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
-                    str = (guild != null) ? $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{id}') {id}" : id.ToString();
+					string name = (guild != null) ? guild.Name : noName;
+					str = $"[{name}](https://discordapp.com/channels/{id}/ '{name}'){sep}{id}";
 					break;
 
 				case GWLItemType.Role:
-					str = MentionUtils.MentionRole(id) + " " + id.ToString();
+					str = $"{MentionUtils.MentionRole(id)}{sep}{id}";
                     break;
 				
                 default:
@@ -1217,6 +1350,68 @@ namespace NadekoBot.Modules.Permissions.Services
 
             return str;
         }
+
+		public string GetMemberNameMention(GWLItemType type, ulong id, ulong ctxId, bool inline=false)
+		{
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
+			string str = $"{noName}{sep}{id}";
+
+            switch (type) {
+                case GWLItemType.User:
+					SocketGuild guildU = _client.Guilds
+						.Where(g => g.Id.Equals(ctxId))
+						.Where(g => g.GetUser(id) != null)
+						.FirstOrDefault();
+					if (guildU != null) return GetNameOrMentionFromId(type, id);
+
+					string name = _client.Guilds
+						.Where(g => g.GetUser(id) != null)
+						.Select(g => g.GetUser(id).Nickname)
+						.FirstOrDefault();
+					if (!string.IsNullOrEmpty(name)) str = $"[@{name}](https://discordapp.com/users/{id}/ '{name}'){sep}{id}";
+                    break;
+
+                case GWLItemType.Channel:
+					SocketGuildChannel chnl = _client.GetChannel(id) as SocketGuildChannel;
+					if (chnl != null) {
+						if (ctxId == chnl.Guild.Id) {
+							return GetNameOrMentionFromId(type, id);
+						}
+						str = $"[#{chnl.Name}](https://discordapp.com/channels/{id}/ '{chnl.Guild.Name}'){sep}{id}";
+					}
+                    break;
+
+                case GWLItemType.Server:
+					SocketGuild guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(id));
+					if (guild != null) {
+						str = $"[{guild.Name}](https://discordapp.com/channels/{id}/ '{guild.Name}'){sep}{id}";
+					}
+					break;
+				
+                default:
+                    break;
+            }
+            return str;
+		}
+
+		public string GetRoleNameMention(ulong id, ulong sid, ulong ctx, bool inline=false)
+		{
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
+			string str = $"{noName}{sep}{id}";
+
+			if (ctx == sid) return GetNameOrMentionFromId(GWLItemType.Role,id);
+
+			SocketGuild guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(sid));
+			if (guild != null) {
+				SocketRole role = guild.Roles.Where(r => r.Id.Equals(id)).FirstOrDefault();
+				if (role != null) {
+					str = $"[@{role.Name}](https://discordapp.com/channels/{sid}/ '{guild.Name}')\n\t{id}";
+				}						
+			}
+			return str;
+		}
 
 		#endregion Resolve ulong IDs
 
