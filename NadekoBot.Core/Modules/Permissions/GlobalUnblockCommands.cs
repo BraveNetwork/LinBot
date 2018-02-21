@@ -145,7 +145,7 @@ namespace NadekoBot.Modules.Permissions
 					.WithTitle(GetText("gwl_title"))
 					.WithDescription(GetText("gub_list_formember", 
 						Format.Code(type.ToString()),
-						_gwl.GetNameOrMentionFromId(type, id)))
+						_gwl.GetNameOrMentionFromId(type, id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
 					.WithFooter($"Page {page}/{lastPage}");
@@ -258,7 +258,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, memID)
+							_gwl.GetNameOrMentionFromId(memType, memID, true)
 							))
 						.AddField(GetText("gwl_field_title", count), string.Join("\n", lists), true)
 						.WithFooter($"Page {page+1}/{lastPage+1}");
@@ -272,7 +272,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetNameOrMentionFromId(memType, memID)
+						_gwl.GetNameOrMentionFromId(memType, memID, true)
 						)
 					.ConfigureAwait(false);
                 	return;

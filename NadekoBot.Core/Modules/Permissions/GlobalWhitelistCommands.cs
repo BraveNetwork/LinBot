@@ -519,18 +519,18 @@ namespace NadekoBot.Modules.Permissions
                     	return;
 					}
 					// Get string list of name/mention from ids
-					string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids));
+					string idList = string.Join("\n",_service.GetRoleNameMention(serverID,ids,Context.Guild.Id));
 
 					// Process Add ID to Whitelist of ListName
 					if (action == AddRemove.Add) 
 					{
 						if(_service.AddRoleToGroup(serverID, ids, group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							string strList = string.Join("\n",_service.GetRoleNameMention(serverID,successList,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_add_role_success",
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
-								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID, true),
 								strList)
 								.ConfigureAwait(false);
 							return;
@@ -539,7 +539,7 @@ namespace NadekoBot.Modules.Permissions
 							await ReplyErrorLocalized("gwl_add_role_fail",
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
-								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID, true),
 								idList)
 								.ConfigureAwait(false);
 							return;
@@ -550,11 +550,11 @@ namespace NadekoBot.Modules.Permissions
 					{
 						if(_service.RemoveRoleFromGroup(serverID, ids, group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList));
+							string strList = string.Join("\n",_service.GetRoleNameMention(serverID,successList,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_remove_role_success", 
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
-								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID, true),
 								strList)
 								.ConfigureAwait(false);
 							return;
@@ -563,7 +563,7 @@ namespace NadekoBot.Modules.Permissions
 							await ReplyErrorLocalized("gwl_remove_role_fail", 
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
-								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID),
+								_service.GetNameOrMentionFromId(GWLItemType.Server, serverID, true),
 								idList)
 								.ConfigureAwait(false);
 							return;
@@ -840,14 +840,14 @@ namespace NadekoBot.Modules.Permissions
                 {
                     await ReplyConfirmLocalized("gwl_purge_success", 
 						Format.Code(type.ToString()), 
-						_service.GetNameOrMentionFromId(type, id))
+						_service.GetNameOrMentionFromId(type, id, true))
 						.ConfigureAwait(false);
                     return;
                 }
 				else {
 					await ReplyErrorLocalized("gwl_purge_fail", 
 						Format.Code(type.ToString()), 
-						_service.GetNameOrMentionFromId(type, id))
+						_service.GetNameOrMentionFromId(type, id, true))
 						.ConfigureAwait(false);
                     return;
 				}
@@ -1259,14 +1259,14 @@ namespace NadekoBot.Modules.Permissions
                     if(!_service.IsMemberInGroup(id,type,group)) {
 						await ReplyErrorLocalized("gwl_not_member", 
 							Format.Code(type.ToString()), 
-							_service.GetNameOrMentionFromId(type,id), 
+							_service.GetNameOrMentionFromId(type,id, true), 
 							Format.Bold(group.ListName))
 							.ConfigureAwait(false);
                         return;
                     } else {
                         await ReplyConfirmLocalized("gwl_is_member", 
 							Format.Code(type.ToString()), 
-							_service.GetNameOrMentionFromId(type,id), 
+							_service.GetNameOrMentionFromId(type,id, true), 
 							Format.Bold(group.ListName))
 							.ConfigureAwait(false);
                         return;
@@ -1284,18 +1284,24 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Ensure the group type is compatible!
+					if (!group.Type.Equals(GWLType.Role)) {
+						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
+                    	return;
+					}
+
                     // Return result of IsMemberInListRole()
                     if(!_service.IsRoleInGroup(sid, id, group)) {
 						await ReplyErrorLocalized("gwl_not_member", 
 							Format.Code(type.ToString()), 
-							_service.GetNameOrMentionFromId(type,id), 
+							_service.GetRoleNameMention(id,sid,Context.Guild.Id,true), 
 							Format.Bold(group.ListName))
 							.ConfigureAwait(false);
                         return;
                     } else {
                         await ReplyConfirmLocalized("gwl_is_member", 
 							Format.Code(type.ToString()), 
-							_service.GetNameOrMentionFromId(type,id), 
+							_service.GetRoleNameMention(id,sid,Context.Guild.Id,true), 
 							Format.Bold(group.ListName))
 							.ConfigureAwait(false);
                         return;
@@ -1477,7 +1483,7 @@ namespace NadekoBot.Modules.Permissions
 					if (page > lastPage) page = lastPage;
                     EmbedBuilder embed = new EmbedBuilder()
                       	.WithTitle(GetText("gwl_title"))
-                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)))
+                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)))
                       	.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
 						.AddField(GetText("gwl_field_title_role", countR), strR, true)
@@ -1486,7 +1492,7 @@ namespace NadekoBot.Modules.Permissions
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                     return;
                 } else {
-					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id)).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)).ConfigureAwait(false);
                     return;
                 }
             }
@@ -1510,7 +1516,7 @@ namespace NadekoBot.Modules.Permissions
 					if (page > lastPage) page = lastPage;
                     EmbedBuilder embed = new EmbedBuilder()
                       	.WithTitle(GetText("gwl_title"))
-                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,rID)))
+                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetRoleNameMention(rID,sID,Context.Guild.Id,true)))
                       	.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.AddField(GetText("gwl_field_title_mem", 0), "*none*", true)
 						.AddField(GetText("gwl_field_title_role", countR), strR, true)
@@ -1519,7 +1525,7 @@ namespace NadekoBot.Modules.Permissions
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                     return;
                 } else {
-					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,rID)).ConfigureAwait(false);
+					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetRoleNameMention(rID,sID,Context.Guild.Id,true)).ConfigureAwait(false);
                     return;
                 }
             }

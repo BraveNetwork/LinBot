@@ -1363,7 +1363,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						.Where(g => g.Id.Equals(ctxId))
 						.Where(g => g.GetUser(id) != null)
 						.FirstOrDefault();
-					if (guildU != null) return GetNameOrMentionFromId(type, id);
+					if (guildU != null) return GetNameOrMentionFromId(type, id, inline);
 
 					string name = _client.Guilds
 						.Where(g => g.GetUser(id) != null)
@@ -1376,7 +1376,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					SocketGuildChannel chnl = _client.GetChannel(id) as SocketGuildChannel;
 					if (chnl != null) {
 						if (ctxId == chnl.Guild.Id) {
-							return GetNameOrMentionFromId(type, id);
+							return GetNameOrMentionFromId(type, id, inline);
 						}
 						str = $"[#{chnl.Name}](https://discordapp.com/channels/{id}/ '{chnl.Guild.Name}'){sep}{id}";
 					}
@@ -1401,14 +1401,40 @@ namespace NadekoBot.Modules.Permissions.Services
 			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
 			string str = $"{noName}{sep}{id}";
 
-			if (ctx == sid) return GetNameOrMentionFromId(GWLItemType.Role,id);
+			if (ctx == sid) return GetNameOrMentionFromId(GWLItemType.Role,id,inline);
 
 			SocketGuild guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(sid));
 			if (guild != null) {
 				SocketRole role = guild.Roles.Where(r => r.Id.Equals(id)).FirstOrDefault();
 				if (role != null) {
-					str = $"[@{role.Name}](https://discordapp.com/channels/{sid}/ '{guild.Name}')\n\t{id}";
+					str = $"[@{role.Name}](https://discordapp.com/channels/{sid}/ '{guild.Name}'){sep}{id}";
 				}						
+			}
+			return str;
+		}
+
+		public string[] GetRoleNameMention(ulong sid, ulong[] ids, ulong ctx, bool inline=false)
+		{
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
+			string[] str = new string[ids.Count()];
+
+			if (ctx == sid) return GetNameOrMentionFromId(GWLItemType.Role,ids,inline);
+
+			SocketGuild guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(sid));
+			if (guild != null) {
+				for (int i=0; i<ids.Count(); i++) {
+					SocketRole role = guild.Roles.Where(r => r.Id.Equals(ids[i])).FirstOrDefault();
+					if (role != null) {
+						str[i] = $"[@{role.Name}](https://discordapp.com/channels/{sid}/ '{guild.Name}'){sep}{ids[i]}";
+					} else {
+						str[i] = $"{noName}{sep}{ids[i]}";
+					}
+				}
+			} else {
+				for (int i=0; i<ids.Count(); i++) {
+					str[i] = $"{noName}{sep}{ids[i]}";
+				}
 			}
 			return str;
 		}
