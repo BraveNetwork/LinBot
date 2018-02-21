@@ -93,7 +93,7 @@
       "{0}gwlinfo usr MyListName 2"
     ]
   },
-  "gwlhas": {
+  "gwlhasmember": {
     "cmd": "gwlhas",
     "desc": "Check whether or not the whitelist named MyListName has a @User/#Channel/Server member with the provided ID, or an unblocked .Command/Module with the provided name.",
     "usage": [
@@ -109,7 +109,7 @@
       "{0}gwlhas mdl Module MyListName"
     ]
   },
-  "gwlfor": {
+  "gwlformember": {
     "cmd": "gwlfor",
     "desc": "List the names of all global whitelists for which the @User/#Channel/Server is a member, or for which the .Command/Module is unblocked. Include an optional page number to jump to a specific subset of the data.",
     "usage": [

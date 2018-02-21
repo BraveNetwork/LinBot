@@ -792,84 +792,26 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		public bool GetGroupNamesByMember(ulong id, GWLItemType type, GWLType typeG, int page, out string[] names, out int count)
-        {
-            names = null;
-            using (var uow = _db.UnitOfWork)
-            {
-				if (type.Equals(GWLItemType.User) && typeG.Equals(GWLType.Role)) {
-					// TODO: Be sure to check the user's roles!
-					var allnames = uow._context.Set<GWLItem>()
-					.Where(i => i.Type.Equals(type))
-					.Where(i => i.ItemId.Equals(id))
-					.Join(uow._context.Set<GWLItemSet>(),
-						i => i.Id, gi => gi.ItemPK,
-						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GWLSet>()
-						.Where(g=>g.Type.Equals(typeG)),
-						listPK => listPK, g => g.Id,
-						(listPK, g) => g);
-
-					count = allnames.Count();
-					if (count <= 0) return false;
-
-					int numSkip = page*numPerPage;
-					if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-					// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
-
-					names = allnames
-						.OrderBy(g => g.ListName.ToLowerInvariant())
-						.Skip(numSkip)
-						.Take(numPerPage)
-						.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-						.ToArray();
-
-				} else {
-					var allnames = uow._context.Set<GWLItem>()
-					.Where(i => i.Type.Equals(type))
-					.Where(i => i.ItemId.Equals(id))
-					.Join(uow._context.Set<GWLItemSet>(),
-						i => i.Id, gi => gi.ItemPK,
-						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GWLSet>()
-						.Where(g=>g.Type.Equals(typeG)),
-						listPK => listPK, g => g.Id,
-						(listPK, g) => g);
-					count = allnames.Count();
-					if (count <= 0) return false;
-
-					int numSkip = page*numPerPage;
-					if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-					// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
-
-					names = allnames
-						.OrderBy(g => g.ListName.ToLowerInvariant())
-						.Skip(numSkip)
-						.Take(numPerPage)
-						.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
-						.ToArray();
-				}
-
-                uow.Complete();
-            }
-            return true;
-        }
-
-		public bool GetGroupNamesByMember(ulong id, GWLItemType type, int page, out string[] names, out int count)
+		/// <summary>
+		/// Output a list of GWL with GWLType.Member for which there is 
+		/// at least one member with the given type and id
+		/// </summary>
+		public bool GetGroupNamesByMemberType(ulong id, GWLItemType type, int page, out string[] names, out int count)
         {
             names = null;
             using (var uow = _db.UnitOfWork)
             {
 				var allnames = uow._context.Set<GWLItem>()
-					.Where(i => i.Type.Equals(type))
-					.Where(i => i.ItemId.Equals(id))
-					.Join(uow._context.Set<GWLItemSet>(),
-						i => i.Id, gi => gi.ItemPK,
-						(i, gi) => gi.ListPK)
-					.Join(uow._context.Set<GWLSet>(),
-						listPK => listPK, g => g.Id,
-						(listPK, g) => g);
-				
+				.Where(i => i.Type.Equals(type))
+				.Where(i => i.RoleServerId.Equals(0))
+				.Where(i => i.ItemId.Equals(id))
+				.Join(uow._context.Set<GWLItemSet>(),
+					i => i.Id, gi => gi.ItemPK,
+					(i, gi) => gi.ListPK)
+				.Join(uow._context.Set<GWLSet>()
+					.Where(g=>g.Type.Equals(GWLType.Member)),
+					listPK => listPK, g => g.Id,
+					(listPK, g) => g);
 				count = allnames.Count();
 				if (count <= 0) return false;
 
@@ -880,7 +822,148 @@ namespace NadekoBot.Modules.Permissions.Services
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
-                	.Take(numPerPage)
+					.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		/// <summary>
+		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
+		/// that matches the given list of roles (presumably from a user/channel/server)
+		/// </summary>
+		public bool GetGroupNamesByMemberRoles(ulong serverID, ulong[] ids, int page, out string[] names, out int count)
+		{
+            names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<GWLItem>()
+				.Where(i => i.Type.Equals(GWLItemType.Role))
+				.Where(i => i.RoleServerId.Equals(serverID))
+				.Where(i => ids.Contains(i.ItemId))
+				.Join(uow._context.Set<GWLItemSet>(),
+					i => i.Id, gi => gi.ItemPK,
+					(i, gi) => gi.ListPK)
+				.Join(uow._context.Set<GWLSet>()
+					.Where(g=>g.Type.Equals(GWLType.Role)),
+					listPK => listPK, g => g.Id,
+					(listPK, g) => g);
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+					.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		/// <summary>
+		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
+		/// </summary>
+		public bool GetGroupNamesByMemberRoles(Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
+		{
+			names = null;
+			count = 0;
+			IEnumerable<string> tempRoles = null;
+			for (int k=0; k<servRoles.Keys.Count(); k++) {
+				ulong sID = servRoles.Keys.ElementAt(k);
+				if (GetGroupNamesByMemberRoles(sID, servRoles.GetValueOrDefault(sID), page, out string[] temp, out int countT)) {
+					if (tempRoles == null) {
+						tempRoles = temp;
+					} else {
+						tempRoles = tempRoles.Union(temp);
+					}
+				}
+			}
+			if (tempRoles != null) count = tempRoles.Count();
+			if (count <= 0) return false;
+			names = tempRoles.ToArray();
+			return true;
+		}
+
+		/// <summary>
+		/// Output a list of GWL with GWLType.Role for which there is at least one 
+		/// RoleServerID-ItemID pair that matches the given server and role ID
+		/// </summary>
+		public bool GetGroupNamesByServerRole(ulong serverID, ulong roleID, int page, out string[] names, out int count)
+		{
+            names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<GWLItem>()
+				.Where(i => i.Type.Equals(GWLItemType.Role))
+				.Where(i => i.RoleServerId.Equals(serverID))
+				.Where(i => i.ItemId.Equals(roleID))
+				.Join(uow._context.Set<GWLItemSet>(),
+					i => i.Id, gi => gi.ItemPK,
+					(i, gi) => gi.ListPK)
+				.Join(uow._context.Set<GWLSet>()
+					.Where(g=>g.Type.Equals(GWLType.Role)),
+					listPK => listPK, g => g.Id,
+					(listPK, g) => g);
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+					.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		/// <summary>
+		/// Output a list of GWL with GWLType.Role for which there is at least one 
+		/// RoleServerID that matches serverID
+		/// </summary>
+		public bool GetGroupNamesByServer(ulong serverID, int page, out string[] names, out int count)
+		{
+            names = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<GWLItem>()
+				.Where(i => i.Type.Equals(GWLItemType.Role))
+				.Where(i => i.RoleServerId.Equals(serverID))
+				.Join(uow._context.Set<GWLItemSet>(),
+					i => i.Id, gi => gi.ItemPK,
+					(i, gi) => gi.ListPK)
+				.Join(uow._context.Set<GWLSet>()
+					.Where(g=>g.Type.Equals(GWLType.Role)),
+					listPK => listPK, g => g.Id,
+					(listPK, g) => g)
+				.GroupBy(g=>g.ListName).Select(y=>y.First()); // since RoleServerID is non-unique, remove dupes https://stackoverflow.com/a/4095023
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				names = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+					.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
 					.ToArray();
 
@@ -1137,5 +1220,67 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#endregion Resolve ulong IDs
 
+		#region Retrieve Server and Role IDs
+			public Dictionary<ulong,ulong[]> GetRoleIDs(GWLItemType type, ulong id, ulong ctxSrvrId)
+			{
+				Dictionary<ulong,ulong[]> result = null;
+				switch(type) {
+					case GWLItemType.Role:
+						// Output serverID: ctxSrvrId, RoleID: id
+						result = new Dictionary<ulong, ulong[]>();
+						result.Add(ctxSrvrId, new ulong[]{id});
+						break;
+
+					case GWLItemType.User:
+						// Find all servers shared with the user
+						// Then find all roles for the user in each server
+						SocketUser user = _client.GetUser(id);
+						if (user != null) {
+							result = _client.Guilds
+								.Where(g => g.GetUser(id) != null)
+								.ToDictionary(s => s.Id, rs => rs.Roles
+									.Where(r => r.Members.Contains(r.Guild.GetUser(id)))
+									.Select(r => r.Id).ToArray());
+						}
+						break;
+
+					case GWLItemType.Channel:
+						// Find the channel's server
+						// Then find all roles in the channel
+						ulong sID = GetServerID(id);
+						if (sID > 0) {
+							result = new Dictionary<ulong, ulong[]>();
+							result.Add(sID, new ulong[]{id});
+						}
+						break;
+
+					case GWLItemType.Server:
+						// Find all roles in this server
+						SocketGuild srvr = _client.GetGuild(id);
+						if (srvr != null) {
+							ulong[] roleIDs = srvr.Roles.Select(r => r.Id).ToArray();
+							if (roleIDs.Length > 0) {
+								result = new Dictionary<ulong, ulong[]>();
+								result.Add(id, roleIDs);
+							}
+						}
+						break;
+
+					default:
+						break;
+				}
+				return result;
+			}
+
+			public ulong GetServerID(ulong cID)
+			{
+				ulong sID = 0;
+				SocketGuildChannel chnl = _client.GetChannel(cID) as SocketGuildChannel;
+				if (chnl != null) {
+					sID = chnl.Guild.Id;
+				}
+				return sID;
+			}
+		#endregion Retrieve Server and Role IDs
 	}
 }

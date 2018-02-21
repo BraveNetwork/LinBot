@@ -342,11 +342,13 @@ namespace NadekoBot.Modules.Permissions
 				var embed = new EmbedBuilder()
 					.WithOkColor()
 					.WithTitle(GetText("gwl_title"))
-					.WithDescription(GetText("gub_list_formember_ctx", 
-						Format.Code(typeS.ToString()),
-						Context.Guild.Name,
-						Format.Code(typeC.ToString()),
-						MentionUtils.MentionChannel(idC)))
+					.WithDescription(GetText("gub_list_formember", 
+						GetText("gwl_current_ctx", 
+							Format.Code(typeS.ToString()),
+							Context.Guild.Name,
+							Format.Code(typeC.ToString()),
+							MentionUtils.MentionChannel(idC)), ""
+						))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
 					.WithFooter($"Page {page}/{lastPage}");
@@ -404,13 +406,15 @@ namespace NadekoBot.Modules.Permissions
 				string desc = "";
 
 				if (yesC && yesS) {
-					desc = GetText("gub_is_unblocked_ctx", 
+					desc = GetText("gub_is_unblocked", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
-						Format.Code(typeS.ToString()), 
-						Context.Guild.Name, 
-						Format.Code(typeC.ToString()), 
-						MentionUtils.MentionChannel(idC));
+						GetText("gwl_current_ctx", 
+							Format.Code(typeS.ToString()),
+							Context.Guild.Name,
+							Format.Code(typeC.ToString()),
+							MentionUtils.MentionChannel(idC)), ""
+						);
 				} else if (yesC) {
 					desc = GetText("gub_is_unblocked", 
 						Format.Code(type.ToString()), 
@@ -424,13 +428,15 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(typeS.ToString()), 
 						Context.Guild.Name);
 				} else {
-					await ReplyErrorLocalized("gub_not_unblocked_ctx", 
+					await ReplyErrorLocalized("gub_not_unblocked", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
-						Format.Code(typeS.ToString()), 
-						Context.Guild.Name, 
-						Format.Code(typeC.ToString()), 
-						MentionUtils.MentionChannel(idC))
+						GetText("gwl_current_ctx", 
+							Format.Code(typeS.ToString()),
+							Context.Guild.Name,
+							Format.Code(typeC.ToString()),
+							MentionUtils.MentionChannel(idC)), ""
+						)
 						.ConfigureAwait(false);
 					return;
 				}
