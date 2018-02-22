@@ -345,7 +345,7 @@ namespace NadekoBot.Modules.Permissions
 					.WithDescription(GetText("gub_list_formember", 
 						GetText("gwl_current_ctx", 
 							Format.Code(typeS.ToString()),
-							Context.Guild.Name,
+							Format.Bold(Context.Guild.Name),
 							Format.Code(typeC.ToString()),
 							MentionUtils.MentionChannel(idC)), ""
 						))
@@ -411,7 +411,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Bold(name),
 						GetText("gwl_current_ctx", 
 							Format.Code(typeS.ToString()),
-							Context.Guild.Name,
+							Format.Bold(Context.Guild.Name),
 							Format.Code(typeC.ToString()),
 							MentionUtils.MentionChannel(idC)), ""
 						);
@@ -433,7 +433,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Bold(name),
 						GetText("gwl_current_ctx", 
 							Format.Code(typeS.ToString()),
-							Context.Guild.Name,
+							Format.Bold(Context.Guild.Name),
 							Format.Code(typeC.ToString()),
 							MentionUtils.MentionChannel(idC)), ""
 						)

@@ -536,6 +536,23 @@ namespace NadekoBot.Modules.Permissions.Services
 				uow._context.Set<GWLItem>().Remove( 
 					uow._context.Set<GWLItem>()
 					.Where( x => x.Type.Equals(type) )
+					.Where( x => x.RoleServerId.Equals(0) )
+					.Where( x => x.ItemId.Equals(id) )
+					.FirstOrDefault()
+				);
+				uow.Complete();
+			}
+			return true;
+		}
+
+		public bool PurgeRole(ulong sid, ulong id)
+		{
+			using (var uow = _db.UnitOfWork)
+			{
+				uow._context.Set<GWLItem>().Remove( 
+					uow._context.Set<GWLItem>()
+					.Where( x => x.Type.Equals(GWLItemType.Role) )
+					.Where( x => x.RoleServerId.Equals(sid) )
 					.Where( x => x.ItemId.Equals(id) )
 					.FirstOrDefault()
 				);
@@ -872,7 +889,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
 		/// that matches the given list of roles (presumably from a user/channel/server)
 		/// </summary>
-		public bool GetGroupNamesByMemberRoles(ulong serverID, ulong[] ids, int page, out string[] names, out int count)
+		public bool GetGroupNamesByRoles(ulong serverID, ulong[] ids, int page, out string[] names, out int count)
 		{
             names = null;
             using (var uow = _db.UnitOfWork)
@@ -910,14 +927,14 @@ namespace NadekoBot.Modules.Permissions.Services
 		/// <summary>
 		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
 		/// </summary>
-		public bool GetGroupNamesByMemberRoles(Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
+		public bool GetGroupNamesByRoles(Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
 		{
 			names = null;
 			count = 0;
 			IEnumerable<string> tempRoles = null;
 			for (int k=0; k<servRoles.Keys.Count(); k++) {
 				ulong sID = servRoles.Keys.ElementAt(k);
-				if (GetGroupNamesByMemberRoles(sID, servRoles.GetValueOrDefault(sID), page, out string[] temp, out int countT)) {
+				if (GetGroupNamesByRoles(sID, servRoles.GetValueOrDefault(sID), page, out string[] temp, out int countT)) {
 					if (tempRoles == null) {
 						tempRoles = temp;
 					} else {
@@ -935,7 +952,7 @@ namespace NadekoBot.Modules.Permissions.Services
 		/// Output a list of GWL with GWLType.Role for which there is at least one 
 		/// RoleServerID-ItemID pair that matches the given server and role ID
 		/// </summary>
-		public bool GetGroupNamesByServerRole(ulong serverID, ulong roleID, int page, out string[] names, out int count)
+		public bool GetGroupNamesByRole(ulong serverID, ulong roleID, int page, out string[] names, out int count)
 		{
             names = null;
             using (var uow = _db.UnitOfWork)
@@ -1413,7 +1430,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			return str;
 		}
 
-		public string[] GetRoleNameMention(ulong sid, ulong[] ids, ulong ctx, bool inline=false)
+		public string[] GetRoleNameMention(ulong[] ids, ulong sid, ulong ctx, bool inline=false)
 		{
 			string sep = inline ? " " : "\n\t";
 			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
