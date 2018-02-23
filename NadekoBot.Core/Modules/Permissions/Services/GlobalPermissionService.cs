@@ -41,66 +41,27 @@ namespace NadekoBot.Modules.Permissions.Services
 
 			if (commandName != "resetglobalperms") {
 
-				// If module is blocked, check if either module or command is unblocked
 				if (BlockedModules.Contains(moduleName)) 
 				{
-					bool mdlIsUB = UnblockedModules.Contains(moduleName) &&
-						_gwl.CheckIfUnblocked(moduleName, UnblockedType.Module, user.Id, guild.Id, channel.Id);
+					// Check if command OR module is unblocked for context
+					if (IsUnblocked(moduleName, commandName, user.Id, guild.Id, channel.Id) )
+					{ return false; }
 
-					if (mdlIsUB) {
-						// Pass!
-						return false;
-					} else {
-						// Check if an unblocked command overrides blocked module!
-						bool cmdIsUB = UnblockedCommands.Contains(commandName) &&
-							_gwl.CheckIfUnblocked(commandName, UnblockedType.Command, user.Id, guild.Id, channel.Id);
-
-						if (cmdIsUB) {
-							// Pass!
-							return false;
-						} else {
-							// TODO: Check if role is unblocked
-							if (_gwl.IsUserRoleUnblocked(user.Id, commandName, moduleName)) {
-								// Pass!
-								return false;
-							}
-
-							// Block it!
-							await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Module, moduleName);
-							return true;
-						}
-					}
+					// Block it!
+					await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Module, moduleName);
+					return true;
 				}
 
 				// If command is blocked, but not the module
 				else if (BlockedCommands.Contains(commandName))
 				{
-					bool cmdIsUB = UnblockedCommands.Contains(commandName) &&
-						_gwl.CheckIfUnblocked(commandName, UnblockedType.Command, user.Id, guild.Id, channel.Id);
+					// Check if command OR module is unblocked for context
+					if (IsUnblocked(moduleName, commandName, user.Id, guild.Id, channel.Id) )
+					{ return false; }
 					
-					if (cmdIsUB) {
-						// Pass!
-						return false;
-					} else {
-						// Check if an unblocked module overrides blocked command!
-						bool mdlIsUB = UnblockedModules.Contains(moduleName) &&
-							_gwl.CheckIfUnblocked(moduleName, UnblockedType.Module, user.Id, guild.Id, channel.Id);
-
-						if (mdlIsUB) {
-							// Pass!
-							return false;
-						} else { 
-							// TODO: Check if role is unblocked
-							if (_gwl.IsUserRoleUnblocked(user.Id, commandName, moduleName)) {
-								// Pass!
-								return false;
-							}
-
-							// Block it!
-							await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Command, commandName);
-							return true;
-						}
-					}
+					// Block it!
+					await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Command, commandName);
+					return true;
 				}
 				else { return false; }
                 //return true;
@@ -108,6 +69,16 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return false;
         }
+
+		private bool IsUnblocked(string mdl, string cmd, ulong uid, ulong sid, ulong cid)
+		{
+			return (UnblockedModules.Contains(mdl) || UnblockedCommands.Contains(cmd)) && 
+				(
+				_gwl.CheckIfUnblockedAll(mdl,cmd) || 
+				_gwl.CheckIfUnblocked(mdl, cmd, uid, sid, cid) ||
+				_gwl.IsUserRoleUnblocked(uid, cmd, mdl)
+				);
+		}
 
 		private async Task ReportBlockedCmdOrMdl(IMessageChannel channel, ulong gid, UnblockedType type, string name)
 		{

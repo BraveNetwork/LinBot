@@ -1163,7 +1163,10 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong memID, GWLItemType memType)
+		#endregion CheckUnblocked
+
+		#region Unblocker
+		public bool CheckIfUnblockedAll(string ubName, UnblockedType ubType)
 		{
 			using (var uow = _db.UnitOfWork)
             {
@@ -1174,17 +1177,36 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.All))
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
-					.Join(uow._context.Set<GWLItemSet>(),
-						gId => gId, gi => gi.ListPK,
-						(gId, gi) => gi.ItemPK)
-					.Join(uow._context.Set<GWLItem>()
-						.Where(x => x.Type.Equals(memType))
-						.Where(x => x.ItemId.Equals(memID)),
-						giPK => giPK, i => i.Id,
-						(giPK, i) => giPK)
+					.Count();
+				
+				uow.Complete();
+
+				// System.Console.WriteLine(result);
+				if (result > 0) return true;
+				return false;
+			}
+		}
+
+		public bool CheckIfUnblockedAll(string mdlName, string cmdName)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+				var result = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.All))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gubPK => gubPK, g => g.Id,
+						(gubPK, g) => g.Id)
 					.Count();
 				
 				uow.Complete();
@@ -1206,7 +1228,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All) || g.Type.Equals(GWLType.Member))
+						.Where(g => g.Type.Equals(GWLType.Member))
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
@@ -1242,7 +1264,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All) || g.Type.Equals(GWLType.Member))
+						.Where(g => g.Type.Equals(GWLType.Member))
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
@@ -1266,7 +1288,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
-		#endregion CheckUnblocked
+		#endregion Unblocker
 
 		#region GetObject
 		public bool GetGroupByName(string listName, out GWLSet group)
