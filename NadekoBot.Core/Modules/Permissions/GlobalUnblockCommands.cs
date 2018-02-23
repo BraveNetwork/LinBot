@@ -54,10 +54,6 @@ namespace NadekoBot.Modules.Permissions
 				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
 				page++;
 				if (page > lastPage) page = lastPage;
-				if (page > 1) {
-					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
-					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
-				}
 
 				var embed = new EmbedBuilder()
 					.WithOkColor()
@@ -173,10 +169,6 @@ namespace NadekoBot.Modules.Permissions
 				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
 				page++;
 				if (page > lastPage) page = lastPage;
-				if (page > 1) {
-					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
-					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
-				}
 
 				var embed = new EmbedBuilder()
 					.WithOkColor()
@@ -860,7 +852,7 @@ namespace NadekoBot.Modules.Permissions
 
 				string desc = "";
 
-				if (yesC && yesS) {
+				if (yesC || yesS || ubForAll) {
 					desc = GetText("gub_is_unblocked", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
@@ -870,18 +862,6 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(typeC.ToString()),
 							MentionUtils.MentionChannel(idC)), ""
 						);
-				} else if (yesC) {
-					desc = GetText("gub_is_unblocked", 
-						Format.Code(type.ToString()), 
-						Format.Bold(name),
-						Format.Code(typeC.ToString()), 
-						MentionUtils.MentionChannel(idC));
-				} else if (yesS) {
-					desc = GetText("gub_is_unblocked", 
-						Format.Code(type.ToString()), 
-						Format.Bold(name),
-						Format.Code(typeS.ToString()), 
-						Format.Bold(Context.Guild.Name));
 				} else {
 					await ReplyErrorLocalized("gub_not_unblocked", 
 						Format.Code(type.ToString()), 
@@ -903,7 +883,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("gwl_field_title_chnl", countC), channelStr, true)
 					.AddField(GetText("gwl_field_title_srvr", countS), serverStr, true)
 					.AddField(GetText("gwl_field_title_all", countA), allStr, true)
-					.WithFooter($"Page {page+1}/{lastPage+1}");
+					.WithFooter($"Page {page}/{lastPage}");
 
 				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                 return;
@@ -938,7 +918,7 @@ namespace NadekoBot.Modules.Permissions
 
 				string desc = "";
 
-				if (yesC && yesS) {
+				if (yesC || yesS || ubForAll) {
 					desc = GetText("gub_is_unblocked_cmd", 
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
@@ -949,20 +929,6 @@ namespace NadekoBot.Modules.Permissions
 							MentionUtils.MentionChannel(idC)), "",
 							Format.Bold(mdlName)
 						);
-				} else if (yesC) {
-					desc = GetText("gub_is_unblocked_cmd", 
-						Format.Code(type.ToString()), 
-						Format.Bold(name),
-						Format.Code(typeC.ToString()), 
-						MentionUtils.MentionChannel(idC),
-						Format.Bold(mdlName));
-				} else if (yesS) {
-					desc = GetText("gub_is_unblocked_cmd", 
-						Format.Code(type.ToString()), 
-						Format.Bold(name),
-						Format.Code(typeS.ToString()), 
-						Format.Bold(Context.Guild.Name),
-						Format.Bold(mdlName));
 				} else {
 					await ReplyErrorLocalized("gub_not_unblocked_cmd", 
 						Format.Code(type.ToString()), 
@@ -985,7 +951,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("gwl_field_title_chnl", countC), channelStr, true)
 					.AddField(GetText("gwl_field_title_srvr", countS), serverStr, true)
 					.AddField(GetText("gwl_field_title_all", countA), allStr, true)
-					.WithFooter($"Page {page+1}/{lastPage+1}");
+					.WithFooter($"Page {page}/{lastPage}");
 
 				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                 return;
