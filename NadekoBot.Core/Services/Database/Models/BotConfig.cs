@@ -70,6 +70,7 @@ Nadeko Support Server: https://discord.gg/nadekobot";
 
         public HashSet<UnblockedCmdOrMdl> UnblockedCommands { get; set; }
         public HashSet<UnblockedCmdOrMdl> UnblockedModules { get; set; }
+		// public HashSet<GWLItem> UnblockedRoles { get; set; }
         public int PermissionVersion { get; set; }
         public string DefaultPrefix { get; set; } = ".";
         public bool CustomReactionsStartWith { get; set; } = false;

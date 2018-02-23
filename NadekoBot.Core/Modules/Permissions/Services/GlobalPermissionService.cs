@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -18,6 +19,8 @@ namespace NadekoBot.Modules.Permissions.Services
 
         public readonly ConcurrentHashSet<string> UnblockedModules;
         public readonly ConcurrentHashSet<string> UnblockedCommands;
+
+		// public readonly ConcurrentHashSet<Tuple<ulong,ulong>> UnblockedRoles;
         private GlobalWhitelistService _gwl;
 		private NadekoStrings _strs;
 
@@ -28,6 +31,9 @@ namespace NadekoBot.Modules.Permissions.Services
 
             UnblockedModules = new ConcurrentHashSet<string>(bc.BotConfig.UnblockedModules.Select(x => x.Name));
             UnblockedCommands = new ConcurrentHashSet<string>(bc.BotConfig.UnblockedCommands.Select(x => x.Name));
+
+			// UnblockedRoles = new ConcurrentHashSet<Tuple<ulong,ulong>>(bc.BotConfig.UnblockedRoles
+			// 	.Select( x => new Tuple<ulong,ulong>(x.RoleServerId,x.ItemId) ));
 
 			_gwl = gwl;
 			_strs = strings;
