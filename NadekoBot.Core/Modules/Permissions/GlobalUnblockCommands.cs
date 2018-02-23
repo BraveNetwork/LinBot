@@ -4,6 +4,7 @@ using NadekoBot.Extensions;
 using NadekoBot.Core.Services;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using NadekoBot.Common.Attributes;
 using NadekoBot.Common.TypeReaders;
 using NadekoBot.Modules.Permissions.Services;
@@ -71,7 +72,24 @@ namespace NadekoBot.Modules.Permissions
             }
 
 			#region GUBFor
+
+			#region GUBFor FieldType
 			
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task GUBForMember(GlobalWhitelistService.FieldType field, IGuild server, ulong id, int page=1)
+			{
+				switch(field) {
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _GUBForRole(server.Id, id, page);
+						return;
+					default: 
+						// Not valid
+						await ReplyErrorLocalized("gwl_field_invalid_role", Format.Bold(field.ToString())).ConfigureAwait(false);
+						return;
+				}
+			}
+
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task GUBForMember(GlobalWhitelistService.FieldType field, ulong id, int page=1)
@@ -84,7 +102,10 @@ namespace NadekoBot.Modules.Permissions
 						await _GUBForMember(GWLItemType.Channel, id, page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _GUBForMember(GWLItemType.User, id, page);
+						await _GUBForUser(id, page);
+						return;
+					case GlobalWhitelistService.FieldType.ROLE: 
+						await _GUBForRole(Context.Guild.Id, id, page);
 						return;
 					default: 
 						// Not valid
@@ -93,7 +114,19 @@ namespace NadekoBot.Modules.Permissions
 				}
 			}
 
+			#endregion GUBFor FieldType
+
 			#region GUBFor Member
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GUBForMember(IGuild server, IRole role, int page=1)
+				=> _GUBForRole(server.Id, role.Id, page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GUBForMember(IGuild server, ulong id, int page=1)
+				=> _GUBForRole(server.Id, id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -108,7 +141,12 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GUBForMember(IUser user, int page=1)
-				=> _GUBForMember(GWLItemType.User, user.Id, page);
+				=> _GUBForUser(user.Id, page);
+
+			[NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public Task GUBForMember(IRole role, int page=1)
+				=> _GUBForRole(Context.Guild.Id, role.Id, page);
 
 			#endregion GUBFor Member
 
@@ -146,6 +184,104 @@ namespace NadekoBot.Modules.Permissions
 					.WithDescription(GetText("gub_list_formember", 
 						Format.Code(type.ToString()),
 						_gwl.GetNameOrMentionFromId(type, id, true)))
+					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
+					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
+					.WithFooter($"Page {page}/{lastPage}");
+
+                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
+			private async Task _GUBForUser(ulong id, int page)
+			{
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+
+				// Error if nothing to show
+				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
+                {
+                    await ReplyErrorLocalized("gub_none").ConfigureAwait(false);
+                    return;
+                }
+
+				GWLItemType type = GWLItemType.User;
+				bool hasRoles = false; 
+				string[] cmdsR = null; string[] mdlsR = null;
+				int cmdRCount = 0; int mdlRCount = 0;
+
+				// Get Dictionary<ServerID,RoleID[]>, and then the cmd/mdl for the roles (combined, then skip/take)
+				Dictionary<ulong,ulong[]> servRoles = _gwl.GetRoleIDs(type, id, Context.Guild.Id);
+				if (servRoles != null) hasRoles = _gwl.GetUnblockedNamesForRoles(servRoles, page, 
+					out cmdsR, out mdlsR, out cmdRCount, out mdlRCount);
+
+				// Send list of all unblocked modules/commands and number of lists for each
+				bool hasCmds = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, id, type, page, out string[] cmds, out int cmdCount);
+				bool hasMdls = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, id, type, page, out string[] mdls, out int mdlCount);
+
+				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+				string strCmdR = (cmdRCount > 0) ? string.Join("\n", cmdsR) : "*no such commands*";
+				string strMdlR = (mdlRCount > 0) ? string.Join("\n", mdlsR) : "*no such modules*";
+
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastCmdRPage = (cmdRCount - 1)/_gwl.numPerPage +1;
+				int lastMdlRPage = (mdlRCount - 1)/_gwl.numPerPage +1;
+				
+				int lastPage = System.Math.Max(
+					System.Math.Max(lastCmdPage, lastCmdRPage),
+					System.Math.Max(lastMdlPage,lastMdlRPage));
+				page++;
+				if (page > lastPage) page = lastPage;
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("gub_list_formember", 
+						Format.Code(type.ToString()),
+						_gwl.GetNameOrMentionFromId(type, id, true)))
+					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
+					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
+					.AddField(GetText("field_separator"), GetText("gub_role"), false)
+					.AddField(GetText("gwl_field_commands", cmdRCount), strCmdR, true)
+					.AddField(GetText("gwl_field_modules", mdlRCount), strMdlR, true)
+					.WithFooter($"Page {page}/{lastPage}");
+
+                await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+				return;
+			}
+
+			private async Task _GUBForRole(ulong sid, ulong id, int page)
+			{
+				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				
+				// Error if nothing to show
+				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
+                {
+                    await ReplyErrorLocalized("gub_none").ConfigureAwait(false);
+                    return;
+                }
+
+				GWLItemType type = GWLItemType.Role;
+
+				// Send list of all unblocked modules/commands and number of lists for each
+				bool hasCmds = _gwl.GetUnblockedNamesForRole(UnblockedType.Command, id, sid, page, out string[] cmds, out int cmdCount);
+				bool hasMdls = _gwl.GetUnblockedNamesForRole(UnblockedType.Module, id, sid, page, out string[] mdls, out int mdlCount);
+
+				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
+				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
+
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
+				page++;
+				if (page > lastPage) page = lastPage;
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(GetText("gub_list_formember", 
+						Format.Code(type.ToString()),
+						_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
 					.WithFooter($"Page {page}/{lastPage}");
@@ -285,7 +421,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task ListMyGUB(int page=1)
-            	=> _GUBForMember(GWLItemType.User, Context.User.Id, page);
+            	=> _GUBForUser(Context.User.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task ListContextGUB(int page=1)
@@ -305,39 +441,28 @@ namespace NadekoBot.Modules.Permissions
 				GWLItemType typeC = GWLItemType.Channel;
 				GWLItemType typeS = GWLItemType.Server;
 
-				// Send list of all unblocked modules/commands and number of lists for each
-				bool hasCmdsC = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, idC, typeC, page, out string[] cmdsC, out int cmdCountC);
-				bool hasMdlsC = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, idC, typeC, page, out string[] mdlsC, out int mdlCountC);
+				bool hasCmdsA = _gwl.GetUnblockedNamesForAll(UnblockedType.Command, page, out string[] cmdsA, out int cmdACount);
+				bool hasMdlsA = _gwl.GetUnblockedNamesForAll(UnblockedType.Module, page, out string[] mdlsA, out int mdlACount);
 
-				bool hasCmdsS = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, idS, typeS, page, out string[] cmdsS, out int cmdCountS);
-				bool hasMdlsS = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, idS, typeS, page, out string[] mdlsS, out int mdlCountS);
-
-				bool hasCmds = hasCmdsC || hasCmdsS;
-				bool hasMdls = hasMdlsC || hasMdlsS;
-
-				// Combine the lists and remove dupes
-				string[] cmds = (hasCmdsC && hasCmdsS) ? cmdsC.Union(cmdsS).ToArray() :
-					(hasCmdsC) ? cmdsC : 
-					(hasCmdsS) ? cmdsS : new string[] {};
-				string[] mdls = (hasMdlsC && hasMdlsS) ? cmdsC.Union(mdlsS).ToArray() :
-					(hasMdlsC) ? mdlsC : 
-					(hasMdlsS) ? mdlsS : new string[] {};
-
-				int cmdCount = cmds.Length;
-				int mdlCount = mdls.Length;
+				// Send list of all unblocked modules/commands for current context
+				bool hasCmds = _gwl.GetUnblockedNamesForContext(UnblockedType.Command, idC, idS, page, out string[] cmds, out int cmdCount);
+				bool hasMdls = _gwl.GetUnblockedNamesForContext(UnblockedType.Module, idC, idS, page, out string[] mdls, out int mdlCount);
 
 				string strCmd = (cmdCount>0) ? string.Join("\n", cmds) : "*no such commands*";
 				string strMdl = (mdlCount>0) ? string.Join("\n", mdls) : "*no such modules*";
+				string strCmdA = (cmdACount>0) ? string.Join("\n", cmdsA) : "*no such commands*";
+				string strMdlA = (mdlACount>0) ? string.Join("\n", mdlsA) : "*no such modules*";
 
 				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
 				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
-				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
+				int lastCmdAPage = (cmdACount - 1)/_gwl.numPerPage +1;
+				int lastMdlAPage = (mdlACount - 1)/_gwl.numPerPage +1;
+				
+				int lastPage = System.Math.Max(
+					System.Math.Max(lastCmdPage, lastCmdAPage),
+					System.Math.Max(lastMdlPage,lastMdlAPage));
 				page++;
 				if (page > lastPage) page = lastPage;
-				if (page > 1) {
-					if (hasCmds && page >= lastCmdPage) strCmd += GetText("gwl_endlist", lastCmdPage);
-					if (hasMdls && page >= lastMdlPage) strMdl += GetText("gwl_endlist", lastMdlPage);
-				}
 
 				var embed = new EmbedBuilder()
 					.WithOkColor()
@@ -351,6 +476,9 @@ namespace NadekoBot.Modules.Permissions
 						))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
+					.AddField(GetText("field_separator"), GetText("gub_general"), false)
+					.AddField(GetText("gwl_field_commands", cmdACount), strCmdA, true)
+					.AddField(GetText("gwl_field_modules", mdlACount), strMdlA, true)
 					.WithFooter($"Page {page}/{lastPage}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
