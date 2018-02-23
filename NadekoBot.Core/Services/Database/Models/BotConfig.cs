@@ -168,7 +168,7 @@ Nadeko Support Server: https://discord.gg/nadekobot";
 
 	public enum GWLType
     {
-        All,
+        General,
         Member,
         Role
     }

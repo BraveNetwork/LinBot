@@ -182,7 +182,7 @@ namespace NadekoBot.Core.Services.Database
 				.HasDefaultValue(true);
 			 modelBuilder.Entity<GWLSet>()
 			 	.Property(g=>g.Type)
-				.HasDefaultValue(GWLType.All);
+				.HasDefaultValue(GWLType.General);
             #endregion
 
 			#region GWLItem ServerRoleId default to 0 (closest to null we can have for ulong)

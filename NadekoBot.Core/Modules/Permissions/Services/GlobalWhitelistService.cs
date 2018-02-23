@@ -733,7 +733,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All)),
+						.Where(g => g.Type.Equals(GWLType.General)),
 						// .Where(g => g.IsEnabled.Equals(true)),
 						gub => gub, g => g.Id,
 						(gub, g) => g);
@@ -770,7 +770,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All)),
+						.Where(g => g.Type.Equals(GWLType.General)),
 						// .Where(g => g.IsEnabled.Equals(true)),
 						gub => gub, g => g.Id,
 						(gub, g) => g)
@@ -1177,7 +1177,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All))
+						.Where(g => g.Type.Equals(GWLType.General))
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
@@ -1203,7 +1203,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All))
+						.Where(g => g.Type.Equals(GWLType.General))
 						.Where(g => g.IsEnabled.Equals(true)),
 						gubPK => gubPK, g => g.Id,
 						(gubPK, g) => g.Id)
@@ -1800,7 +1800,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			using (var uow = _db.UnitOfWork)
             {
                 var anon = uow._context.Set<GWLSet>()
-						.Where(g => g.Type.Equals(GWLType.All))
+						.Where(g => g.Type.Equals(GWLType.General))
 						.Where(g => g.IsEnabled.Equals(true))
 					.Join(uow._context.Set<GlobalUnblockedSet>(),
 						g => g.Id, gub => gub.ListPK,

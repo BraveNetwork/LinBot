@@ -40,7 +40,7 @@ namespace NadekoBot.Modules.Permissions
 					|| field.Equals(GlobalWhitelistService.FieldType.MODULE);
 
 				switch(type) {
-					case GWLType.All:
+					case GWLType.General:
 						return isCmdOrMdl;
 
 					case GWLType.Member:
@@ -125,7 +125,7 @@ namespace NadekoBot.Modules.Permissions
 				GWLType type; 
 				switch(field) {
 					case GlobalWhitelistService.FieldType.ALL:
-						type = GWLType.All;
+						type = GWLType.General;
 						break;
 					case GlobalWhitelistService.FieldType.MEMBER:
 						type = GWLType.Member;
@@ -999,7 +999,7 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
-				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeAll = _service.GetGroupNames(GWLType.General, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNames(GWLType.Member, page, out string[] namesM, out int countM);
 				bool hasTypeRole = _service.GetGroupNames(GWLType.Role, page, out string[] namesR, out int countR);
 
@@ -1096,7 +1096,7 @@ namespace NadekoBot.Modules.Permissions
 								int lastRolePage = (numRole - 1)/_service.numPerPage +1;
 								lastPage = System.Math.Max(lastPage,lastRolePage);
 								break;
-							case GWLType.All:
+							case GWLType.General:
 							default:
 								break;
 						}
@@ -1354,7 +1354,7 @@ namespace NadekoBot.Modules.Permissions
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
 					// Let user know that if General list, it applies to all
-					if (group.Type.Equals(GWLType.All)) {
+					if (group.Type.Equals(GWLType.General)) {
 						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
                     	return;
 					}
@@ -1415,7 +1415,7 @@ namespace NadekoBot.Modules.Permissions
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
 					// Let user know that if General list, it applies to all
-					if (group.Type.Equals(GWLType.All)) {
+					if (group.Type.Equals(GWLType.General)) {
 						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
                     	return;
 					}
@@ -1592,7 +1592,7 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
-				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeAll = _service.GetGroupNames(GWLType.General, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
 				bool hasTypeRole = false; string[] namesR = null; int countR = 0;
 
@@ -1709,7 +1709,7 @@ namespace NadekoBot.Modules.Permissions
 
 				GWLItemType type = GWLItemType.Role;
 
-				// bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				// bool hasTypeAll = _service.GetGroupNames(GWLType.General, page, out string[] namesA, out int countA);
 				bool hasTypeRole = _service.GetGroupNamesByRole(sid, id, page, out string[] namesR, out int countR);
 
 				// string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
@@ -1744,7 +1744,7 @@ namespace NadekoBot.Modules.Permissions
             {
                 if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
-				bool hasTypeAll = _service.GetGroupNamesByUnblocked(name, type, GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeAll = _service.GetGroupNamesByUnblocked(name, type, GWLType.General, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNamesByUnblocked(name, type, GWLType.Member, page, out string[] namesM, out int countM);
 				bool hasTypeRole = _service.GetGroupNamesByUnblocked(name, type, GWLType.Role, page, out string[] namesR, out int countR);
 
@@ -1797,7 +1797,7 @@ namespace NadekoBot.Modules.Permissions
 				GWLItemType typeC = GWLItemType.Channel;
 				GWLItemType typeS = GWLItemType.Server;
 
-				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				bool hasTypeAll = _service.GetGroupNames(GWLType.General, page, out string[] namesA, out int countA);
 				bool hasC = _service.GetGroupNamesByMemberType(idC, typeC, page, out string[] namesC, out int countC);
 				bool hasS = _service.GetGroupNamesByMemberType(idS, typeS, page, out string[] namesS, out int countS);
 				// bool hasTypeRole = _service.GetGroupNamesByServer(idS, page, out string[] namesR, out int countR);
@@ -1866,7 +1866,7 @@ namespace NadekoBot.Modules.Permissions
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
 					// Let user know that if General list, it applies to all
-					if (group.Type.Equals(GWLType.All)) {
+					if (group.Type.Equals(GWLType.General)) {
 						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
                     	return;
 					}
