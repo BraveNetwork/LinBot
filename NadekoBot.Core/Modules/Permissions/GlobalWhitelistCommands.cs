@@ -1016,9 +1016,9 @@ namespace NadekoBot.Modules.Permissions
                     var embed = new EmbedBuilder()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list"))
-						.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
 						.AddField(GetText("gwl_field_title_role", countR), strR, true)
+						.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.WithFooter($"Page {page+1}/{lastPage+1}")
 						.WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1353,7 +1353,33 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
-					// Ensure the group type is compatible!
+					// Let user know that if General list, it applies to all
+					if (group.Type.Equals(GWLType.All)) {
+						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
+                    	return;
+					}
+
+					// Special Role case for User type
+					if (group.Type.Equals(GWLType.Role) && type.Equals(GWLItemType.User)) {
+						Dictionary<ulong,ulong[]> servRoles = _service.GetRoleIDs(type, id, Context.Guild.Id);
+						if(!_service.IsMemberRoleInGroup(servRoles,group)) {
+							await ReplyErrorLocalized("gwl_not_member", 
+								Format.Code(type.ToString()), 
+								_service.GetNameOrMentionFromId(type,id, true), 
+								Format.Bold(group.ListName))
+								.ConfigureAwait(false);
+							return;
+						} else {
+							await ReplyConfirmLocalized("gwl_is_member_role", 
+								Format.Code(type.ToString()), 
+								_service.GetNameOrMentionFromId(type,id, true), 
+								Format.Bold(group.ListName))
+								.ConfigureAwait(false);
+							return;
+						}
+					}
+
+					// Otherwise Ensure the group type is compatible!
 					if (!IsCompatible(group.Type, type)) {
 						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
                     	return;
@@ -1388,6 +1414,12 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Let user know that if General list, it applies to all
+					if (group.Type.Equals(GWLType.All)) {
+						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
+                    	return;
+					}
+
 					// Ensure the group type is compatible!
 					if (!group.Type.Equals(GWLType.Role)) {
 						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
@@ -1476,7 +1508,7 @@ namespace NadekoBot.Modules.Permissions
 						await _ListForMember(GWLItemType.Channel, id, page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _ListForMember(GWLItemType.User, id, page);
+						await _ListForUser(id, page);
 						return;
 					case GlobalWhitelistService.FieldType.ROLE: 
 						await _ListForRole(Context.Guild.Id, id, page);
@@ -1547,7 +1579,7 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public Task GWLForMember(IUser user, int page=1)
-				=> _ListForMember(GWLItemType.User, user.Id, page);
+				=> _ListForUser(user.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
@@ -1556,7 +1588,7 @@ namespace NadekoBot.Modules.Permissions
 
 			#endregion ListGWLFor Member
 
-            private async Task _ListForMember(GWLItemType type, ulong id, int page)
+            /*private async Task _ListForMember(GWLItemType type, ulong id, int page)
             {
                 if(--page < 0) return;
 
@@ -1609,6 +1641,66 @@ namespace NadekoBot.Modules.Permissions
 					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)).ConfigureAwait(false);
                     return;
                 }
+			}*/
+
+			private async Task _ListForMember(GWLItemType type, ulong id, int page)
+            {
+                if(--page < 0) return;
+
+				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
+				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
+                
+                if (hasTypeMem) {
+					int lastPage = (countM - 1)/_service.numPerPage;
+					if (page > lastPage) page = lastPage;
+                    EmbedBuilder embed = new EmbedBuilder()
+                      	.WithTitle(GetText("gwl_title"))
+                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)))
+						.AddField(GetText("gwl_field_title", countM), strM, true)
+                      	.WithFooter($"Page {page+1}/{lastPage+1}")
+                      	.WithOkColor();
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    return;
+                } else {
+					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)).ConfigureAwait(false);
+                    return;
+                }
+            }
+
+			private async Task _ListForUser(ulong id, int page)
+            {
+                if(--page < 0) return;
+
+				GWLItemType type = GWLItemType.User;
+
+				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
+				bool hasTypeRole = false; string[] namesR = null; int countR = 0;
+
+				// Get Role/ServerID stuff Dictionary<ServerID,RoleID[]>
+				Dictionary<ulong,ulong[]> servRoles = _service.GetRoleIDs(type, id, Context.Guild.Id);
+				if (servRoles != null) hasTypeRole = _service.GetGroupNamesByRoles(servRoles, page, out namesR, out countR);
+
+				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
+				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
+                
+                if (hasTypeMem || hasTypeRole) {
+					int lastMPage = (countM - 1)/_service.numPerPage;
+					int lastRPage = (countR - 1)/_service.numPerPage;
+					int lastPage = System.Math.Max(lastMPage,lastRPage);
+					if (page > lastPage) page = lastPage;
+                    EmbedBuilder embed = new EmbedBuilder()
+                      	.WithTitle(GetText("gwl_title"))
+                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)))
+						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
+						.AddField(GetText("gwl_field_title_role", countR), strR, true)
+                      	.WithFooter($"Page {page+1}/{lastPage+1}")
+                      	.WithOkColor();
+                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                    return;
+                } else {
+					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)).ConfigureAwait(false);
+                    return;
+                }
             }
 
 			private async Task _ListForRole(ulong sid, ulong id, int page)
@@ -1617,23 +1709,27 @@ namespace NadekoBot.Modules.Permissions
 
 				GWLItemType type = GWLItemType.Role;
 
-				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
+				// bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
 				bool hasTypeRole = _service.GetGroupNamesByRole(sid, id, page, out string[] namesR, out int countR);
 
-				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
+				// string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
 				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
                 
-                if (hasTypeAll || hasTypeRole) {
-					int lastAPage = (countA - 1)/_service.numPerPage;
-					int lastRPage = (countR - 1)/_service.numPerPage;
-					int lastPage = System.Math.Max(lastAPage,lastRPage);
+                // if (hasTypeAll || hasTypeRole) {
+				if (hasTypeRole) {
+					// int lastAPage = (countA - 1)/_service.numPerPage;
+					// int lastRPage = (countR - 1)/_service.numPerPage;
+					// int lastPage = System.Math.Max(lastAPage,lastRPage);
+					int lastPage = (countR - 1)/_service.numPerPage;
+
 					if (page > lastPage) page = lastPage;
                     EmbedBuilder embed = new EmbedBuilder()
                       	.WithTitle(GetText("gwl_title"))
                       	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetRoleNameMention(id,sid,Context.Guild.Id,true)))
-                      	.AddField(GetText("gwl_field_title_all", countA), strA, true)
-						.AddField(GetText("gwl_field_title_mem", 0), "*none*", true)
-						.AddField(GetText("gwl_field_title_role", countR), strR, true)
+                      	// .AddField(GetText("gwl_field_title_all", countA), strA, true)
+						// .AddField(GetText("gwl_field_title_mem", 0), "*none*", true)
+						// .AddField(GetText("gwl_field_title_role", countR), strR, true)
+						.AddField(GetText("gwl_field_title", countR), strR, true)
                       	.WithFooter($"Page {page+1}/{lastPage+1}")
                       	.WithOkColor();
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1666,9 +1762,9 @@ namespace NadekoBot.Modules.Permissions
 						.WithOkColor()
 						.WithTitle(GetText("gwl_title"))
 						.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), Format.Bold(name)))
-						.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
 						.AddField(GetText("gwl_field_title_role", countR), strR, true)
+						.AddField(GetText("gwl_field_title_all", countA), strA, true)
 						.WithFooter($"Page {page+1}/{lastPage+1}");
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1688,7 +1784,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task ListMyGWL(int page=1)
-            	=> _ListForMember(GWLItemType.User, Context.User.Id, page);
+            	=> _ListForUser(Context.User.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task ListContextGWL(int page=1)
@@ -1704,21 +1800,24 @@ namespace NadekoBot.Modules.Permissions
 				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
 				bool hasC = _service.GetGroupNamesByMemberType(idC, typeC, page, out string[] namesC, out int countC);
 				bool hasS = _service.GetGroupNamesByMemberType(idS, typeS, page, out string[] namesS, out int countS);
-				bool hasTypeRole = _service.GetGroupNamesByServer(idS, page, out string[] namesR, out int countR);
+				// bool hasTypeRole = _service.GetGroupNamesByServer(idS, page, out string[] namesR, out int countR);
 
 				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
 				string serverStr = (hasS) ? string.Join("\n",namesS) : "*none*";
 				string channelStr = (hasC) ? string.Join("\n",namesC) : "*none*";
-				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
+				// string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
                 
-                if (hasTypeAll || hasS || hasC || hasTypeRole) {
+                // if (hasTypeAll || hasS || hasC || hasTypeRole) {
+				if (hasTypeAll || hasS || hasC) {
 					int lastAPage = (countA - 1)/_service.numPerPage;
 					int lastServerPage = (countS - 1)/_service.numPerPage;
 					int lastChannelPage = (countC - 1)/_service.numPerPage;
-					int lastRPage = (countR - 1)/_service.numPerPage;
-					int lastPage = System.Math.Max(lastAPage, 
-						System.Math.Max(lastRPage,
-							System.Math.Max( lastServerPage, lastChannelPage )));
+					// int lastRPage = (countR - 1)/_service.numPerPage;
+					// int lastPage = System.Math.Max(lastAPage, 
+					// 	System.Math.Max(lastRPage,
+					// 		System.Math.Max( lastServerPage, lastChannelPage )));
+					int lastPage = System.Math.Max(lastAPage,
+							System.Math.Max( lastServerPage, lastChannelPage ));
 					if (page > lastPage) page = lastPage;
 
 					EmbedBuilder embed = new EmbedBuilder()
@@ -1730,12 +1829,14 @@ namespace NadekoBot.Modules.Permissions
 								Format.Code(typeC.ToString()),
 								MentionUtils.MentionChannel(idC)), ""
 							))
-						.AddField(GetText("gwl_field_title_all", countA), strA, true)
-						.AddField(GetText("gwl_field_server_ctx", countS), 
+						// .AddField(GetText("gwl_field_title_all", countA), strA, true)
+						.AddField(GetText("gwl_field_title_srvr", countS), 
 							serverStr, true)
-						.AddField(GetText("gwl_field_channel_ctx", countC), 
+						.AddField(GetText("gwl_field_title_chnl", countC), 
 							channelStr, true)
-						.AddField(GetText("gwl_field_title_role", countR), strR, true)
+						.AddField(GetText("field_separator"), GetText("gwl_general"), true)
+						.AddField(GetText("gwl_field_title_all", countA), strA, true)
+						// .AddField(GetText("gwl_field_title_role", countR), strR, true)
                       	.WithFooter($"Page {page+1}/{lastPage+1}")
                       	.WithOkColor();
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -1764,6 +1865,12 @@ namespace NadekoBot.Modules.Permissions
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
+					// Let user know that if General list, it applies to all
+					if (group.Type.Equals(GWLType.All)) {
+						await ReplyConfirmLocalized("gwl_has_general", Format.Bold(group.ListName)).ConfigureAwait(false);
+                    	return;
+					}
+
 					// Ensure the group type is compatible!
 					if (!group.Type.Equals(GWLType.Member)) {
 						await ReplyErrorLocalized("gwl_incompat_type", Format.Code("Server|Channel"), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
