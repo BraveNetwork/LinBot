@@ -1195,6 +1195,41 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
+		public bool CheckIfUnblocked(string ubName, UnblockedType ubType, ulong usrId, ulong srvrId, ulong chnlId)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+				var result = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => x.Type.Equals(ubType))
+					.Where(x => x.Name.Equals(ubName))
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.All) || g.Type.Equals(GWLType.Member))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gubPK => gubPK, g => g.Id,
+						(gubPK, g) => g.Id)
+					.Join(uow._context.Set<GWLItemSet>(),
+						gId => gId, gi => gi.ListPK,
+						(gId, gi) => gi.ItemPK)
+					.Join(uow._context.Set<GWLItem>()
+						.Where(x => 
+							(x.Type.Equals(GWLItemType.Server) && x.ItemId.Equals(srvrId)) ||
+							(x.Type.Equals(GWLItemType.Channel) && x.ItemId.Equals(chnlId)) ||
+							(x.Type.Equals(GWLItemType.User) && x.ItemId.Equals(usrId)) ),
+						giPK => giPK, i => i.Id,
+						(giPK, i) => giPK)
+					.Count();
+				
+				uow.Complete();
+
+				// System.Console.WriteLine(result);
+				if (result > 0) return true;
+				return false;
+			}
+		}
+		
 		public bool CheckIfUnblocked(string mdlName, string cmdName, ulong usrId, ulong srvrId, ulong chnlId)
 		{
 			using (var uow = _db.UnitOfWork)
@@ -2151,66 +2186,115 @@ namespace NadekoBot.Modules.Permissions.Services
 		#endregion Resolve ulong IDs
 
 		#region Retrieve Server and Role IDs
-			public Dictionary<ulong,ulong[]> GetRoleIDs(GWLItemType type, ulong id, ulong ctxSrvrId)
-			{
-				Dictionary<ulong,ulong[]> result = null;
-				switch(type) {
-					case GWLItemType.Role:
-						// Output serverID: ctxSrvrId, RoleID: id
+
+		private bool GuildRoleHasUser(ulong gid, ulong rid, ulong uid)
+		{
+			SocketGuild g = _client.GetGuild(gid);
+			if (g == null) return false;
+
+			SocketRole r = g.GetRole(rid);
+			if (r == null) return false;
+
+			SocketGuildUser u = g.GetUser(uid);
+			if (u == null) return false;
+
+			return r.Members.Contains(u);
+		}
+
+		public bool IsUserRoleUnblocked(ulong id, string cmdName, string mdlName)
+		{
+			int count = 0;
+			// In general, a user is likely to have many more roles than there are unblocked roles
+			// So we should iterate over the unblocked roles to find any that contains our user
+			// And then CheckIfUnblocked on those matches
+			using (var uow = _db.UnitOfWork)
+            {
+                count = uow._context.Set<GWLItem>()
+					.Where(i => i.Type.Equals(GWLItemType.Role))
+					.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, id))
+					.Join(uow._context.Set<GWLItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i,gi) => gi.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.IsEnabled.Equals(true))
+						.Where(g => g.Type.Equals(GWLType.Role)),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g.Id)
+					.Join(uow._context.Set<GlobalUnblockedSet>(),
+						listPK=>listPK, gu => gu.ListPK,
+						(listPK, gu) => gu.UnblockedPK)
+					.Join(uow._context.Set<UnblockedCmdOrMdl>()
+						.Where(x => 
+							(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+							(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) ),
+						uPK => uPK, x => x.Id,
+						(uPK, x) => x.Id)
+					.Count();
+				uow.Complete();
+            }
+			return (count > 0);
+		}
+
+		public Dictionary<ulong,ulong[]> GetRoleIDs(GWLItemType type, ulong id, ulong ctxSrvrId)
+		{
+			Dictionary<ulong,ulong[]> result = null;
+			switch(type) {
+				case GWLItemType.Role:
+					// Output serverID: ctxSrvrId, RoleID: id
+					result = new Dictionary<ulong, ulong[]>();
+					result.Add(ctxSrvrId, new ulong[]{id});
+					break;
+
+				case GWLItemType.User:
+					// Find all servers shared with the user
+					// Then find all roles for the user in each server
+					SocketUser user = _client.GetUser(id);
+					if (user != null) {
+						result = _client.Guilds
+							.Where(g => g.GetUser(id) != null)
+							.ToDictionary(s => s.Id, rs => rs.Roles
+								.Where(r => r.Members.Contains(r.Guild.GetUser(id)))
+								.Select(r => r.Id).ToArray());
+					}
+					break;
+
+				case GWLItemType.Channel:
+					// Find the channel's server
+					// Then find all roles in the channel
+					ulong sID = GetServerID(id);
+					if (sID > 0) {
 						result = new Dictionary<ulong, ulong[]>();
-						result.Add(ctxSrvrId, new ulong[]{id});
-						break;
+						result.Add(sID, new ulong[]{id});
+					}
+					break;
 
-					case GWLItemType.User:
-						// Find all servers shared with the user
-						// Then find all roles for the user in each server
-						SocketUser user = _client.GetUser(id);
-						if (user != null) {
-							result = _client.Guilds
-								.Where(g => g.GetUser(id) != null)
-								.ToDictionary(s => s.Id, rs => rs.Roles
-									.Where(r => r.Members.Contains(r.Guild.GetUser(id)))
-									.Select(r => r.Id).ToArray());
-						}
-						break;
-
-					case GWLItemType.Channel:
-						// Find the channel's server
-						// Then find all roles in the channel
-						ulong sID = GetServerID(id);
-						if (sID > 0) {
+				case GWLItemType.Server:
+					// Find all roles in this server
+					SocketGuild srvr = _client.GetGuild(id);
+					if (srvr != null) {
+						ulong[] roleIDs = srvr.Roles.Select(r => r.Id).ToArray();
+						if (roleIDs.Length > 0) {
 							result = new Dictionary<ulong, ulong[]>();
-							result.Add(sID, new ulong[]{id});
+							result.Add(id, roleIDs);
 						}
-						break;
+					}
+					break;
 
-					case GWLItemType.Server:
-						// Find all roles in this server
-						SocketGuild srvr = _client.GetGuild(id);
-						if (srvr != null) {
-							ulong[] roleIDs = srvr.Roles.Select(r => r.Id).ToArray();
-							if (roleIDs.Length > 0) {
-								result = new Dictionary<ulong, ulong[]>();
-								result.Add(id, roleIDs);
-							}
-						}
-						break;
-
-					default:
-						break;
-				}
-				return result;
+				default:
+					break;
 			}
+			return result;
+		}
 
-			public ulong GetServerID(ulong cID)
-			{
-				ulong sID = 0;
-				SocketGuildChannel chnl = _client.GetChannel(cID) as SocketGuildChannel;
-				if (chnl != null) {
-					sID = chnl.Guild.Id;
-				}
-				return sID;
+		public ulong GetServerID(ulong cID)
+		{
+			ulong sID = 0;
+			SocketGuildChannel chnl = _client.GetChannel(cID) as SocketGuildChannel;
+			if (chnl != null) {
+				sID = chnl.Guild.Id;
 			}
+			return sID;
+		}
 		#endregion Retrieve Server and Role IDs
 	}
 }
