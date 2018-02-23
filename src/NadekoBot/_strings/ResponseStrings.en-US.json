@@ -71,6 +71,8 @@
   "permissions_gub_list_formember": "Here are all the commands and modules that have been explicitly unblocked for {0} {1}:",
   "permissions_gub_is_unblocked": "The {0} {1} is unblocked for the {2} {3} through the following whitelists:",
   "permissions_gub_not_unblocked": "The {0} {1} is NOT unblocked for the {2} {3}.",
+  "permissions_gub_is_unblocked_cmd": "The {0} {1} and/or its containing `Module` {4} is unblocked for the {2} {3} through the following whitelists:",
+  "permissions_gub_not_unblocked_cmd": "The {0} {1} is NOT unblocked for the {2} {3}, and nor is the containing `Module` {4}.",
   "permissions_gwl_reset": "Cleared all whitelists from the database.",
   "permissions_gwl_reset_purge": "Cleared all whitelists from the database, along with any member and unblocked command/module data.",
   "permissions_gwl_reset_fail": "Unable to reset whitelists. See console output for details.",

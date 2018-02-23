@@ -756,6 +756,45 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 			return true;
 		}
+
+		public bool CheckIfUnblockedForAll(string mdlName, string cmdName, int page, out string[] lists, out int count)
+		{
+			lists = null;
+			using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.All))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gub => gub, g => g.Id,
+						(gub, g) => g)
+					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null);
+				
+				uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				lists = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+			}
+			return true;
+		}
+
 		public bool CheckIfUnblockedForMember(string ubName, UnblockedType ubType, ulong memID, GWLItemType memType, int page, out string[] lists, out int count)
 		{
 			lists = null;
@@ -785,6 +824,57 @@ namespace NadekoBot.Modules.Permissions.Services
 						.Where(x => x.ItemId.Equals(memID)),
 						gi => gi.ItemPK, i => i.Id,
 						(gi, i) => gi.g);
+				
+				uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				lists = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+			}
+			return true;
+		}
+
+		public bool CheckIfUnblockedForMember(string mdlName, string cmdName, ulong memID, GWLItemType memType, int page, out string[] lists, out int count)
+		{
+			lists = null;
+			using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.Member))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gub => gub, g => g.Id,
+						(gub, g) => g
+						)
+					.Join(uow._context.Set<GWLItemSet>(),
+						g => g.Id, gi => gi.ListPK,
+						(g, gi) => new {
+							g,
+							gi.ItemPK
+						})
+					.Join(uow._context.Set<GWLItem>()
+						.Where(x => x.Type.Equals(memType))
+						.Where(x => x.RoleServerId.Equals(0))
+						.Where(x => x.ItemId.Equals(memID)),
+						gi => gi.ItemPK, i => i.Id,
+						(gi, i) => gi.g)
+					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null);
 				
 				uow.Complete();
 
@@ -888,6 +978,90 @@ namespace NadekoBot.Modules.Permissions.Services
 			return false;
 		}
 
+		/// <summary>
+		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
+		/// that matches the given list of roles (presumably from a user/channel/server)
+		/// but don't sort or cut yet
+		/// </summary>
+		public bool CheckIfUnblockedForMemberRoles(string mdlName, string cmdName, ulong sid, ulong[] ids, out GWLSet[] groups)
+		{
+            groups = null;
+            using (var uow = _db.UnitOfWork)
+            {
+				groups = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.Role))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gub => gub, g => g.Id,
+						(gub, g) => g
+						)
+					.Join(uow._context.Set<GWLItemSet>(),
+						g => g.Id, gi => gi.ListPK,
+						(g, gi) => new {
+							g,
+							gi.ItemPK
+						})
+					.Join(uow._context.Set<GWLItem>()
+						.Where(x => x.Type.Equals(GWLItemType.Role))
+						.Where(x => x.RoleServerId.Equals(sid))
+						.Where(x => ids.Contains(x.ItemId)),
+						gi => gi.ItemPK, i => i.Id,
+						(gi, i) => gi.g)
+					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null)
+					.ToArray();
+				
+				int count = groups.Count();
+				if (count <= 0) return false;
+
+                uow.Complete();
+            }
+            return true;
+        }
+
+		/// <summary>
+		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
+		/// Then sort and take what is needed for the current page
+		/// </summary>
+		public bool CheckIfUnblockedForMemberRoles(string mdlName, string cmdName, Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
+		{
+			names = null;
+			count = 0;
+			IEnumerable<GWLSet> tempRoles = null;
+			for (int k=0; k<servRoles.Keys.Count(); k++) {
+				ulong sID = servRoles.Keys.ElementAt(k);
+				if (CheckIfUnblockedForMemberRoles(mdlName, cmdName, sID, servRoles.GetValueOrDefault(sID), out GWLSet[] temp)) {
+					if (tempRoles == null) {
+						tempRoles = temp;
+					} else {
+						tempRoles = tempRoles.Union(temp);
+					}
+				}
+			}
+			if (tempRoles != null) {
+				count = tempRoles.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
+
+				names = tempRoles
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+					.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? $"{enabledText} {g.ListName}" : $"{disabledText} {g.ListName}" )
+					.ToArray();
+				
+				return true;
+			}
+			return false;
+		}
+
 		public bool CheckIfUnblockedForRole(string ubName, UnblockedType ubType, ulong sid, ulong id, int page, out string[] lists, out int count)
 		{
 			lists = null;
@@ -896,6 +1070,57 @@ namespace NadekoBot.Modules.Permissions.Services
 				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(ubType))
 					.Where(x => x.Name.Equals(ubName))
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.Role))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gub => gub, g => g.Id,
+						(gub, g) => g
+						)
+					.Join(uow._context.Set<GWLItemSet>(),
+						g => g.Id, gi => gi.ListPK,
+						(g, gi) => new {
+							g,
+							gi.ItemPK
+						})
+					.Join(uow._context.Set<GWLItem>()
+						.Where(x => x.Type.Equals(GWLItemType.Role))
+						.Where(x => x.RoleServerId.Equals(sid))
+						.Where(x => x.ItemId.Equals(id)),
+						gi => gi.ItemPK, i => i.Id,
+						(gi, i) => gi.g)
+					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null);
+				
+				uow.Complete();
+
+				count = allnames.Count();
+				if (count <= 0) return false;
+
+				int numSkip = page*numPerPage;
+				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
+				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
+
+				lists = allnames
+					.OrderBy(g => g.ListName.ToLowerInvariant())
+					.Skip(numSkip)
+                	.Take(numPerPage)
+					.Select(g => (g.IsEnabled) ? enabledText + g.ListName : disabledText + g.ListName)
+					.ToArray();
+			}
+			return true;
+		}
+
+		public bool CheckIfUnblockedForRole(string mdlName, string cmdName, ulong sid, ulong id, int page, out string[] lists, out int count)
+		{
+			lists = null;
+			using (var uow = _db.UnitOfWork)
+            {
+				var allnames = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
 						ub => ub.Id, gub => gub.UnblockedPK, 
 						(ub,gub) => gub.ListPK)
@@ -958,6 +1183,42 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Join(uow._context.Set<GWLItem>()
 						.Where(x => x.Type.Equals(memType))
 						.Where(x => x.ItemId.Equals(memID)),
+						giPK => giPK, i => i.Id,
+						(giPK, i) => giPK)
+					.Count();
+				
+				uow.Complete();
+
+				// System.Console.WriteLine(result);
+				if (result > 0) return true;
+				return false;
+			}
+		}
+
+		public bool CheckIfUnblocked(string mdlName, string cmdName, ulong usrId, ulong srvrId, ulong chnlId)
+		{
+			using (var uow = _db.UnitOfWork)
+            {
+				var result = uow._context.Set<UnblockedCmdOrMdl>()
+					.Where(x => 
+						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
+					.Join(uow._context.Set<GlobalUnblockedSet>(), 
+						ub => ub.Id, gub => gub.UnblockedPK, 
+						(ub,gub) => gub.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.Type.Equals(GWLType.All) || g.Type.Equals(GWLType.Member))
+						.Where(g => g.IsEnabled.Equals(true)),
+						gubPK => gubPK, g => g.Id,
+						(gubPK, g) => g.Id)
+					.Join(uow._context.Set<GWLItemSet>(),
+						gId => gId, gi => gi.ListPK,
+						(gId, gi) => gi.ItemPK)
+					.Join(uow._context.Set<GWLItem>()
+						.Where(x => 
+							(x.Type.Equals(GWLItemType.Server) && x.ItemId.Equals(srvrId)) ||
+							(x.Type.Equals(GWLItemType.Channel) && x.ItemId.Equals(chnlId)) ||
+							(x.Type.Equals(GWLItemType.User) && x.ItemId.Equals(usrId)) ),
 						giPK => giPK, i => i.Id,
 						(giPK, i) => giPK)
 					.Count();

@@ -298,11 +298,11 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, IGuild server, ulong id, CommandInfo cmd, int page=1)
+            public async Task GUBCheck(CommandInfo cmd, GlobalWhitelistService.FieldType field, IGuild server, ulong id, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.ROLE: 
-						await _GUBCheckRole(server.Id, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheckRoleCommand(server.Id, id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 						return;
 					default: 
 						// Not valid
@@ -313,7 +313,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, IGuild server, ulong id, ModuleInfo mdl, int page=1)
+            public async Task GUBCheck(ModuleInfo mdl, GlobalWhitelistService.FieldType field, IGuild server, ulong id, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.ROLE: 
@@ -328,20 +328,20 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, CommandInfo cmd, int page=1)
+            public async Task GUBCheck(CommandInfo cmd, GlobalWhitelistService.FieldType field, ulong id, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
-						await _GUBCheck(GWLItemType.Server, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheckCommand(GWLItemType.Server, id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.CHANNEL: 
-						await _GUBCheck(GWLItemType.Channel, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheckCommand(GWLItemType.Channel, id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.USER: 
-						await _GUBCheckUser(id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheckUserCommand(id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 						return;
 					case GlobalWhitelistService.FieldType.ROLE: 
-						await _GUBCheckRole(Context.Guild.Id, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+						await _GUBCheckRoleCommand(Context.Guild.Id, id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 						return;
 					default: 
 						// Not valid
@@ -352,7 +352,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task GUBCheck(GlobalWhitelistService.FieldType field, ulong id, ModuleInfo mdl, int page=1)
+            public async Task GUBCheck(ModuleInfo mdl, GlobalWhitelistService.FieldType field, ulong id, int page=1)
 			{
 				switch(field) {
 					case GlobalWhitelistService.FieldType.SERVER: 
@@ -380,33 +380,33 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, IRole role, CommandInfo cmd, int page=1)
-				=> _GUBCheckRole(server.Id, role.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, IGuild server, IRole role, int page=1)
+				=> _GUBCheckRoleCommand(server.Id, role.Id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, ulong id, CommandInfo cmd, int page=1)
-				=> _GUBCheckRole(server.Id, id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, IGuild server, ulong id, int page=1)
+				=> _GUBCheckRoleCommand(server.Id, id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, CommandInfo cmd, int page=1)
-				=> _GUBCheck(GWLItemType.Server, server.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, IGuild server, int page=1)
+				=> _GUBCheckCommand(GWLItemType.Server, server.Id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(ITextChannel channel, CommandInfo cmd, int page=1)
-				=> _GUBCheck(GWLItemType.Channel, channel.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, ITextChannel channel, int page=1)
+				=> _GUBCheckCommand(GWLItemType.Channel, channel.Id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IUser user, CommandInfo cmd, int page=1)
-				=> _GUBCheckUser(user.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, IUser user, int page=1)
+				=> _GUBCheckUserCommand(user.Id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IRole role, CommandInfo cmd, int page=1)
-				=> _GUBCheckRole(Context.Guild.Id, role.Id, UnblockedType.Command, cmd.Name.ToLowerInvariant(), page);
+            public Task GUBCheck(CommandInfo cmd, IRole role, int page=1)
+				=> _GUBCheckRoleCommand(Context.Guild.Id, role.Id, cmd.Module.GetTopLevelModule().Name.ToLowerInvariant(), cmd.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Command
 
@@ -414,32 +414,32 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, IRole role, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, IGuild server, IRole role, int page=1)
 				=> _GUBCheckRole(server.Id, role.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, ulong id, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, IGuild server, ulong id, int page=1)
 				=> _GUBCheckRole(server.Id, id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IGuild server, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, IGuild server, int page=1)
 				=> _GUBCheck(GWLItemType.Server, server.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(ITextChannel channel, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, ITextChannel channel, int page=1)
 				=> _GUBCheck(GWLItemType.Channel, channel.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IUser user, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, IUser user, int page=1)
 				=> _GUBCheckUser(user.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public Task GUBCheck(IRole role, ModuleInfo mdl, int page=1)
+            public Task GUBCheck(ModuleInfo mdl, IRole role, int page=1)
 				=> _GUBCheckRole(Context.Guild.Id, role.Id, UnblockedType.Module, mdl.Name.ToLowerInvariant(), page);
 
 			#endregion GUBCheck Module
@@ -484,6 +484,56 @@ namespace NadekoBot.Modules.Permissions
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
 						_gwl.GetNameOrMentionFromId(memType, memID, true)
+						)
+					.ConfigureAwait(false);
+                	return;
+				}
+			}
+
+			private async Task _GUBCheckCommand(GWLItemType memType, ulong memID, string mdlName, string ubName, int page=1)
+			{
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
+
+				UnblockedType ubType = UnblockedType.Command;
+
+				bool ubForAll = _gwl.CheckIfUnblockedForAll(mdlName, ubName, page, out string[] listsA, out int countA);
+				bool ubForMem = _gwl.CheckIfUnblockedForMember(mdlName, ubName, memID, memType, page, out string[] listsM, out int countM);
+
+				if (ubForAll || ubForMem)
+				{
+					string all = (ubForAll) ? string.Join("\n",listsA) : "*none*";
+					string mem = (ubForMem) ? string.Join("\n",listsM) : "*none*";
+
+					int lastAPage = (countA - 1)/_gwl.numPerPage;
+					int lastMPage = (countM - 1)/_gwl.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, lastMPage);
+					if (page > lastPage) page = lastPage;
+
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gub_is_unblocked_cmd", 
+							Format.Code(ubType.ToString()), 
+							Format.Bold(ubName),
+							Format.Code(memType.ToString()),
+							_gwl.GetNameOrMentionFromId(memType, memID, true),
+							Format.Bold(mdlName)
+							))
+						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
+						.AddField(GetText("gwl_field_title_all", countA), all, true)
+						.WithFooter($"Page {page+1}/{lastPage+1}");
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                	return;
+
+				} else
+				{
+					await ReplyErrorLocalized("gub_not_unblocked_cmd", 
+						Format.Code(ubType.ToString()), 
+						Format.Bold(ubName),
+						Format.Code(memType.ToString()),
+						_gwl.GetNameOrMentionFromId(memType, memID, true),
+						Format.Bold(mdlName)
 						)
 					.ConfigureAwait(false);
                 	return;
@@ -543,6 +593,61 @@ namespace NadekoBot.Modules.Permissions
 				}
 			}
 
+			private async Task _GUBCheckUserCommand(ulong id, string mdlName, string ubName, int page=1)
+			{
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
+
+				GWLItemType memType = GWLItemType.User;
+				UnblockedType ubType = UnblockedType.Command;
+
+				bool ubForAll = _gwl.CheckIfUnblockedForAll(mdlName, ubName, page, out string[] listsA, out int countA);
+				bool ubForMem = _gwl.CheckIfUnblockedForMember(mdlName, ubName, id, memType, page, out string[] listsM, out int countM);
+				Dictionary<ulong,ulong[]> servRoles = _gwl.GetRoleIDs(memType, id, Context.Guild.Id);
+				bool ubForRole = _gwl.CheckIfUnblockedForMemberRoles(mdlName, ubName, servRoles, page, out string[] listsR, out int countR);
+
+				if (ubForAll || ubForMem || ubForRole)
+				{
+					string all = (ubForAll) ? string.Join("\n",listsA) : "*none*";
+					string mem = (ubForMem) ? string.Join("\n",listsM) : "*none*";
+					string role = (ubForRole) ? string.Join("\n",listsR) : "*none*";
+
+					int lastAPage = (countA - 1)/_gwl.numPerPage;
+					int lastMPage = (countM - 1)/_gwl.numPerPage;
+					int lastRPage = (countR - 1)/_gwl.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, System.Math.Max(lastMPage, lastRPage));
+					if (page > lastPage) page = lastPage;
+
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gub_is_unblocked_cmd", 
+							Format.Code(ubType.ToString()), 
+							Format.Bold(ubName),
+							Format.Code(memType.ToString()),
+							_gwl.GetNameOrMentionFromId(memType, id, true),
+							Format.Bold(mdlName)))
+						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
+						.AddField(GetText("gwl_field_title_role", countR), role, true)
+						.AddField(GetText("gwl_field_title_all", countA), all, true)
+						.WithFooter($"Page {page+1}/{lastPage+1}");
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                	return;
+
+				} else
+				{
+					await ReplyErrorLocalized("gub_not_unblocked_cmd", 
+						Format.Code(ubType.ToString()), 
+						Format.Bold(ubName),
+						Format.Code(memType.ToString()),
+						_gwl.GetNameOrMentionFromId(memType, id, true),
+						Format.Bold(mdlName)
+						)
+					.ConfigureAwait(false);
+                	return;
+				}
+			}
+
 			private async Task _GUBCheckRole(ulong sid, ulong id, UnblockedType ubType, string ubName, int page=1)
 			{
 				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
@@ -569,7 +674,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetRoleNameMention(sid, id, Context.Guild.Id, true)
+							_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true)
 							))
 						.AddField(GetText("gwl_field_title_role", countR), role, true)
 						.AddField(GetText("gwl_field_title_all", countA), all, true)
@@ -584,7 +689,58 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetRoleNameMention(sid, id, Context.Guild.Id, true)
+						_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true)
+						)
+					.ConfigureAwait(false);
+                	return;
+				}
+			}
+
+			private async Task _GUBCheckRoleCommand(ulong sid, ulong id, string mdlName, string ubName, int page=1)
+			{
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
+
+				GWLItemType memType = GWLItemType.Role;
+				UnblockedType ubType = UnblockedType.Command;
+
+				bool ubForAll = _gwl.CheckIfUnblockedForAll(mdlName, ubName, page, out string[] listsA, out int countA);
+				bool ubForRole = _gwl.CheckIfUnblockedForRole(mdlName, ubName, sid, id, page, out string[] listsR, out int countR);
+
+				if (ubForAll || ubForRole)
+				{
+					string all = (ubForAll) ? string.Join("\n",listsA) : "*none*";
+					string role = (ubForRole) ? string.Join("\n",listsR) : "*none*";
+
+					int lastAPage = (countA - 1)/_gwl.numPerPage;
+					int lastRPage = (countR - 1)/_gwl.numPerPage;
+					int lastPage = System.Math.Max(lastAPage, lastRPage);
+					if (page > lastPage) page = lastPage;
+
+					var embed = new EmbedBuilder()
+						.WithOkColor()
+						.WithTitle(GetText("gwl_title"))
+						.WithDescription(GetText("gub_is_unblocked_cmd", 
+							Format.Code(ubType.ToString()), 
+							Format.Bold(ubName),
+							Format.Code(memType.ToString()),
+							_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true),
+							Format.Bold(mdlName)
+							))
+						.AddField(GetText("gwl_field_title_role", countR), role, true)
+						.AddField(GetText("gwl_field_title_all", countA), all, true)
+						.WithFooter($"Page {page+1}/{lastPage+1}");
+
+					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                	return;
+
+				} else
+				{
+					await ReplyErrorLocalized("gub_not_unblocked_cmd", 
+						Format.Code(ubType.ToString()), 
+						Format.Bold(ubName),
+						Format.Code(memType.ToString()),
+						_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true),
+						Format.Bold(mdlName)
 						)
 					.ConfigureAwait(false);
                 	return;
@@ -663,7 +819,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsMyGUB(CommandInfo command, int page=1)
-				=> _GUBCheckUser(Context.User.Id, UnblockedType.Command, command.Name.ToLowerInvariant(), page);
+				=> _GUBCheckUserCommand(Context.User.Id, command.Module.GetTopLevelModule().Name.ToLowerInvariant(), command.Name.ToLowerInvariant(), page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsMyGUB(ModuleInfo module, int page=1)
@@ -671,7 +827,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsContextGUB(CommandInfo command, int page=1)
-				=> _IsContextGUB(UnblockedType.Command, command.Name.ToLowerInvariant(), page);
+				=> _IsContextGUBCommand(command.Module.GetTopLevelModule().Name.ToLowerInvariant(), command.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
             public Task IsContextGUB(ModuleInfo module, int page=1)
@@ -725,7 +881,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(type.ToString()), 
 						Format.Bold(name),
 						Format.Code(typeS.ToString()), 
-						Context.Guild.Name);
+						Format.Bold(Context.Guild.Name));
 				} else {
 					await ReplyErrorLocalized("gub_not_unblocked", 
 						Format.Code(type.ToString()), 
@@ -735,6 +891,88 @@ namespace NadekoBot.Modules.Permissions
 							Format.Bold(Context.Guild.Name),
 							Format.Code(typeC.ToString()),
 							MentionUtils.MentionChannel(idC)), ""
+						)
+						.ConfigureAwait(false);
+					return;
+				}
+
+				var embed = new EmbedBuilder()
+					.WithOkColor()
+					.WithTitle(GetText("gwl_title"))
+					.WithDescription(desc)
+					.AddField(GetText("gwl_field_title_chnl", countC), channelStr, true)
+					.AddField(GetText("gwl_field_title_srvr", countS), serverStr, true)
+					.AddField(GetText("gwl_field_title_all", countA), allStr, true)
+					.WithFooter($"Page {page+1}/{lastPage+1}");
+
+				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
+                return;
+			}
+
+			private async Task _IsContextGUBCommand(string mdlName, string name, int page)
+			{
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
+
+				ulong idC = Context.Channel.Id;
+				ulong idS = Context.Guild.Id;
+
+				GWLItemType typeC = GWLItemType.Channel;
+				GWLItemType typeS = GWLItemType.Server;
+
+				UnblockedType type = UnblockedType.Command;
+
+				bool yesC = _gwl.CheckIfUnblockedForMember(mdlName, name, idC, typeC, page, out string[] listC, out int countC);
+				bool yesS = _gwl.CheckIfUnblockedForMember(mdlName, name, idS, typeS, page, out string[] listS, out int countS);
+				bool ubForAll = _gwl.CheckIfUnblockedForAll(mdlName, name, page, out string[] listA, out int countA);
+
+				string serverStr = (yesS) ? string.Join("\n",listS) : "*none*";
+				string channelStr = (yesC) ? string.Join("\n",listC) : "*none*";
+				string allStr = (ubForAll) ? string.Join("\n",listA) : "*none*";
+
+				int lastServerPage = (countS - 1)/_gwl.numPerPage +1;
+				int lastChannelPage = (countC - 1)/_gwl.numPerPage +1;
+				int lastAPage = (countA - 1)/_gwl.numPerPage +1;
+				int lastPage = System.Math.Max( lastAPage, System.Math.Max( lastServerPage, lastChannelPage ));
+				page++;
+				if (page > lastPage) page = lastPage;
+
+				string desc = "";
+
+				if (yesC && yesS) {
+					desc = GetText("gub_is_unblocked_cmd", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						GetText("gwl_current_ctx", 
+							Format.Code(typeS.ToString()),
+							Format.Bold(Context.Guild.Name),
+							Format.Code(typeC.ToString()),
+							MentionUtils.MentionChannel(idC)), "",
+							Format.Bold(mdlName)
+						);
+				} else if (yesC) {
+					desc = GetText("gub_is_unblocked_cmd", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeC.ToString()), 
+						MentionUtils.MentionChannel(idC),
+						Format.Bold(mdlName));
+				} else if (yesS) {
+					desc = GetText("gub_is_unblocked_cmd", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						Format.Code(typeS.ToString()), 
+						Format.Bold(Context.Guild.Name),
+						Format.Bold(mdlName));
+				} else {
+					await ReplyErrorLocalized("gub_not_unblocked_cmd", 
+						Format.Code(type.ToString()), 
+						Format.Bold(name),
+						GetText("gwl_current_ctx", 
+							Format.Code(typeS.ToString()),
+							Format.Bold(Context.Guild.Name),
+							Format.Code(typeC.ToString()),
+							MentionUtils.MentionChannel(idC)), "",
+						Format.Bold(mdlName)
 						)
 						.ConfigureAwait(false);
 					return;
