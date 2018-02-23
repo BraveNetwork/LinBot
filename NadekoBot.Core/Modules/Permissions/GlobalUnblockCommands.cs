@@ -33,7 +33,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ListGUB(int page=1)
             {
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -152,7 +152,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBForMember(GWLItemType type, ulong id, int page)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -194,7 +194,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBForUser(ulong id, int page)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -252,7 +252,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBForRole(ulong sid, ulong id, int page)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 				
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -446,7 +446,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBCheck(GWLItemType memType, ulong memID, UnblockedType ubType, string ubName, int page=1)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				bool ubForAll = _gwl.CheckIfUnblockedForAll(ubName, ubType, page, out string[] listsA, out int countA);
 				bool ubForMem = _gwl.CheckIfUnblockedForMember(ubName, ubType, memID, memType, page, out string[] listsM, out int countM);
@@ -492,7 +492,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBCheckUser(ulong id, UnblockedType ubType, string ubName, int page=1)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				GWLItemType memType = GWLItemType.User;
 
@@ -545,7 +545,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _GUBCheckRole(ulong sid, ulong id, UnblockedType ubType, string ubName, int page=1)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				GWLItemType memType = GWLItemType.Role;
 
@@ -602,7 +602,7 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task ListContextGUB(int page=1)
             {
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				// Error if nothing to show
 				if (!_service.UnblockedModules.Any() && !_service.UnblockedCommands.Any())
@@ -679,7 +679,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _IsContextGUB(UnblockedType type, string name, int page)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				ulong idC = Context.Channel.Id;
 				ulong idS = Context.Guild.Id;

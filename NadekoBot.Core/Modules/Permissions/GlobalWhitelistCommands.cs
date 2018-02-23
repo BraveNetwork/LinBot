@@ -997,7 +997,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task ListGWL(int page=1)
             {
-                if(--page < 0) return; // ensures page is 0-indexed and non-negative
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNames(GWLType.Member, page, out string[] namesM, out int countM);
@@ -1040,7 +1040,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _Info(string listName, GlobalWhitelistService.FieldType field, int page)
 			{
-				if(--page < 0) return; // ensures page is 0-indexed and non-negative
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -1590,7 +1590,7 @@ namespace NadekoBot.Modules.Permissions
 
             /*private async Task _ListForMember(GWLItemType type, ulong id, int page)
             {
-                if(--page < 0) return;
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				bool hasTypeAll = _service.GetGroupNames(GWLType.All, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
@@ -1645,7 +1645,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _ListForMember(GWLItemType type, ulong id, int page)
             {
-                if(--page < 0) return;
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
 				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
@@ -1669,7 +1669,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _ListForUser(ulong id, int page)
             {
-                if(--page < 0) return;
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				GWLItemType type = GWLItemType.User;
 
@@ -1705,7 +1705,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _ListForRole(ulong sid, ulong id, int page)
             {
-                if(--page < 0) return;
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				GWLItemType type = GWLItemType.Role;
 
@@ -1742,7 +1742,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _ListForMember(UnblockedType type, string name, int page)
             {
-                if(--page < 0) return; // ensures page is 0-indexed and non-negative
+                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				bool hasTypeAll = _service.GetGroupNamesByUnblocked(name, type, GWLType.All, page, out string[] namesA, out int countA);
 				bool hasTypeMem = _service.GetGroupNamesByUnblocked(name, type, GWLType.Member, page, out string[] namesM, out int countM);
@@ -1789,7 +1789,7 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task ListContextGWL(int page=1)
             {
-				if(--page < 0) return;
+				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
 				ulong idC = Context.Channel.Id;
 				ulong idS = Context.Guild.Id;
