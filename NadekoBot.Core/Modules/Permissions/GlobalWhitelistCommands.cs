@@ -1361,8 +1361,7 @@ namespace NadekoBot.Modules.Permissions
 
 					// Special Role case for User type
 					if (group.Type.Equals(GWLType.Role) && type.Equals(GWLItemType.User)) {
-						Dictionary<ulong,ulong[]> servRoles = _service.GetRoleIDs(type, id, Context.Guild.Id);
-						if(!_service.IsMemberRoleInGroup(servRoles,group)) {
+						if(!_service.IsUserRoleInGroup(id,group)) {
 							await ReplyErrorLocalized("gwl_not_member", 
 								Format.Code(type.ToString()), 
 								_service.GetNameOrMentionFromId(type,id, true), 
@@ -1587,62 +1586,7 @@ namespace NadekoBot.Modules.Permissions
 				=> _ListForRole(role.Guild.Id, role.Id, page);
 
 			#endregion ListGWLFor Member
-
-            /*private async Task _ListForMember(GWLItemType type, ulong id, int page)
-            {
-                if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
-
-				bool hasTypeAll = _service.GetGroupNames(GWLType.General, page, out string[] namesA, out int countA);
-				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
-				bool hasTypeRole = false; string[] namesR = null; int countR = 0;
-
-				// Get Role/ServerID stuff
-				switch(type) {
-					case GWLItemType.User:
-						// Get Dictionary<ServerID,RoleID[]>
-						Dictionary<ulong,ulong[]> servRoles = _service.GetRoleIDs(type, id, Context.Guild.Id);
-						if (servRoles != null) hasTypeRole = _service.GetGroupNamesByRoles(servRoles, page, out namesR, out countR);
-						break;
-
-					case GWLItemType.Channel:
-						ulong sID =_service.GetServerID(id);
-						if (sID > 0) hasTypeRole = _service.GetGroupNamesByServer(sID, page, out namesR, out countR);
-						break;
-
-					case GWLItemType.Server:
-						hasTypeRole = _service.GetGroupNamesByServer(id, page, out namesR, out countR);
-						break;
-
-					default:
-						break;
-				}
-
-				string strA = (hasTypeAll) ? string.Join("\n", namesA) : "*none*";
-				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
-				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";
-                
-                if (hasTypeAll || hasTypeMem || hasTypeRole) {
-					int lastAPage = (countA - 1)/_service.numPerPage;
-					int lastMPage = (countM - 1)/_service.numPerPage;
-					int lastRPage = (countR - 1)/_service.numPerPage;
-					int lastPage = System.Math.Max(lastAPage, System.Math.Max(lastMPage,lastRPage));
-					if (page > lastPage) page = lastPage;
-                    EmbedBuilder embed = new EmbedBuilder()
-                      	.WithTitle(GetText("gwl_title"))
-                      	.WithDescription(GetText("gwl_list_bymember", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)))
-                      	.AddField(GetText("gwl_field_title_all", countA), strA, true)
-						.AddField(GetText("gwl_field_title_mem", countM), strM, true)
-						.AddField(GetText("gwl_field_title_role", countR), strR, true)
-                      	.WithFooter($"Page {page+1}/{lastPage+1}")
-                      	.WithOkColor();
-                    await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
-                    return;
-                } else {
-					await ReplyErrorLocalized("gwl_empty_member", Format.Code(type.ToString()), _service.GetNameOrMentionFromId(type,id,true)).ConfigureAwait(false);
-                    return;
-                }
-			}*/
-
+			
 			private async Task _ListForMember(GWLItemType type, ulong id, int page)
             {
                 if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
@@ -1674,11 +1618,7 @@ namespace NadekoBot.Modules.Permissions
 				GWLItemType type = GWLItemType.User;
 
 				bool hasTypeMem = _service.GetGroupNamesByMemberType(id, type, page, out string[] namesM, out int countM);
-				bool hasTypeRole = false; string[] namesR = null; int countR = 0;
-
-				// Get Role/ServerID stuff Dictionary<ServerID,RoleID[]>
-				Dictionary<ulong,ulong[]> servRoles = _service.GetRoleIDs(type, id, Context.Guild.Id);
-				if (servRoles != null) hasTypeRole = _service.GetGroupNamesByRoles(servRoles, page, out namesR, out countR);
+				bool hasTypeRole = _service.GetGroupNamesByUserRole(id, page, out string[] namesR, out int countR);
 
 				string strM = (hasTypeMem) ? string.Join("\n", namesM) : "*none*";
 				string strR = (hasTypeRole) ? string.Join("\n", namesR) : "*none*";

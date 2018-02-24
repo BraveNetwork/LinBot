@@ -613,7 +613,7 @@ namespace NadekoBot.Modules.Permissions.Services
             return result;
         }
 
-		public bool IsMemberRoleInGroup(ulong sid, ulong[] ids, GWLSet group)
+		public bool IsUserRoleInGroup(ulong uid, GWLSet group)
         {
             var result = true;
 
@@ -621,8 +621,7 @@ namespace NadekoBot.Modules.Permissions.Services
             {
                 var temp = uow._context.Set<GWLItem>()
 					.Where( x => x.Type.Equals(GWLItemType.Role) )
-					.Where( x => x.RoleServerId.Equals(sid) )
-					.Where( x => ids.Contains(x.ItemId) )
+					.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, uid))
 					.Join(
 						uow._context.Set<GWLItemSet>(), 
 						i => i.Id, gi => gi.ItemPK,
@@ -644,17 +643,6 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return result;
         }
-
-		public bool IsMemberRoleInGroup(Dictionary<ulong,ulong[]> servRoles, GWLSet group)
-		{
-			for (int k=0; k<servRoles.Keys.Count(); k++) {
-				ulong sID = servRoles.Keys.ElementAt(k);
-				if (IsMemberRoleInGroup(sID, servRoles.GetValueOrDefault(sID), group)) {
-					return true;
-				}
-			}
-			return false;
-		}
 
 		public bool IsRoleInGroup(ulong sid, ulong id, GWLSet group)
         {
@@ -895,17 +883,12 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		/// <summary>
-		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
-		/// that matches the given list of roles (presumably from a user/channel/server)
-		/// but don't sort or cut yet
-		/// </summary>
-		public bool CheckIfUnblockedForMemberRoles(string ubName, UnblockedType ubType, ulong sid, ulong[] ids, out GWLSet[] groups)
+		public bool CheckIfUnblockedForUserRole(string ubName, UnblockedType ubType, ulong uid, int page, out string[] names, out int count)
 		{
-            groups = null;
+            names = null; count = 0;
             using (var uow = _db.UnitOfWork)
             {
-				groups = uow._context.Set<UnblockedCmdOrMdl>()
+				var groups = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(ubType))
 					.Where(x => x.Name.Equals(ubName))
 					.Join(uow._context.Set<GlobalUnblockedSet>(), 
@@ -913,7 +896,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						(ub,gub) => gub.ListPK)
 					.Join(uow._context.Set<GWLSet>()
 						.Where(g => g.Type.Equals(GWLType.Role)),
-						// .Where(g => g.IsEnabled.Equals(true)),
+						//.Where(g => g.IsEnabled.Equals(true)),
 						gub => gub, g => g.Id,
 						(gub, g) => g
 						)
@@ -925,70 +908,36 @@ namespace NadekoBot.Modules.Permissions.Services
 						})
 					.Join(uow._context.Set<GWLItem>()
 						.Where(x => x.Type.Equals(GWLItemType.Role))
-						.Where(x => x.RoleServerId.Equals(sid))
-						.Where(x => ids.Contains(x.ItemId)),
+						.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, uid)),
 						gi => gi.ItemPK, i => i.Id,
 						(gi, i) => gi.g)
 					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null)
 					.ToArray();
-				
-				int count = groups.Count();
-				if (count <= 0) return false;
 
                 uow.Complete();
-            }
-            return true;
-        }
 
-		/// <summary>
-		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
-		/// Then sort and take what is needed for the current page
-		/// </summary>
-		public bool CheckIfUnblockedForMemberRoles(string ubName, UnblockedType ubType, Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
-		{
-			names = null;
-			count = 0;
-			IEnumerable<GWLSet> tempRoles = null;
-			for (int k=0; k<servRoles.Keys.Count(); k++) {
-				ulong sID = servRoles.Keys.ElementAt(k);
-				if (CheckIfUnblockedForMemberRoles(ubName, ubType, sID, servRoles.GetValueOrDefault(sID), out GWLSet[] temp)) {
-					if (tempRoles == null) {
-						tempRoles = temp;
-					} else {
-						tempRoles = tempRoles.Union(temp);
-					}
-				}
-			}
-			if (tempRoles != null) {
-				count = tempRoles.Count();
+				if (groups != null)	count = groups.Count();
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 
-				names = tempRoles
+				names = groups
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
 					.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? $"{enabledText} {g.ListName}" : $"{disabledText} {g.ListName}" )
 					.ToArray();
-				
-				return true;
-			}
-			return false;
-		}
+            }
+            return true;
+        }
 
-		/// <summary>
-		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
-		/// that matches the given list of roles (presumably from a user/channel/server)
-		/// but don't sort or cut yet
-		/// </summary>
-		public bool CheckIfUnblockedForMemberRoles(string mdlName, string cmdName, ulong sid, ulong[] ids, out GWLSet[] groups)
+		public bool CheckIfUnblockedForUserRole(string mdlName, string cmdName, ulong uid, int page, out string[] names, out int count)
 		{
-            groups = null;
+            names = null; count = 0;
             using (var uow = _db.UnitOfWork)
             {
-				groups = uow._context.Set<UnblockedCmdOrMdl>()
+				var groups = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => 
 						(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
 						(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) )
@@ -1009,58 +958,29 @@ namespace NadekoBot.Modules.Permissions.Services
 						})
 					.Join(uow._context.Set<GWLItem>()
 						.Where(x => x.Type.Equals(GWLItemType.Role))
-						.Where(x => x.RoleServerId.Equals(sid))
-						.Where(x => ids.Contains(x.ItemId)),
+						.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, uid)),
 						gi => gi.ItemPK, i => i.Id,
 						(gi, i) => gi.g)
 					.GroupBy(g => g.Id).Select(set => set.FirstOrDefault()).Where(g => g != null)
 					.ToArray();
-				
-				int count = groups.Count();
-				if (count <= 0) return false;
 
                 uow.Complete();
-            }
-            return true;
-        }
 
-		/// <summary>
-		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
-		/// Then sort and take what is needed for the current page
-		/// </summary>
-		public bool CheckIfUnblockedForMemberRoles(string mdlName, string cmdName, Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
-		{
-			names = null;
-			count = 0;
-			IEnumerable<GWLSet> tempRoles = null;
-			for (int k=0; k<servRoles.Keys.Count(); k++) {
-				ulong sID = servRoles.Keys.ElementAt(k);
-				if (CheckIfUnblockedForMemberRoles(mdlName, cmdName, sID, servRoles.GetValueOrDefault(sID), out GWLSet[] temp)) {
-					if (tempRoles == null) {
-						tempRoles = temp;
-					} else {
-						tempRoles = tempRoles.Union(temp);
-					}
-				}
-			}
-			if (tempRoles != null) {
-				count = tempRoles.Count();
+				if (groups != null)	count = groups.Count();
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 
-				names = tempRoles
+				names = groups
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
 					.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? $"{enabledText} {g.ListName}" : $"{disabledText} {g.ListName}" )
 					.ToArray();
-				
-				return true;
-			}
-			return false;
-		}
+            }
+            return true;
+        }
 
 		public bool CheckIfUnblockedForRole(string ubName, UnblockedType ubType, ulong sid, ulong id, int page, out string[] lists, out int count)
 		{
@@ -1288,6 +1208,40 @@ namespace NadekoBot.Modules.Permissions.Services
 			}
 		}
 
+		public bool IsUserRoleUnblocked(ulong id, string cmdName, string mdlName)
+		{
+			int count = 0;
+			// In general, a user is likely to have many more roles than there are unblocked roles
+			// So we should iterate over the unblocked roles to find any that contains our user
+			// And then CheckIfUnblocked on those matches
+			using (var uow = _db.UnitOfWork)
+            {
+                count = uow._context.Set<GWLItem>()
+					.Where(i => i.Type.Equals(GWLItemType.Role))
+					.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, id))
+					.Join(uow._context.Set<GWLItemSet>(),
+						i => i.Id, gi => gi.ItemPK,
+						(i,gi) => gi.ListPK)
+					.Join(uow._context.Set<GWLSet>()
+						.Where(g => g.IsEnabled.Equals(true))
+						.Where(g => g.Type.Equals(GWLType.Role)),
+						listPK => listPK, g => g.Id,
+						(listPK, g) => g.Id)
+					.Join(uow._context.Set<GlobalUnblockedSet>(),
+						listPK=>listPK, gu => gu.ListPK,
+						(listPK, gu) => gu.UnblockedPK)
+					.Join(uow._context.Set<UnblockedCmdOrMdl>()
+						.Where(x => 
+							(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
+							(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) ),
+						uPK => uPK, x => x.Id,
+						(uPK, x) => x.Id)
+					.Count();
+				uow.Complete();
+            }
+			return (count > 0);
+		}
+
 		#endregion Unblocker
 
 		#region GetObject
@@ -1418,20 +1372,14 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
-		/// <summary>
-		/// Output a list of GWL with GWLType.Role for which there is at least one RoleServerID-ItemID pair 
-		/// that matches the given list of roles (presumably from a user/channel/server)
-		/// but don't sort or cut yet
-		/// </summary>
-		public bool GetGroupNamesByRoles(ulong serverID, ulong[] ids, out GWLSet[] groups)
+		public bool GetGroupNamesByUserRole(ulong uid, int page, out string[] names, out int count)
 		{
-            groups = null;
+            names = null; count = 0;
             using (var uow = _db.UnitOfWork)
             {
-				groups = uow._context.Set<GWLItem>()
+				var groups = uow._context.Set<GWLItem>()
 				.Where(i => i.Type.Equals(GWLItemType.Role))
-				.Where(i => i.RoleServerId.Equals(serverID))
-				.Where(i => ids.Contains(i.ItemId))
+				.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, uid))
 				.Join(uow._context.Set<GWLItemSet>(),
 					i => i.Id, gi => gi.ItemPK,
 					(i, gi) => gi.ListPK)
@@ -1441,52 +1389,24 @@ namespace NadekoBot.Modules.Permissions.Services
 					(listPK, g) => g)
 				.GroupBy(a => a).Select(set => set.FirstOrDefault()).Where(u => u != null)
 				.ToArray();
-				
-				int count = groups.Count();
-				if (count <= 0) return false;
 
-                uow.Complete();
-            }
-            return true;
-        }
+				uow.Complete();
 
-		/// <summary>
-		/// Iterate over a dictionary of ServerID-RoleIDs and combine the results of each iteration
-		/// Then sort and take what is needed for the current page
-		/// </summary>
-		public bool GetGroupNamesByRoles(Dictionary<ulong,ulong[]> servRoles, int page, out string[] names, out int count)
-		{
-			names = null;
-			count = 0;
-			IEnumerable<GWLSet> tempRoles = null;
-			for (int k=0; k<servRoles.Keys.Count(); k++) {
-				ulong sID = servRoles.Keys.ElementAt(k);
-				if (GetGroupNamesByRoles(sID, servRoles.GetValueOrDefault(sID), out GWLSet[] temp)) {
-					if (tempRoles == null) {
-						tempRoles = temp;
-					} else {
-						tempRoles = tempRoles.Union(temp);
-					}
-				}
-			}
-			if (tempRoles != null) {
-				count = tempRoles.Count();
+				if (groups != null)	count = groups.Count();
 				if (count <= 0) return false;
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
 
-				names = tempRoles
+				names = groups
 					.OrderBy(g => g.ListName.ToLowerInvariant())
 					.Skip(numSkip)
 					.Take(numPerPage)
 					.Select(g => (g.IsEnabled) ? $"{enabledText} {g.ListName}" : $"{disabledText} {g.ListName}" )
 					.ToArray();
-				
-				return true;
-			}
-			return false;
-		}
+            }
+            return true;
+        }
 
 		/// <summary>
 		/// Output a list of GWL with GWLType.Role for which there is at least one 
@@ -1609,7 +1529,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 		#endregion GetGroupNames
 
-		#region Get Id/Name Lists
+		#region GetGroupMembers
 
 		public bool GetGroupMembers(GWLSet group, GWLItemType type, int page, out ulong[] results, out int count)
         {
@@ -1726,6 +1646,10 @@ namespace NadekoBot.Modules.Permissions.Services
             }
             return true;
         }
+
+		#endregion GetGroupMembers
+
+		#region GetUnblockedNames
 
 		public bool GetGroupUnblockedNames(GWLSet group, UnblockedType type, int page, out string[] names, out int count)
 		{
@@ -1863,19 +1787,14 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		/// <summary>
-		/// Collects all commands OR modules linked to the given set of RoleIDs
-		/// DOES NOT AGGREGATE NOR SORT
-		/// </summary>
-		public bool GetUnblockedNamesForRoles(UnblockedType type, ulong sid, ulong[] ids, out string[] names)
+		public bool GetUnblockedNamesForUserRole(UnblockedType type, ulong uid, int page, out string[] names, out int count)
 		{
-			names= null;
+			names= null; count = 0;
 			using (var uow = _db.UnitOfWork)
             {
                 var anon = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(GWLItemType.Role))
-					.Where(x => x.RoleServerId.Equals(sid))
-					.Where(x => ids.Contains(x.ItemId))
+					.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, uid))
 					.Join(uow._context.Set<GWLItemSet>(),
 						i => i.Id, gi => gi.ItemPK,
 						(i, gi) => gi.ListPK)
@@ -1894,64 +1813,11 @@ namespace NadekoBot.Modules.Permissions.Services
 					.GroupBy(a => a).Select(set => set.FirstOrDefault()).Where(u => u != null);
 				uow.Complete();
 
-				int count = anon.Count();
+				if (anon != null) count = anon.Count();
 				if (count <= 0) return false;
 				
 				names = anon.ToArray();
             }
-			return true;
-		}
-
-		/// <summary>
-		/// Collects all commands and modules for all roles in the dictionary
-		/// Then aggregates each set and sorts to take just what is needed for the current page
-		/// </summary>
-		public bool GetUnblockedNamesForRoles(Dictionary<ulong,ulong[]> servRoles, 
-			int page, out string[] cmds, out string[] mdls, out int numCmd, out int numMdl)
-		{
-			cmds = null; mdls = null;
-			numCmd = 0; numMdl = 0;
-			IEnumerable<string> tempCmd = null;
-			IEnumerable<string> tempMdl = null;
-			for (int k=0; k<servRoles.Keys.Count(); k++) {
-				ulong sID = servRoles.Keys.ElementAt(k);
-				if (GetUnblockedNamesForRoles(UnblockedType.Command, sID, servRoles.GetValueOrDefault(sID), out string[] tempC)) {
-					if (tempCmd == null) {
-						tempCmd = tempC;
-					} else {
-						tempCmd = tempCmd.Union(tempC);
-					}
-				}
-				if (GetUnblockedNamesForRoles(UnblockedType.Module, sID, servRoles.GetValueOrDefault(sID), out string[] tempM)) {
-					if (tempMdl == null) {
-						tempMdl = tempM;
-					} else {
-						tempMdl = tempMdl.Union(tempM);
-					}
-				}
-			}
-
-			int numSkip = page*numPerPage;
-
-			if (tempCmd != null) {
-				numCmd = tempCmd.Count();
-				int numSkipC = 0;
-				if (numSkip >= numCmd) numSkipC = numPerPage * ((numCmd-1)/numPerPage);
-				cmds = tempCmd.OrderBy(a => a.ToLowerInvariant())
-					.Skip(numSkipC)
-					.Take(numPerPage)
-					.ToArray();
-			}
-			if (tempMdl != null) {
-				numMdl = tempMdl.Count();
-				int numSkipM = 0;
-				if (numSkip >= numMdl) numSkipM = numPerPage * ((numMdl-1)/numPerPage);
-				mdls = tempMdl.OrderBy(a => a.ToLowerInvariant())
-					.Skip(numSkipM)
-					.Take(numPerPage)
-					.ToArray();
-			}
-			if (numCmd <= 0 && numMdl <= 0) return false;			
 			return true;
 		}
 
@@ -2038,7 +1904,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
-		#endregion Get Id/Name Lists
+		#endregion GetUnblockedNames
 
 		#region Resolve ulong IDs
 
@@ -2223,40 +2089,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			return r.Members.Contains(u);
 		}
 
-		public bool IsUserRoleUnblocked(ulong id, string cmdName, string mdlName)
-		{
-			int count = 0;
-			// In general, a user is likely to have many more roles than there are unblocked roles
-			// So we should iterate over the unblocked roles to find any that contains our user
-			// And then CheckIfUnblocked on those matches
-			using (var uow = _db.UnitOfWork)
-            {
-                count = uow._context.Set<GWLItem>()
-					.Where(i => i.Type.Equals(GWLItemType.Role))
-					.Where(i => GuildRoleHasUser(i.RoleServerId, i.ItemId, id))
-					.Join(uow._context.Set<GWLItemSet>(),
-						i => i.Id, gi => gi.ItemPK,
-						(i,gi) => gi.ListPK)
-					.Join(uow._context.Set<GWLSet>()
-						.Where(g => g.IsEnabled.Equals(true))
-						.Where(g => g.Type.Equals(GWLType.Role)),
-						listPK => listPK, g => g.Id,
-						(listPK, g) => g.Id)
-					.Join(uow._context.Set<GlobalUnblockedSet>(),
-						listPK=>listPK, gu => gu.ListPK,
-						(listPK, gu) => gu.UnblockedPK)
-					.Join(uow._context.Set<UnblockedCmdOrMdl>()
-						.Where(x => 
-							(x.Type.Equals(UnblockedType.Command) && x.Name.Equals(cmdName)) ||
-							(x.Type.Equals(UnblockedType.Module) && x.Name.Equals(mdlName)) ),
-						uPK => uPK, x => x.Id,
-						(uPK, x) => x.Id)
-					.Count();
-				uow.Complete();
-            }
-			return (count > 0);
-		}
-
+		/// <summary>NOTE: THIS IS VERY SLOW</summary>
 		public Dictionary<ulong,ulong[]> GetRoleIDs(GWLItemType type, ulong id, ulong ctxSrvrId)
 		{
 			Dictionary<ulong,ulong[]> result = null;

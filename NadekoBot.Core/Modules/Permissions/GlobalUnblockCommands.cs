@@ -3,6 +3,7 @@ using Discord.Commands;
 using NadekoBot.Extensions;
 using NadekoBot.Core.Services;
 using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using NadekoBot.Common.Attributes;
@@ -196,23 +197,19 @@ namespace NadekoBot.Modules.Permissions
                 }
 
 				GWLItemType type = GWLItemType.User;
-				bool hasRoles = false; 
-				string[] cmdsR = null; string[] mdlsR = null;
-				int cmdRCount = 0; int mdlRCount = 0;
+				
+				// Get unblocked for user's roles
+				bool hasCmdsR = _gwl.GetUnblockedNamesForUserRole(UnblockedType.Command, id, page, out string[] cmdsR, out int cmdRCount);
+				bool hasMdlsR = _gwl.GetUnblockedNamesForUserRole(UnblockedType.Module, id, page, out string[] mdlsR, out int mdlRCount);
 
-				// Get Dictionary<ServerID,RoleID[]>, and then the cmd/mdl for the roles (combined, then skip/take)
-				Dictionary<ulong,ulong[]> servRoles = _gwl.GetRoleIDs(type, id, Context.Guild.Id);
-				if (servRoles != null) hasRoles = _gwl.GetUnblockedNamesForRoles(servRoles, page, 
-					out cmdsR, out mdlsR, out cmdRCount, out mdlRCount);
-
-				// Send list of all unblocked modules/commands and number of lists for each
+				// Get unblocked for user self
 				bool hasCmds = _gwl.GetUnblockedNamesForMember(UnblockedType.Command, id, type, page, out string[] cmds, out int cmdCount);
 				bool hasMdls = _gwl.GetUnblockedNamesForMember(UnblockedType.Module, id, type, page, out string[] mdls, out int mdlCount);
 
 				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
 				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
-				string strCmdR = (cmdRCount > 0) ? string.Join("\n", cmdsR) : "*no such commands*";
-				string strMdlR = (mdlRCount > 0) ? string.Join("\n", mdlsR) : "*no such modules*";
+				string strCmdR = (hasCmdsR) ? string.Join("\n", cmdsR) : "*no such commands*";
+				string strMdlR = (hasMdlsR) ? string.Join("\n", mdlsR) : "*no such modules*";
 
 				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
 				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
@@ -540,8 +537,7 @@ namespace NadekoBot.Modules.Permissions
 
 				bool ubForAll = _gwl.CheckIfUnblockedForAll(ubName, ubType, page, out string[] listsA, out int countA);
 				bool ubForMem = _gwl.CheckIfUnblockedForMember(ubName, ubType, id, memType, page, out string[] listsM, out int countM);
-				Dictionary<ulong,ulong[]> servRoles = _gwl.GetRoleIDs(memType, id, Context.Guild.Id);
-				bool ubForRole = _gwl.CheckIfUnblockedForMemberRoles(ubName, ubType, servRoles, page, out string[] listsR, out int countR);
+				bool ubForRole = _gwl.CheckIfUnblockedForUserRole(ubName, ubType, id, page, out string[] listsR, out int countR);
 
 				if (ubForAll || ubForMem || ubForRole)
 				{
@@ -594,8 +590,7 @@ namespace NadekoBot.Modules.Permissions
 
 				bool ubForAll = _gwl.CheckIfUnblockedForAll(mdlName, ubName, page, out string[] listsA, out int countA);
 				bool ubForMem = _gwl.CheckIfUnblockedForMember(mdlName, ubName, id, memType, page, out string[] listsM, out int countM);
-				Dictionary<ulong,ulong[]> servRoles = _gwl.GetRoleIDs(memType, id, Context.Guild.Id);
-				bool ubForRole = _gwl.CheckIfUnblockedForMemberRoles(mdlName, ubName, servRoles, page, out string[] listsR, out int countR);
+				bool ubForRole = _gwl.CheckIfUnblockedForUserRole(mdlName, ubName, id, page, out string[] listsR, out int countR);
 
 				if (ubForAll || ubForMem || ubForRole)
 				{
