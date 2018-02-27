@@ -248,6 +248,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+			[Priority(1)]
 			public async Task GWLAdd(string listName, GlobalWhitelistService.FieldType field, IGuild server, params ulong[] ids)
 			{
 				// If params is empty, report error
@@ -324,6 +325,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
+			[Priority(1)]
 			public async Task GWLRemove(string listName, GlobalWhitelistService.FieldType field, IGuild server, params ulong[] ids)
 			{
 				// If params is empty, report error
