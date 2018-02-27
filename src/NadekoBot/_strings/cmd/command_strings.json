@@ -31,16 +31,42 @@
       "{0}gwldel MyListName"
     ]
   },
-  "gwladdremove": {
-    "cmd": "gwladdrem gwladdrm",
-    "desc": "[Add] or [Rem]ove @User/#Channel/Server IDs or .Command/Module (max of 30 at a time) to/from the global whitelist named MyListName.",
+  "gwladd": {
+    "cmd": "gwladd",
+    "desc": "Add up to 30 .Command/Module(s) at a time to the global whitelist named MyListName.\nWhitelists of type MEMBER can also have @User/#Channel/Server members added.\nWhitelists of type ROLE can have Server-Role pairs added. If adding multiple Roles to a ROLE whitelist, you can either mention the roles (and have the ServerID be inferred) or run `.gwladd MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to add.",
     "usage": [
-      "{0}gwladdrm Add MyListName ServerA ServerB ServerC",
-      "{0}gwladdrm Rem MyListName #ChannelA #ChannelB #ChannelC",
-      "{0}gwladdrm Add MyListName @UserA @UserB @UserC",
-      "{0}gwladdrm Rem srvr MyListName 123123123 456456456 789789789",
-      "{0}gwladdrm Add chnl MyListName 123123123 456456456 789789789",
-      "{0}gwladdrm Rem usr MyListName 123123123 456456456 789789789"
+      "{0}gwladd MyListName .commandA .commandB .commandC",
+      "{0}gwladd MyListName ModuleA ModuleB ModuleC",
+      "{0}gwladd MyListName ServerA ServerB ServerC",
+      "{0}gwladd MyListName #ChannelA #ChannelB #ChannelC",
+      "{0}gwladd MyListName @UserA @UserB @UserC",
+      "{0}gwladd MyListName @RoleA @RoleB @RoleC",
+      "{0}gwladd MyListName ServerWithRoles 123123123 456456456",
+      "{0}gwladd MyListName srvr 123123123 456456456 789789789",
+      "{0}gwladd MyListName chnl 123123123 456456456 789789789",
+      "{0}gwladd MyListName usr 123123123 456456456 789789789",
+      "{0}gwladd MyListName role ServerWithRoles 123123123 456456456 789789789",
+      "{0}gwladd MyListName cmd commandA commandB commandC",
+      "{0}gwladd MyListName mdl ModuleA ModuleB ModuleC"
+    ]
+  },
+  "gwlremove": {
+    "cmd": "gwlremove gwlrem gwlrm",
+    "desc": "Remove up to 30 .Command/Module(s) at a time from the global whitelist named MyListName.\nWhitelists of type MEMBER can also have @User/#Channel/Server members removed.\nWhitelists of type ROLE can have Server-Role pairs removed. If removing multiple Roles from a ROLE whitelist, you can either mention the roles (and have the ServerID be inferred) or run `.gwlrm MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to remove.",
+    "usage": [
+      "{0}gwlrm MyListName .commandA .commandB .commandC",
+      "{0}gwlrm MyListName ModuleA ModuleB ModuleC",
+      "{0}gwlrm MyListName ServerA ServerB ServerC",
+      "{0}gwlrm MyListName #ChannelA #ChannelB #ChannelC",
+      "{0}gwlrm MyListName @UserA @UserB @UserC",
+      "{0}gwlrm MyListName @RoleA @RoleB @RoleC",
+      "{0}gwlrm MyListName ServerWithRoles 123123123 456456456",
+      "{0}gwlrm MyListName srvr 123123123 456456456 789789789",
+      "{0}gwlrm MyListName chnl 123123123 456456456 789789789",
+      "{0}gwlrm MyListName usr 123123123 456456456 789789789",
+      "{0}gwlrm MyListName role ServerWithRoles 123123123 456456456 789789789",
+      "{0}gwlrm MyListName cmd commandA commandB commandC",
+      "{0}gwlrm MyListName mdl ModuleA ModuleB ModuleC"
     ]
   },
   "gwlclear": {

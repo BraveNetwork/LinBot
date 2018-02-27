@@ -118,7 +118,7 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing member, add it to the database
 				// Fetch all member names already in the database
-				var curItems = uow._context.Set<GWLItem>()
+				ulong[] curItems = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Select(x => x.ItemId)
 					.ToArray();
@@ -132,18 +132,18 @@ namespace NadekoBot.Modules.Permissions.Services
 							(int)type);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}
 
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GWLItem>()
+				int[] curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs already related to group
-				var curRel = uow._context.Set<GWLItemSet>()
+				int[] curRel = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.ItemPK)
 					.ToArray();
@@ -157,13 +157,14 @@ namespace NadekoBot.Modules.Permissions.Services
 							excludedIDs.ElementAt(i));
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}				
 
 				// Return list of all newly added relationships
 				successList = uow._context.Set<GWLItem>()
 					.Where(x => excludedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
+					.OrderBy(id => id)
 					.ToArray();
 
 				uow.Complete();
@@ -180,13 +181,13 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GWLItem>()
+				int[] curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs related to the given group BEFORE delete
-				var relIDs = uow._context.Set<GWLItemSet>()
+				int[] relIDs = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -201,10 +202,10 @@ namespace NadekoBot.Modules.Permissions.Services
 							curIDs[i]);
 						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
-					uow._context.SaveChanges();					
+					uow.Complete();					
 				}
 				// Fetch all member IDs related to the given group AFTER delete
-				var relIDsRemain = uow._context.Set<GWLItemSet>()
+				int[] relIDsRemain = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -216,6 +217,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				successList = uow._context.Set<GWLItem>()
 					.Where(x => deletedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
+					.OrderBy(id => id)
 					.ToArray();
 
 				uow.Complete();
@@ -233,7 +235,7 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing member, add it to the database
 				// Fetch all member names already in the database
-				var curItems = uow._context.Set<GWLItem>()
+				ulong[] curItems = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => x.RoleServerId.Equals(serverID))
 					.Select(x => x.ItemId)
@@ -249,19 +251,19 @@ namespace NadekoBot.Modules.Permissions.Services
 							serverID);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}
 
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GWLItem>()
+				int[] curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => x.RoleServerId.Equals(serverID))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs already related to group
-				var curRel = uow._context.Set<GWLItemSet>()
+				int[] curRel = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.ItemPK)
 					.ToArray();
@@ -275,7 +277,7 @@ namespace NadekoBot.Modules.Permissions.Services
 							excludedIDs.ElementAt(i));
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}				
 
 				// Return list of all newly added relationships
@@ -283,6 +285,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.RoleServerId.Equals(serverID))
 					.Where(x => excludedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
+					.OrderBy(id => id)
 					.ToArray();
 
 				uow.Complete();
@@ -300,14 +303,14 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing relationship, add it to the database
 				// Fetch all member IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<GWLItem>()
+				int[] curIDs = uow._context.Set<GWLItem>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => x.RoleServerId.Equals(serverID))
 					.Where(x => items.Contains(x.ItemId))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all member IDs related to the given group BEFORE delete
-				var relIDs = uow._context.Set<GWLItemSet>()
+				int[] relIDs = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -322,10 +325,10 @@ namespace NadekoBot.Modules.Permissions.Services
 							curIDs[i]);
 						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
-					uow._context.SaveChanges();					
+					uow.Complete();					
 				}
 				// Fetch all member IDs related to the given group AFTER delete
-				var relIDsRemain = uow._context.Set<GWLItemSet>()
+				int[] relIDsRemain = uow._context.Set<GWLItemSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.ItemPK))
 					.Select(x => x.ItemPK)
@@ -338,6 +341,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					.Where(x => x.RoleServerId.Equals(serverID))
 					.Where(x => deletedIDs.Contains(x.Id))
 					.Select(x => x.ItemId)
+					.OrderBy(id => id)
 					.ToArray();
 
 				uow.Complete();
@@ -358,7 +362,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				// For each non-existing ub, add it to the database
 				// Fetch all ub names already in the database
-				var curNames = uow._context.Set<UnblockedCmdOrMdl>()
+				string[] curNames = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(type))
 					.Select(x => x.Name)
 					.ToArray();
@@ -373,18 +377,18 @@ namespace NadekoBot.Modules.Permissions.Services
 							(int)type);
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}
 
 				// For each non-existing relationship, add it to the database
 				// Fetch all ub IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<UnblockedCmdOrMdl>()
+				int[] curIDs = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => names.Contains(x.Name))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all ub IDs already related to group
-				var curRel = uow._context.Set<GlobalUnblockedSet>()
+				int[] curRel = uow._context.Set<GlobalUnblockedSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Select(x => x.UnblockedPK)
 					.ToArray();
@@ -398,13 +402,14 @@ namespace NadekoBot.Modules.Permissions.Services
 							excludedIDs.ElementAt(i));
 						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}				
 
 				// Return list of all newly added relationships
 				successList = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => excludedIDs.Contains(x.Id))
 					.Select(x => x.Name)
+					.OrderBy(n => n)
 					.ToArray();
 
 				uow.Complete();
@@ -421,13 +426,13 @@ namespace NadekoBot.Modules.Permissions.Services
             {
 				// For each non-existing relationship, add it to the database
 				// Fetch all ub IDs existing in DB with given type and name in list
-				var curIDs = uow._context.Set<UnblockedCmdOrMdl>()
+				int[] curIDs = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => x.Type.Equals(type))
 					.Where(x => names.Contains(x.Name))
 					.Select(x => x.Id)
 					.ToArray();
 				// Fetch all ub IDs related to the given group BEFORE delete
-				var relIDs = uow._context.Set<GlobalUnblockedSet>()
+				int[] relIDs = uow._context.Set<GlobalUnblockedSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.UnblockedPK))
 					.Select(x => x.UnblockedPK)
@@ -442,10 +447,10 @@ namespace NadekoBot.Modules.Permissions.Services
 							curIDs[i]);
 						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
-					uow._context.SaveChanges();
+					uow.Complete();
 				}
 				// Fetch all ub IDs related to the given group AFTER delete
-				var relIDsRemain = uow._context.Set<GlobalUnblockedSet>()
+				int[] relIDsRemain = uow._context.Set<GlobalUnblockedSet>()
 					.Where(x => x.ListPK.Equals(group.Id))
 					.Where(x => curIDs.Contains(x.UnblockedPK))
 					.Select(x => x.UnblockedPK)
@@ -457,6 +462,7 @@ namespace NadekoBot.Modules.Permissions.Services
 				successList = uow._context.Set<UnblockedCmdOrMdl>()
 					.Where(x => deletedIDs.Contains(x.Id))
 					.Select(x => x.Name)
+					.OrderBy(n => n)
 					.ToArray();
 
 				uow.Complete();
