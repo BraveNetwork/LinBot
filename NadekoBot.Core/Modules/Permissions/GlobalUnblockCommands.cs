@@ -50,10 +50,9 @@ namespace NadekoBot.Modules.Permissions
 				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
 				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
 
-				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
-				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage;
 				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				var embed = new EmbedBuilder()
@@ -62,7 +61,7 @@ namespace NadekoBot.Modules.Permissions
 					.WithDescription(GetText("gub_list"))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -165,10 +164,9 @@ namespace NadekoBot.Modules.Permissions
 				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
 				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
 
-				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
-				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage;
 				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				var embed = new EmbedBuilder()
@@ -179,7 +177,7 @@ namespace NadekoBot.Modules.Permissions
 						_gwl.GetNameOrMentionFromId(type, id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -211,15 +209,14 @@ namespace NadekoBot.Modules.Permissions
 				string strCmdR = (hasCmdsR) ? string.Join("\n", cmdsR) : "*no such commands*";
 				string strMdlR = (hasMdlsR) ? string.Join("\n", mdlsR) : "*no such modules*";
 
-				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
-				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
-				int lastCmdRPage = (cmdRCount - 1)/_gwl.numPerPage +1;
-				int lastMdlRPage = (mdlRCount - 1)/_gwl.numPerPage +1;
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage;
+				int lastCmdRPage = (cmdRCount - 1)/_gwl.numPerPage;
+				int lastMdlRPage = (mdlRCount - 1)/_gwl.numPerPage;
 				
 				int lastPage = System.Math.Max(
 					System.Math.Max(lastCmdPage, lastCmdRPage),
 					System.Math.Max(lastMdlPage,lastMdlRPage));
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				var embed = new EmbedBuilder()
@@ -233,7 +230,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("field_separator"), GetText("gub_role"), false)
 					.AddField(GetText("gwl_field_commands", cmdRCount), strCmdR, true)
 					.AddField(GetText("gwl_field_modules", mdlRCount), strMdlR, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -259,10 +256,9 @@ namespace NadekoBot.Modules.Permissions
 				string strCmd = (hasCmds) ? string.Join("\n", cmds) : "*no such commands*";
 				string strMdl = (hasMdls) ? string.Join("\n", mdls) : "*no such modules*";
 
-				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
-				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage;
 				int lastPage = (cmdCount > mdlCount) ? lastCmdPage : lastMdlPage;
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				var embed = new EmbedBuilder()
@@ -273,7 +269,7 @@ namespace NadekoBot.Modules.Permissions
 						_gwl.GetRoleNameMention(id, sid, Context.Guild.Id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -772,15 +768,14 @@ namespace NadekoBot.Modules.Permissions
 				string strCmdA = (cmdACount>0) ? string.Join("\n", cmdsA) : "*no such commands*";
 				string strMdlA = (mdlACount>0) ? string.Join("\n", mdlsA) : "*no such modules*";
 
-				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage +1;
-				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage +1;
-				int lastCmdAPage = (cmdACount - 1)/_gwl.numPerPage +1;
-				int lastMdlAPage = (mdlACount - 1)/_gwl.numPerPage +1;
+				int lastCmdPage = (cmdCount - 1)/_gwl.numPerPage;
+				int lastMdlPage = (mdlCount - 1)/_gwl.numPerPage;
+				int lastCmdAPage = (cmdACount - 1)/_gwl.numPerPage;
+				int lastMdlAPage = (mdlACount - 1)/_gwl.numPerPage;
 				
 				int lastPage = System.Math.Max(
 					System.Math.Max(lastCmdPage, lastCmdAPage),
 					System.Math.Max(lastMdlPage,lastMdlAPage));
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				var embed = new EmbedBuilder()
@@ -798,7 +793,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("field_separator"), GetText("gub_general"), false)
 					.AddField(GetText("gwl_field_commands", cmdACount), strCmdA, true)
 					.AddField(GetText("gwl_field_modules", mdlACount), strMdlA, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
 				return;
@@ -838,11 +833,10 @@ namespace NadekoBot.Modules.Permissions
 				string channelStr = (yesC) ? string.Join("\n",listC) : "*none*";
 				string allStr = (ubForAll) ? string.Join("\n",listA) : "*none*";
 
-				int lastServerPage = (countS - 1)/_gwl.numPerPage +1;
-				int lastChannelPage = (countC - 1)/_gwl.numPerPage +1;
-				int lastAPage = (countA - 1)/_gwl.numPerPage +1;
+				int lastServerPage = (countS - 1)/_gwl.numPerPage;
+				int lastChannelPage = (countC - 1)/_gwl.numPerPage;
+				int lastAPage = (countA - 1)/_gwl.numPerPage;
 				int lastPage = System.Math.Max( lastAPage, System.Math.Max( lastServerPage, lastChannelPage ));
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				string desc = "";
@@ -878,7 +872,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("gwl_field_title_chnl", countC), channelStr, true)
 					.AddField(GetText("gwl_field_title_srvr", countS), serverStr, true)
 					.AddField(GetText("gwl_field_title_all", countA), allStr, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
 				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                 return;
@@ -904,11 +898,10 @@ namespace NadekoBot.Modules.Permissions
 				string channelStr = (yesC) ? string.Join("\n",listC) : "*none*";
 				string allStr = (ubForAll) ? string.Join("\n",listA) : "*none*";
 
-				int lastServerPage = (countS - 1)/_gwl.numPerPage +1;
-				int lastChannelPage = (countC - 1)/_gwl.numPerPage +1;
-				int lastAPage = (countA - 1)/_gwl.numPerPage +1;
+				int lastServerPage = (countS - 1)/_gwl.numPerPage ;
+				int lastChannelPage = (countC - 1)/_gwl.numPerPage;
+				int lastAPage = (countA - 1)/_gwl.numPerPage;
 				int lastPage = System.Math.Max( lastAPage, System.Math.Max( lastServerPage, lastChannelPage ));
-				page++;
 				if (page > lastPage) page = lastPage;
 
 				string desc = "";
@@ -946,7 +939,7 @@ namespace NadekoBot.Modules.Permissions
 					.AddField(GetText("gwl_field_title_chnl", countC), channelStr, true)
 					.AddField(GetText("gwl_field_title_srvr", countS), serverStr, true)
 					.AddField(GetText("gwl_field_title_all", countA), allStr, true)
-					.WithFooter($"Page {page}/{lastPage}");
+					.WithFooter($"Page {page+1}/{lastPage+1}");
 
 				await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
                 return;

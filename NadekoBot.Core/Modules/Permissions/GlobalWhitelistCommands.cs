@@ -1274,8 +1274,8 @@ namespace NadekoBot.Modules.Permissions
 						int numCmd = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.COMMAND, page);
 						int numMdl = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.MODULE, page);
 
-						int lastCmdPage = (numCmd - 1)/_service.numPerPage +1;
-						int lastMdlPage = (numMdl - 1)/_service.numPerPage +1;
+						int lastCmdPage = (numCmd - 1)/_service.numPerPage;
+						int lastMdlPage = (numMdl - 1)/_service.numPerPage;
 
 						int lastPage = System.Math.Max(lastCmdPage,lastMdlPage);
 
@@ -1291,9 +1291,9 @@ namespace NadekoBot.Modules.Permissions
 								int numC = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.CHANNEL, page);
 								int numS = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.SERVER, page);
 								// Do Page Calcs
-								int lastUPage = (numU - 1)/_service.numPerPage +1;
-								int lastCPage = (numC - 1)/_service.numPerPage +1;
-								int lastSPage = (numS - 1)/_service.numPerPage +1;
+								int lastUPage = (numU - 1)/_service.numPerPage;
+								int lastCPage = (numC - 1)/_service.numPerPage;
+								int lastSPage = (numS - 1)/_service.numPerPage;
 								lastPage = System.Math.Max(lastPage,
 									System.Math.Max(lastUPage,
 									System.Math.Max(lastCPage,lastSPage)));
@@ -1302,7 +1302,7 @@ namespace NadekoBot.Modules.Permissions
 								// Get Role lists
 								int numRole = getPartialFieldInfo(embed, group, GlobalWhitelistService.FieldType.ROLE, page);
 								// Do Page Calcs
-								int lastRolePage = (numRole - 1)/_service.numPerPage +1;
+								int lastRolePage = (numRole - 1)/_service.numPerPage;
 								lastPage = System.Math.Max(lastPage,lastRolePage);
 								break;
 							case GWLType.General:
@@ -1310,9 +1310,8 @@ namespace NadekoBot.Modules.Permissions
 								break;
 						}
 						// Paginated Embed
-						page++;
 						if (page > lastPage) page = lastPage;						
-						embed.WithFooter($"Page {page}/{lastPage}");
+						embed.WithFooter($"Page {page+1}/{lastPage+1}");
 					}
 
 					await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
