@@ -193,7 +193,7 @@ namespace NadekoBot.Modules.Permissions
 
 			[NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-			public async Task GWLEnable(PermissionAction doEnable, string listName="")
+			public async Task GWLEnable(string listName, PermissionAction doEnable)
 			{
 				string listNameI = listName.ToLowerInvariant();
 				if (_service.GetGroupByName(listNameI, out GWLSet group)) {

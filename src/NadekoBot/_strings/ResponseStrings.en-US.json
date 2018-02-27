@@ -6,7 +6,7 @@
   "permissions_gwl_name_error": "Improper Input! A global whitelist name must have at least one character and no more than {1} characters. The name you provided: {0}\nIf you were trying to list all global whitelists, try `.h .lgwl` instead.",
   "permissions_gwl_not_exists": "The whitelist named {0} does not exist! Try `.h .lgwl` for a list of all global whitelists.",
   "permissions_gwl_incompat_type": "The fieldtype {0} is incompatible with the whitelist {1} of type {2}!",
-  "permissions_gwl_field_invalid_gwltype": "Invalid FieldType ({0})! Please use one of the following: All (a), Member (m), Role (r).",
+  "permissions_gwl_field_invalid_gwltype": "Invalid FieldType ({0})! Please use one of the following: General (gen), Member (m), Role (r).",
   "permissions_gwl_field_invalid_member": "Invalid FieldType ({0})! Please use one of the following: Server (s), Channel (c), User (u), or Role (r).",
   "permissions_gwl_field_invalid_role": "Invalid FieldType ({0})! Received a an id and/or a server. Expected field type of the id to be Role (r).",
   "permissions_gwl_field_invalid_unblock": "Invalid FieldType ({0})! Received a string name and expected type to be one of the following: Command (cmd) or Module (mdl).",
