@@ -2033,6 +2033,67 @@ namespace NadekoBot.Modules.Permissions.Services
             return str;
 		}
 
+		public string[] GetMemberNameMention(GWLItemType type, ulong[] ids, ulong ctxId, bool inline=false)
+		{
+			string sep = inline ? " " : "\n\t";
+			string noName = _strs.GetText("unresolvable_name", 0, "permissions");
+			string[] str = new string[ids.Count()];
+
+            switch (type) {
+                case GWLItemType.User:
+					for (int i=0; i<ids.Length; i++) {
+						SocketGuild guildU = _client.Guilds
+							.Where(g => g.Id.Equals(ctxId))
+							.Where(g => g.GetUser(ids[i]) != null)
+							.FirstOrDefault();
+						if (guildU != null) {
+							str[i] = GetNameOrMentionFromId(type, ids[i], inline);
+						} else {
+							string name = _client.Guilds
+								.Where(g => g.GetUser(ids[i]) != null)
+								.Select(g => g.GetUser(ids[i]).Nickname)
+								.FirstOrDefault();
+							if (!string.IsNullOrEmpty(name)) {
+								str[i] = $"[@{name}](https://discordapp.com/users/{ids[i]}/ '{name}'){sep}{ids[i]}";
+							} else {
+								str[i] = $"{noName} {ids[i]}";
+							}
+						}
+					}
+                    break;
+
+                case GWLItemType.Channel:
+					for (int i=0; i<ids.Length; i++) {
+						SocketGuildChannel chnl = _client.GetChannel(ids[i]) as SocketGuildChannel;
+						if (chnl != null) {
+							if (ctxId == chnl.Guild.Id) {
+								str[i] = GetNameOrMentionFromId(type, ids[i], inline);
+							} else {
+								str[i] = $"[#{chnl.Name}](https://discordapp.com/channels/{ids[i]}/ '{chnl.Guild.Name}'){sep}{ids[i]}";
+							}
+						} else {
+							str[i] = $"{noName} {ids[i]}";
+						}
+					}
+                    break;
+
+                case GWLItemType.Server:
+					for (int i = 0; i<ids.Length; i++) {
+						SocketGuild guild = _client.Guilds.FirstOrDefault(g => g.Id.Equals(ids[i]));
+						if (guild != null) {
+							str[i] = $"[{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{guild.Name}'){sep}{ids[i]}";
+						} else {
+							str[i] = $"{noName} {ids[i]}";
+						}
+					}
+					break;
+				
+                default:
+                    break;
+            }
+            return str;
+		}
+
 		public string GetRoleNameMention(ulong id, ulong sid, ulong ctx, bool inline=false)
 		{
 			string sep = inline ? " " : "\n\t";

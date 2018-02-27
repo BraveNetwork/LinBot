@@ -679,14 +679,14 @@ namespace NadekoBot.Modules.Permissions
                     	return;
 					}
 					// Get string list of name/mention from ids
-					string idList = string.Join("\n",_service.GetNameOrMentionFromId(type,ids,true));
+					string idList = string.Join("\n",_service.GetMemberNameMention(type,ids,Context.Guild.Id));
 
 					// Process Add ID to Whitelist of ListName
 					if (action == AddRemove.Add) 
 					{
 						if(_service.AddMemberToGroup(ids,type,group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList,true));
+							string strList = string.Join("\n",_service.GetMemberNameMention(type,successList,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_add_success",
 								successList.Count(), ids.Count(),
 								Format.Code(type.ToString()),
@@ -710,7 +710,7 @@ namespace NadekoBot.Modules.Permissions
 					{
 						if(_service.RemoveMemberFromGroup(ids,type,group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetNameOrMentionFromId(type,successList,true));
+							string strList = string.Join("\n",_service.GetMemberNameMention(type,successList,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_remove_success", 
 								successList.Count(), ids.Count(),
 								Format.Code(type.ToString()),
@@ -767,14 +767,14 @@ namespace NadekoBot.Modules.Permissions
                     	return;
 					}
 					// Get string list of name/mention from ids
-					string idList = string.Join("\n",_service.GetRoleNameMention(ids,sid,Context.Guild.Id,true));
+					string idList = string.Join("\n",_service.GetRoleNameMention(ids,sid,Context.Guild.Id));
 
 					// Process Add ID to Whitelist of ListName
 					if (action == AddRemove.Add) 
 					{
 						if(_service.AddRoleToGroup(sid, ids, group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetRoleNameMention(successList,sid,Context.Guild.Id,true));
+							string strList = string.Join("\n",_service.GetRoleNameMention(successList,sid,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_add_role_success",
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
@@ -798,7 +798,7 @@ namespace NadekoBot.Modules.Permissions
 					{
 						if(_service.RemoveRoleFromGroup(sid, ids, group, out ulong[] successList))
 						{
-							string strList = string.Join("\n",_service.GetRoleNameMention(successList,sid,Context.Guild.Id,true));
+							string strList = string.Join("\n",_service.GetRoleNameMention(successList,sid,Context.Guild.Id));
 							await ReplyConfirmLocalized("gwl_remove_role_success", 
 								successList.Count(), ids.Count(),
 								Format.Bold(group.ListName),
