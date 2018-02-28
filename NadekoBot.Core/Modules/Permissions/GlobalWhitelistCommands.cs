@@ -4,8 +4,10 @@ using Discord.WebSocket;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
 using System.Threading.Tasks;
+using System;
 using System.Linq;
-using System.Collections.Generic;
+using System.Text;
+using System.Globalization;
 using NadekoBot.Extensions;
 using NadekoBot.Common.Attributes;
 using NadekoBot.Common.Collections;
@@ -30,6 +32,48 @@ namespace NadekoBot.Modules.Permissions
 				_perm = perm;
 				_cmds = cmds;
             }
+
+			#region Text Validation and Escaping
+			private string EscapeText(string input) {
+				// Escape backslash to prevent \n and \t and the like
+				// Escape * and ` and _ and ~ to avoid Discord markdown
+				// Adapted from https://stackoverflow.com/a/14502246
+				var literal = new StringBuilder(input.Length);
+				foreach (var c in input)
+				{
+					switch (c)
+					{
+						case '\'': literal.Append(@"\'"); break;
+						case '\"': literal.Append("\\\""); break;
+						case '\\': literal.Append(@"\\"); break;
+						case '\0': literal.Append(@"\0"); break;
+						case '\a': literal.Append(@"\a"); break;
+						case '\b': literal.Append(@"\b"); break;
+						case '\f': literal.Append(@"\f"); break;
+						case '\n': literal.Append(@"\n"); break;
+						case '\r': literal.Append(@"\r"); break;
+						case '\t': literal.Append(@"\t"); break;
+						case '\v': literal.Append(@"\v"); break;
+						case '*': literal.Append(@"\*"); break;
+						case '`': literal.Append(@"\`"); break;
+						case '_': literal.Append(@"\_"); break;
+						case '~': literal.Append(@"\~"); break;
+						default:
+							if (Char.GetUnicodeCategory(c) != UnicodeCategory.Control)
+							{
+								literal.Append(c);
+							}
+							else
+							{
+								literal.Append(@"\u");
+								literal.Append(((ushort)c).ToString("x4"));
+							}
+							break;
+					}
+				}
+				return literal.ToString();
+			}
+			#endregion
 
 			#region Type Compatibility
 			private bool IsCompatible(GWLType type, GlobalWhitelistService.FieldType field)
@@ -113,6 +157,8 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLCreate(string listName="", GlobalWhitelistService.FieldType field=0)
             {
+				listName = EscapeText(listName);
+
                 if (string.IsNullOrWhiteSpace(listName) || listName.Length > MaxNameLength) {
 					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
                 	return;
@@ -158,6 +204,8 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLRename(string listName="", string newName="")
             {
+				newName = EscapeText(newName);
+
 				if (string.IsNullOrWhiteSpace(newName) || newName.Length > MaxNameLength) {
 					await ReplyErrorLocalized("gwl_name_error", Format.Bold(listName), MaxNameLength).ConfigureAwait(false);
                 	return;
