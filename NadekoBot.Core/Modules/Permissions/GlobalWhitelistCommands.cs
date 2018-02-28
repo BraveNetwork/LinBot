@@ -43,21 +43,25 @@ namespace NadekoBot.Modules.Permissions
 				{
 					switch (c)
 					{
-						case '\'': literal.Append(@"\'"); break;
-						case '\"': literal.Append("\\\""); break;
-						case '\\': literal.Append(@"\\"); break;
-						case '\0': literal.Append(@"\0"); break;
-						case '\a': literal.Append(@"\a"); break;
-						case '\b': literal.Append(@"\b"); break;
-						case '\f': literal.Append(@"\f"); break;
-						case '\n': literal.Append(@"\n"); break;
-						case '\r': literal.Append(@"\r"); break;
-						case '\t': literal.Append(@"\t"); break;
-						case '\v': literal.Append(@"\v"); break;
+						// Markdown
 						case '*': literal.Append(@"\*"); break;
 						case '`': literal.Append(@"\`"); break;
 						case '_': literal.Append(@"\_"); break;
 						case '~': literal.Append(@"\~"); break;
+						// Common Escapes
+						case '\'': literal.Append(@"\'"); break;
+						case '\"': literal.Append("\\\""); break;
+						case '\\': literal.Append(@"\\"); break;
+						// Empty Spaces
+						case '\0':
+						case '\a':
+						case '\b':
+						case '\f':
+						case '\n':
+						case '\r':
+						case '\t':
+						case '\v':
+							break;
 						default:
 							if (Char.GetUnicodeCategory(c) != UnicodeCategory.Control)
 							{
@@ -71,6 +75,7 @@ namespace NadekoBot.Modules.Permissions
 							break;
 					}
 				}
+				System.Console.WriteLine("Old: {0} |New: {1}", input, literal.ToString());
 				return literal.ToString();
 			}
 			#endregion
@@ -204,6 +209,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLRename(string listName="", string newName="")
             {
+				listName = EscapeText(listName);
 				newName = EscapeText(newName);
 
 				if (string.IsNullOrWhiteSpace(newName) || newName.Length > MaxNameLength) {
@@ -243,6 +249,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
 			public async Task GWLEnable(string listName, PermissionAction doEnable)
 			{
+				listName = EscapeText(listName);
 				string listNameI = listName.ToLowerInvariant();
 				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
 					if (doEnable.Value) {
@@ -264,6 +271,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
 			public async Task GWLEnable(string listName="")
 			{
+				listName = EscapeText(listName);
 				string listNameI = listName.ToLowerInvariant();
 				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
 					string statusTxt = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") : GetText("gwl_status_disabled_emoji");
@@ -279,6 +287,7 @@ namespace NadekoBot.Modules.Permissions
             [OwnerOnly]
             public async Task GWLDelete(string listName="")
             {
+				listName = EscapeText(listName);
                 if (!_service.DeleteWhitelist(listName.ToLowerInvariant()))
                 {
                     await ReplyErrorLocalized("gwl_delete_fail", Format.Bold(listName)).ConfigureAwait(false);
@@ -720,6 +729,8 @@ namespace NadekoBot.Modules.Permissions
 					await ReplyErrorLocalized("gwl_toomany_params", Format.Code(type.ToString()), MaxNumInput).ConfigureAwait(false);
                     return;
 				}
+
+				listName = EscapeText(listName);
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -808,6 +819,8 @@ namespace NadekoBot.Modules.Permissions
 					await ReplyErrorLocalized("gwl_missing_params", Format.Code(type.ToString())).ConfigureAwait(false);
                     return;
 				}
+
+				listName = EscapeText(listName);
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -886,6 +899,7 @@ namespace NadekoBot.Modules.Permissions
                     return;
 				}
 
+				listName = EscapeText(listName);
 				// If the listName doesn't exist, return an error message
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -981,6 +995,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _Clear(string listName, GlobalWhitelistService.FieldType field)
 			{
+				listName = EscapeText(listName);
 				if (_service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group)) 
 				{
 					bool result;
@@ -1299,6 +1314,7 @@ namespace NadekoBot.Modules.Permissions
 			{
 				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
 
+				listName = EscapeText(listName);
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
 					// Ensure the group type is compatible!
@@ -1606,6 +1622,7 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _HasMember(string listName, GWLItemType type, ulong id)
 			{
+				listName = EscapeText(listName);
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -1666,6 +1683,7 @@ namespace NadekoBot.Modules.Permissions
 			{
 				GWLItemType type = GWLItemType.Role;
 
+				listName = EscapeText(listName);
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -1705,6 +1723,8 @@ namespace NadekoBot.Modules.Permissions
 
 			private async Task _HasMember(string listName, UnblockedType type, string name)
 			{
+				listName = EscapeText(listName);
+
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
@@ -2058,6 +2078,7 @@ namespace NadekoBot.Modules.Permissions
 			[NadekoCommand, Usage, Description, Aliases]
             public async Task IsContextGWL(string listName="")
             {
+				listName = EscapeText(listName);
 				// Return error if whitelist doesn't exist
                 if (!string.IsNullOrWhiteSpace(listName) && _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group))
                 {
