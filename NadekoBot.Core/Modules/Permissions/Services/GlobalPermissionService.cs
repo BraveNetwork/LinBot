@@ -54,7 +54,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					{ return false; }
 
 					// Block it!
-					await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Module, moduleName);
+					await ReportBlockedCmdOrMdl(msg, channel, guild.Id, UnblockedType.Module, moduleName);
 					return true;
 				}
 
@@ -66,7 +66,7 @@ namespace NadekoBot.Modules.Permissions.Services
 					{ return false; }
 					
 					// Block it!
-					await ReportBlockedCmdOrMdl(channel, guild.Id, UnblockedType.Command, commandName);
+					await ReportBlockedCmdOrMdl(msg, channel, guild.Id, UnblockedType.Command, commandName);
 					return true;
 				}
 				else { return false; }
@@ -86,12 +86,20 @@ namespace NadekoBot.Modules.Permissions.Services
 				);
 		}
 
-		private async Task ReportBlockedCmdOrMdl(IMessageChannel channel, ulong gid, UnblockedType type, string name)
+		private async Task ReportBlockedCmdOrMdl(IUserMessage msg, IMessageChannel channel, ulong gid, UnblockedType type, string name)
 		{
-			await channel.SendErrorAsync(
-				_strs.GetText("blocker_embed_title", gid, "permissions"),
-				_strs.GetText("blocker_embed_desc", gid, "permissions", Format.Code(type.ToString()), Format.Bold(name))
-			);
+			try {
+				// Report blocked cmd/mdl
+				IUserMessage reportMsg = await channel.SendErrorAsync(
+					_strs.GetText("blocker_embed_title", gid, "permissions"),
+					_strs.GetText("blocker_embed_desc", gid, "permissions", Format.Code(type.ToString()), Format.Bold(name))
+				);
+				// Delete the report
+				reportMsg.DeleteAfter(10);
+				// Delete the blocked cmd/mdl message
+				msg.DeleteAfter(10);
+			}
+			catch (Exception ex) { System.Console.WriteLine(ex); }
 		}
     }
 }
