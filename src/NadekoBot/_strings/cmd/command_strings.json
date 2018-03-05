@@ -1,15 +1,18 @@
 {
   "gwlcreate": {
     "cmd": "gwl gwlcreate",
-    "desc": "Create a new whitelist named MyListName.",
+    "desc": "Create a new whitelist named MyListName (max of 20 char). If using a backslash `\\` in your name, you must remember to escape it with a second backslash `\\\\` in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes. \n\nYou may also specify the type of whitelist: General (default), Member (m), or Role (r). GENERAL unblocks for all users. MEMBER unblocks for specific users, channels, and servers. ROLE unblocks for specific Server-Role pairs.",
     "usage": [
       "{0}gwl MyListName",
-      "{0}gwl \"My List Name\""
+      "{0}gwl \"My List Name\"",
+      "{0}gwl GeneralList GENERAL",
+      "{0}gwl MemberList MEMBER",
+      "{0}gwl RoleList ROLE"
     ]
   },
   "gwlrename": {
     "cmd": "gwlrename",
-    "desc": "Rename an existing whitelist named OldName to MyNewName.",
+    "desc": "Rename an existing whitelist named OldName to MyNewName (max of 20 char). If using a backslash `\\` or quote `\"` in your name, you must remember to escape it with a second backslash `\\\\` (or `\\\"`) in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes.",
     "usage": [
       "{0}gwlrename OldName MyNewName",
       "{0}gwlrename \"Old Name\" \"My New Name\""
@@ -17,10 +20,10 @@
   },
   "gwlenable": {
     "cmd": "gwlenable gwlstatus",
-    "desc": "Check or set the IsEnabled status of the whitelist named MyListName.",
+    "desc": "Check or set the IsEnabled status of the whitelist named MyListName. Checking the status also tells you what type the whitelist is (General, Member, or Role), however, you cannot change the type.",
     "usage": [
-      "{0}gwlenable true MyListName",
-      "{0}gwlenable false MyListName",
+      "{0}gwlenable MyListName true",
+      "{0}gwlenable MyListName false",
       "{0}gwlstatus MyListName"
     ]
   },
@@ -33,7 +36,7 @@
   },
   "gwladd": {
     "cmd": "gwladd",
-    "desc": "Add up to 30 .Command/Module(s) at a time to the global whitelist named MyListName.\nWhitelists of type MEMBER can also have @User/#Channel/Server members added.\nWhitelists of type ROLE can have Server-Role pairs added. If adding multiple Roles to a ROLE whitelist, you can either mention the roles (and have the ServerID be inferred) or run `.gwladd MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to add.",
+    "desc": "Add up to 30 .Command/Module(s) at a time to the global whitelist named MyListName. \n\nWhitelists of type MEMBER can also have @User/#Channel/Server members added. \n\nWhitelists of type ROLE can have Server-Role pairs added. If adding multiple Roles to a ROLE whitelist, you can either mention the roles (and assume the current ServerID) or run `.gwladd MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to add.",
     "usage": [
       "{0}gwladd MyListName .commandA .commandB .commandC",
       "{0}gwladd MyListName ModuleA ModuleB ModuleC",
@@ -42,17 +45,17 @@
       "{0}gwladd MyListName @UserA @UserB @UserC",
       "{0}gwladd MyListName @RoleA @RoleB @RoleC",
       "{0}gwladd MyListName ServerWithRoles 123123123 456456456",
-      "{0}gwladd MyListName srvr 123123123 456456456 789789789",
-      "{0}gwladd MyListName chnl 123123123 456456456 789789789",
-      "{0}gwladd MyListName usr 123123123 456456456 789789789",
-      "{0}gwladd MyListName role ServerWithRoles 123123123 456456456 789789789",
-      "{0}gwladd MyListName cmd commandA commandB commandC",
-      "{0}gwladd MyListName mdl ModuleA ModuleB ModuleC"
+      "{0}gwladd MyListName CMD commandA commandB commandC",
+      "{0}gwladd MyListName MDL ModuleA ModuleB ModuleC",
+      "{0}gwladd MyListName SRVR 123123123 456456456 789789789",
+      "{0}gwladd MyListName CHNL 123123123 456456456 789789789",
+      "{0}gwladd MyListName USR 123123123 456456456 789789789",
+      "{0}gwladd MyListName ROLE ServerWithRoles 123123123 456456456 789789789"
     ]
   },
   "gwlremove": {
     "cmd": "gwlremove gwlrem gwlrm",
-    "desc": "Remove up to 30 .Command/Module(s) at a time from the global whitelist named MyListName.\nWhitelists of type MEMBER can also have @User/#Channel/Server members removed.\nWhitelists of type ROLE can have Server-Role pairs removed. If removing multiple Roles from a ROLE whitelist, you can either mention the roles (and have the ServerID be inferred) or run `.gwlrm MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to remove.",
+    "desc": "Remove up to 30 .Command/Module(s) at a time from the global whitelist named MyListName. \n\nWhitelists of type MEMBER can also have @User/#Channel/Server members removed. \n\nWhitelists of type ROLE can have Server-Role pairs removed. If removing multiple Roles from a ROLE whitelist, you can either mention the roles (and assume the current ServerID) or run `.gwlrm MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to remove.",
     "usage": [
       "{0}gwlrm MyListName .commandA .commandB .commandC",
       "{0}gwlrm MyListName ModuleA ModuleB ModuleC",
@@ -61,45 +64,50 @@
       "{0}gwlrm MyListName @UserA @UserB @UserC",
       "{0}gwlrm MyListName @RoleA @RoleB @RoleC",
       "{0}gwlrm MyListName ServerWithRoles 123123123 456456456",
-      "{0}gwlrm MyListName srvr 123123123 456456456 789789789",
-      "{0}gwlrm MyListName chnl 123123123 456456456 789789789",
-      "{0}gwlrm MyListName usr 123123123 456456456 789789789",
-      "{0}gwlrm MyListName role ServerWithRoles 123123123 456456456 789789789",
-      "{0}gwlrm MyListName cmd commandA commandB commandC",
-      "{0}gwlrm MyListName mdl ModuleA ModuleB ModuleC"
+      "{0}gwlrm MyListName CMD commandA commandB commandC",
+      "{0}gwlrm MyListName MDL ModuleA ModuleB ModuleC",
+      "{0}gwlrm MyListName SRVR 123123123 456456456 789789789",
+      "{0}gwlrm MyListName CHNL 123123123 456456456 789789789",
+      "{0}gwlrm MyListName USR 123123123 456456456 789789789",
+      "{0}gwlrm MyListName ROLE ServerWithRoles 123123123 456456456 789789789"
     ]
   },
   "gwlclear": {
     "cmd": "gwlclear",
-    "desc": "Remove all @User/#Channel/Server members AND all unblocked .Commands/Modules from the global whitelist named MyListName. If you don't want MyListName to be completely empty, specify the particular data type to remove: Unblocked (ub), Command (cmd), Module (mdl), Member (mem), User (u), Channel (c), Server (s).",
+    "desc": "Remove all members AND all unblocked .Commands/Modules from the global whitelist named MyListName. If you don't want MyListName to be completely empty, specify the particular data type to remove: Unblocked (ub), Command (cmd), Module (mdl), Member (mem), User (u), Channel (c), Server (s), Roles (r).",
     "usage": [
       "{0}gwlclear MyListName",
-      "{0}gwlclear srvr MyListName",
-      "{0}gwlclear chnl MyListName",
-      "{0}gwlclear user MyListName",
-      "{0}gwlclear unblocked MyListName",
-      "{0}gwlclear members MyListName"
+      "{0}gwlclear MyListName MEM",
+      "{0}gwlclear MyListName SRVR",
+      "{0}gwlclear MyListName CHNL",
+      "{0}gwlclear MyListName USR",
+      "{0}gwlclear MyListName ROLE",
+      "{0}gwlclear MyListName UNBLOCKED",
+      "{0}gwlclear MyListName CMD",
+      "{0}gwlclear MyListName MDL"
     ]
   },
   "gwlpurge": {
     "cmd": "gwlpurge",
-    "desc": "Remove the given .Command/Module/@User/#Channel/Server from ALL global whitelists.",
+    "desc": "Remove the given .Command/Module/@User/#Channel/Server/@Role from ALL global whitelists. If removing a role from another server, you must specify ServerID AND RoleID (in that order).",
     "usage": [
-      "{0}gwlpurge Server",
-      "{0}gwlpurge srvr 123123123",
-      "{0}gwlpurge #Channel",
-      "{0}gwlpurge chnl 123123123",
-      "{0}gwlpurge @User",
-      "{0}gwlpurge usr 123123123",
       "{0}gwlpurge .Command",
-      "{0}gwlpurge cmd Command",
+      "{0}gwlpurge CMD Command",
       "{0}gwlpurge Module",
-      "{0}gwlpurge mdl Module"
+      "{0}gwlpurge MDL Module",
+      "{0}gwlpurge ServerName",
+      "{0}gwlpurge SRVR 123123123",
+      "{0}gwlpurge #Channel",
+      "{0}gwlpurge CHNL 123123123",
+      "{0}gwlpurge @User",
+      "{0}gwlpurge USR 123123123",
+      "{0}gwlpurge @Role",
+      "{0}gwlpurge ROLE ServerWithRole 123123123"
     ]
   },
   "listgwl": {
     "cmd": "listgwl lgwl",
-    "desc": "List all existing global whitelist names. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "List all existing global whitelist names, grouped by type. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}lgwl",
       "{0}lgwl 2"
@@ -107,54 +115,59 @@
   },
   "gwlinfo": {
     "cmd": "gwlinfo",
-    "desc": "Get the IsEnabled status and a list of all unblocked commands and modules, and a list of all users, channels, and servers related to the whitelist named MyListName. Alternatively, specify which type of list data you want (Command|Module|User|Channel|Server). Include an optional page number to jump to a specific subset of the data.",
+    "desc": "Get the IsEnabled status, whitelist type, and a list of all unblocked commands and modules, as well as a list of all users, channels, and servers, or roles related to the whitelist named MyListName. \n\nAlternatively, specify which type of list data you want (Command|Module|User|Channel|Server|Role). \n\nInclude an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}gwlinfo MyListName",
       "{0}gwlinfo MyListName 2",
-      "{0}gwlinfo cmd MyListName",
-      "{0}gwlinfo mod MyListName",
-      "{0}gwlinfo srvr MyListName",
-      "{0}gwlinfo chnl MyListName",
-      "{0}gwlinfo usr MyListName",
-      "{0}gwlinfo usr MyListName 2"
+      "{0}gwlinfo MyListName CMD",
+      "{0}gwlinfo MyListName CMD 2",
+      "{0}gwlinfo MyListName MDL",
+      "{0}gwlinfo MyListName SRVR",
+      "{0}gwlinfo MyListName CHNL",
+      "{0}gwlinfo MyListName USR",
+      "{0}gwlinfo MyListName ROLE"
     ]
   },
   "gwlhasmember": {
     "cmd": "gwlhas",
-    "desc": "Check whether or not the whitelist named MyListName has a @User/#Channel/Server member with the provided ID, or an unblocked .Command/Module with the provided name.",
+    "desc": "Check whether or not the whitelist named MyListName has a @User/#Channel/Server/@Role member with the provided ID, or an unblocked .Command/Module with the provided name. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order), and use the ROLE FieldType.",
     "usage": [
-      "{0}gwlhas Server MyListName",
-      "{0}gwlhas srvr 123123123 MyListName",
-      "{0}gwlhas #Channel MyListName",
-      "{0}gwlhas chnl 123123123 MyListName",
-      "{0}gwlhas @User MyListName",
-      "{0}gwlhas usr 123123123 MyListName",
-      "{0}gwlhas .Command MyListName",
-      "{0}gwlhas cmd Command MyListName",
-      "{0}gwlhas Module MyListName",
-      "{0}gwlhas mdl Module MyListName"
+      "{0}gwlhas MyListName .Command",
+      "{0}gwlhas MyListName CMD Command",
+      "{0}gwlhas MyListName Module",
+      "{0}gwlhas MyListName MDL Module",
+      "{0}gwlhas MyListName ServerName",
+      "{0}gwlhas MyListName SRVR 123123123",
+      "{0}gwlhas MyListName #Channel",
+      "{0}gwlhas MyListName CHNL 123123123",
+      "{0}gwlhas MyListName @User",
+      "{0}gwlhas MyListName USR 123123123",
+      "{0}gwlhas MyListName @Role",
+      "{0}gwlhas MyListName ROLE ServerWithRole 123123123"
     ]
   },
   "gwlformember": {
     "cmd": "gwlfor",
-    "desc": "List the names of all global whitelists for which the @User/#Channel/Server is a member, or for which the .Command/Module is unblocked. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "List the names of all global whitelists for which the @User/#Channel/Server/@Role is a member, or for which the .Command/Module is unblocked. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
     "usage": [
-      "{0}gwlfor Server",
-      "{0}gwlfor Server 2",
-      "{0}gwlfor srvr 123123123",
-      "{0}gwlfor #Channel",
-      "{0}gwlfor chnl 123123123",
-      "{0}gwlfor @User",
-      "{0}gwlfor usr 123123123",
       "{0}gwlfor .Command",
-      "{0}gwlfor cmd Command",
+      "{0}gwlfor CMD Command",
       "{0}gwlfor Module",
-      "{0}gwlfor mdl Module"
+      "{0}gwlfor MDL Module",
+      "{0}gwlfor ServerName",
+      "{0}gwlfor ServerName 2",
+      "{0}gwlfor SRVR 123123123",
+      "{0}gwlfor #Channel",
+      "{0}gwlfor CHNL 123123123",
+      "{0}gwlfor @User",
+      "{0}gwlfor USR 123123123",
+      "{0}gwlfor @Role",
+      "{0}gwlfor ROLE ServerWithRole 123123123"
     ]
   },
   "listmygwl": {
     "cmd": "listmygwl mygwl",
-    "desc": "Get a list of all global whitelists to which you belong. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Get a list of all global whitelists to which you belong. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}mygwl",
       "{0}mygwl 2"
@@ -162,7 +175,7 @@
   },
   "listcontextgwl": {
     "cmd": "listcontextgwl gwlhere",
-    "desc": "Get a list of all global whitelists to which the current channel and server belong. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Get a list of all global whitelists to which the current channel and server belong. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}gwlhere",
       "{0}gwlhere 2"
@@ -170,14 +183,14 @@
   },
   "ismygwl": {
     "cmd": "ismygwl",
-    "desc": "Find out whether or not you belong to the global whitelist named MyListName.",
+    "desc": "[GuildChannelOnly] Find out whether or not you belong to the global whitelist named MyListName.",
     "usage": [
       "{0}ismygwl MyListName"
     ]
   },
   "iscontextgwl": {
     "cmd": "iscontextgwl isgwlhere",
-    "desc": "Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
+    "desc": "[GuildChannelOnly] Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
     "usage": [
       "{0}isgwlhere MyListName"
     ]
@@ -192,41 +205,45 @@
   },
   "gubformember": {
     "cmd": "gubfor",
-    "desc": "List the names of all commands/modules unblocked for the @User/#Channel/Server. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "List the names of all commands/modules unblocked for the @User/#Channel/Server/@Role. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
     "usage": [
-      "{0}gubfor Server 2",
-      "{0}gubfor Server",
-      "{0}gubfor srvr 123123123",
+      "{0}gubfor ServerName 2",
+      "{0}gubfor ServerName",
+      "{0}gubfor SRVR 123123123",
       "{0}gubfor #Channel",
-      "{0}gubfor chnl 123123123",
+      "{0}gubfor CHNL 123123123",
       "{0}gubfor @User",
-      "{0}gubfor usr 123123123",
-      "{0}gubfor .Command",
-      "{0}gubfor Module"
+      "{0}gubfor USR 123123123",
+      "{0}gubfor @Role",
+      "{0}gubfor ROLE ServerWithRole 123123123"
     ]
   },
   "gubcheck": {
-    "cmd": "gubcheck",
-    "desc": "Check whether or not the .Command/Module is unblocked for @User/#Channel/Server member. If it is unblocked, you'll get a list of all global whitelists through which it is unblocked. Include an optional page number to jump to a specific subset of the data.",
+    "cmd": "gubcheck gubhas",
+    "desc": "Check whether or not the .Command/Module is unblocked for @User/#Channel/Server/@Role member. If it is unblocked, you'll get a list of all global whitelists through which it is unblocked, grouped by type. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
     "usage": [
-      "{0}gubcheck Server .Command 2",
-      "{0}gubcheck Server .Command",
-      "{0}gubcheck Server Module",
-      "{0}gubcheck srvr 123123123 .Command",
-      "{0}gubcheck srvr 123123123 Module",
-      "{0}gubcheck #Channel .Command",
-      "{0}gubcheck #Channel Module",
-      "{0}gubcheck chnl 123123123 .Command",
-      "{0}gubcheck chnl 123123123 Module",
-      "{0}gubcheck @User .Command",
-      "{0}gubcheck @User Module",
-      "{0}gubcheck usr 123123123 .Command",
-      "{0}gubcheck usr 123123123 Module"
+      "{0}gubcheck .Command ServerName 2",
+      "{0}gubcheck .Command ServerName",
+      "{0}gubcheck .Command SRVR 123123123",
+      "{0}gubcheck .Command #Channel",
+      "{0}gubcheck .Command CHNL 123123123",
+      "{0}gubcheck .Command @User",
+      "{0}gubcheck .Command USR 123123123",
+      "{0}gubcheck .Command @Role",
+      "{0}gubcheck .Command ROLE ServerWithRole 123123123",
+      "{0}gubcheck Module ServerName",
+      "{0}gubcheck Module SRVR 123123123",
+      "{0}gubcheck Module #Channel",
+      "{0}gubcheck Module CHNL 123123123",
+      "{0}gubcheck Module @User",
+      "{0}gubcheck Module USR 123123123",
+      "{0}gubcheck Module @Role",
+      "{0}gubcheck Module ROLE ServerWithRole 123123123"
     ]
   },
   "listmygub": {
     "cmd": "listmygub mygub",
-    "desc": "Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}mygub",
       "{0}mygub 2"
@@ -234,7 +251,7 @@
   },
   "listcontextgub": {
     "cmd": "listcontextgub gubhere",
-    "desc": "Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}gubhere",
       "{0}gubhere 2"
@@ -242,35 +259,37 @@
   },
   "ismygub": {
     "cmd": "ismygub",
-    "desc": "Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}ismygub .Command 2",
       "{0}ismygub .Command",
+      "{0}ismygub Module 2",
       "{0}ismygub Module"
     ]
   },
   "iscontextgub": {
     "cmd": "iscontextgub isgubhere",
-    "desc": "Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "[GuildChannelOnly] Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}isgubhere .Command 2",
       "{0}isgubhere .Command",
+      "{0}isgubhere Module 2",
       "{0}isgubhere Module"
     ]
   },
   "resetglobalwhitelists": {
     "cmd": "resetglobalwhitelists gwlreset",
-    "desc": "Delete all global whitelist data: records storing whitelist names, records linkng whitelists to users/channels/servers, and records linking whitelists to unblocked commands/modules. This leaves behind records that you may try to add to a whitelist again in the future, unless you add the `--purge` flag.",
+    "desc": "Delete all global whitelist data: records storing whitelist names, linked relations to users/channels/servers, and linked relations to unblocked commands/modules. Use the `--purge` flag to clear out both linked and unlinked global whitelist data.",
     "usage": [
       "{0}gwlreset",
       "{0}gwlreset --purge"
     ]
   },
   "resetglobalunblocked": {
-    "cmd": "resetglobalunblocked ubreset",
+    "cmd": "resetglobalunblocked gubreset",
     "desc": "Delete all global unblocked data: records storing unblocked commands/modules and records linking unblocked commands/modules to a whitelist. DOES NOT CLEAR WHITELIST MEMBER DATA. Use `.gwlreset` to clear all whitelist data.",
     "usage": [
-      "{0}ubreset"
+      "{0}gubreset"
     ]
   },
   "h": {
