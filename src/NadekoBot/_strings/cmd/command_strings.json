@@ -167,7 +167,7 @@
   },
   "listmygwl": {
     "cmd": "listmygwl mygwl",
-    "desc": "[GuildChannelOnly] Get a list of all global whitelists to which you belong. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Get a list of all global whitelists to which you belong. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}mygwl",
       "{0}mygwl 2"
@@ -175,7 +175,7 @@
   },
   "listcontextgwl": {
     "cmd": "listcontextgwl gwlhere",
-    "desc": "[GuildChannelOnly] Get a list of all global whitelists to which the current channel and server belong. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Get a list of all global whitelists to which the current channel and server belong. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}gwlhere",
       "{0}gwlhere 2"
@@ -183,14 +183,14 @@
   },
   "ismygwl": {
     "cmd": "ismygwl",
-    "desc": "[GuildChannelOnly] Find out whether or not you belong to the global whitelist named MyListName.",
+    "desc": "**GuildChannelOnly** Find out whether or not you belong to the global whitelist named MyListName.",
     "usage": [
       "{0}ismygwl MyListName"
     ]
   },
   "iscontextgwl": {
     "cmd": "iscontextgwl isgwlhere",
-    "desc": "[GuildChannelOnly] Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
+    "desc": "**GuildChannelOnly** Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
     "usage": [
       "{0}isgwlhere MyListName"
     ]
@@ -243,7 +243,7 @@
   },
   "listmygub": {
     "cmd": "listmygub mygub",
-    "desc": "[GuildChannelOnly] Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}mygub",
       "{0}mygub 2"
@@ -251,7 +251,7 @@
   },
   "listcontextgub": {
     "cmd": "listcontextgub gubhere",
-    "desc": "[GuildChannelOnly] Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}gubhere",
       "{0}gubhere 2"
@@ -259,7 +259,7 @@
   },
   "ismygub": {
     "cmd": "ismygub",
-    "desc": "[GuildChannelOnly] Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}ismygub .Command 2",
       "{0}ismygub .Command",
@@ -269,7 +269,7 @@
   },
   "iscontextgub": {
     "cmd": "iscontextgub isgubhere",
-    "desc": "[GuildChannelOnly] Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "desc": "**GuildChannelOnly** Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
     "usage": [
       "{0}isgubhere .Command 2",
       "{0}isgubhere .Command",
