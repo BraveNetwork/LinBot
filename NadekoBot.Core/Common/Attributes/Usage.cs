@@ -16,8 +16,15 @@ namespace NadekoBot.Common.Attributes
         public static string GetUsage(string memberName)
         {
             var usage = Localization.LoadCommand(memberName.ToLowerInvariant()).Usage;
-            return string.Join(" or ", usage
-                .Select(x => Format.Code(x)));
+
+			if (usage.Count() > 2) {
+				return "```\n" + string.Join("\n", usage) + "\n```";
+			}
+			else {
+				return string.Join(" or ", usage
+					.Select(x => Format.Code(x)));
+			}
+				
         }
     }
 }
