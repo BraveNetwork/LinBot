@@ -735,10 +735,12 @@ namespace NadekoBot.Modules.Permissions
 			#region User-Oriented
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task ListMyGUB(int page=1)
             	=> _GUBForUser(Context.User.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public async Task ListContextGUB(int page=1)
             {
 				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
@@ -800,18 +802,22 @@ namespace NadekoBot.Modules.Permissions
 			}
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task IsMyGUB(CommandInfo command, int page=1)
 				=> _GUBCheckUserCommand(Context.User.Id, command.Module.GetTopLevelModule().Name.ToLowerInvariant(), command.Name.ToLowerInvariant(), page);
 			
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task IsMyGUB(ModuleInfo module, int page=1)
 				=> _GUBCheckUser(Context.User.Id, UnblockedType.Module, module.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task IsContextGUB(CommandInfo command, int page=1)
 				=> _IsContextGUBCommand(command.Module.GetTopLevelModule().Name.ToLowerInvariant(), command.Name.ToLowerInvariant(), page);
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task IsContextGUB(ModuleInfo module, int page=1)
 				=> _IsContextGUB(UnblockedType.Module, module.Name.ToLowerInvariant(), page);
 

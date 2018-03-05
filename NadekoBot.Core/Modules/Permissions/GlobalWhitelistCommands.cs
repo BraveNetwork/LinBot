@@ -1999,10 +1999,12 @@ namespace NadekoBot.Modules.Permissions
 			#region User-Oriented
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task ListMyGWL(int page=1)
             	=> _ListForUser(Context.User.Id, page);
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public async Task ListContextGWL(int page=1)
             {
 				if(--page < 0) page = 0; // ensures page is 0-indexed and non-negative
@@ -2072,10 +2074,12 @@ namespace NadekoBot.Modules.Permissions
 			}
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public Task IsMyGWL(string listName="")
 				=> _HasMember(listName, GWLItemType.User, Context.User.Id);
 
 			[NadekoCommand, Usage, Description, Aliases]
+			[RequireContext(ContextType.Guild)]
             public async Task IsContextGWL(string listName="")
             {
 				listName = EscapeText(listName);
