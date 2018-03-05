@@ -24,11 +24,10 @@ namespace NadekoBot.Modules.Permissions.Services
 		public readonly int numPerPage = 5;
 
 		public enum FieldType {
-			A = 0, ALL = A, EVERYTHING = A, GENERAL = A, GEN = A,
+			A = 0, ALL = A, EVERYTHING = A, GENERAL = A, GEN = A, G = A,
 			CMD = 1, COMMAND = CMD, COMMANDS = CMD, CMDS = CMD,
 			MOD = 2, MODULE = MOD, MODULES = MOD, MODS = MOD, MDL = MOD, MDLS = MOD,
-			S = 3, SRVR = S, SERVER = S, SERVERS = S, SRVRS = S, 
-			G = S, GUILD = G, GUILDS = G,
+			S = 3, SRVR = S, SERVER = S, SERVERS = S, SRVRS = S,
 			C = 4, CHNL = C, CHANNEL = C, CHANNELS = C, CHNLS = C,
 			U = 5, USR = U, USER = U, USERS = U, USRS = U,
 			R = 6, ROLE = R, ROLES = R,

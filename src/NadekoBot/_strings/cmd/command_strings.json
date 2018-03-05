@@ -1,7 +1,7 @@
 {
   "gwlcreate": {
     "cmd": "gwl gwlcreate",
-    "desc": "Create a new whitelist named MyListName (max of 20 char). If using a backslash `\\` in your name, you must remember to escape it with a second backslash `\\\\` in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes. \n\nYou may also specify the type of whitelist: General (default), Member (m), or Role (r). GENERAL unblocks for all users. MEMBER unblocks for specific users, channels, and servers. ROLE unblocks for specific Server-Role pairs.",
+    "desc": "Create a new whitelist named MyListName (max of 20 char). If using a backslash `\\` in your name, you must remember to escape it with a second backslash `\\\\` in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes. \n\nYou may also specify the type of whitelist: General (default, g), Member (m), or Role (r). GENERAL unblocks for all users. MEMBER unblocks for specific users, channels, and servers. ROLE unblocks for specific Server-Role pairs.",
     "usage": [
       "{0}gwl MyListName",
       "{0}gwl \"My List Name\"",
