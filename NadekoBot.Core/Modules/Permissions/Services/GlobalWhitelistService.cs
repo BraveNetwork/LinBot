@@ -59,12 +59,13 @@ namespace NadekoBot.Modules.Permissions.Services
             return true;
         }
 
+		/// <summary>Assumes the provided listName came from a valid GWLSet object.</summary>
 		public bool RenameWhitelist(string oldName, string listName)
 		{
 			using (var uow = _db.UnitOfWork)
             {
                 GWLSet group = uow._context.Set<GWLSet>()
-					.Where(g => g.ListName.ToLowerInvariant().Equals(oldName))
+					.Where(g => g.ListName.Equals(oldName))
 					.SingleOrDefault();
 
 				if (group == null) return false;
@@ -75,12 +76,13 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
+		/// <summary>Assumes the provided listName came from a valid GWLSet object.</summary>
 		public bool SetEnabledStatus(string listName, bool status)
 		{
 			using (var uow = _db.UnitOfWork)
             {
                 GWLSet group = uow._context.Set<GWLSet>()
-					.Where(g => g.ListName.ToLowerInvariant().Equals(listName))
+					.Where(g => g.ListName.Equals(listName))
 					.SingleOrDefault();
 
 				if (group == null) return false;
@@ -91,6 +93,7 @@ namespace NadekoBot.Modules.Permissions.Services
 			return true;
 		}
 
+		/// <summary>Assumes the provided listName came from a valid GWLSet object.</summary>
         public bool DeleteWhitelist(string listName)
         {
             using (var uow = _db.UnitOfWork)
@@ -98,7 +101,7 @@ namespace NadekoBot.Modules.Permissions.Services
                 // Delete the whitelist record and all relation records
                 uow._context.Set<GWLSet>().Remove( 
                     uow._context.Set<GWLSet>()
-                    .Where( x => x.ListName.ToLowerInvariant().Equals(listName) ).FirstOrDefault()
+                    .Where( x => x.ListName.Equals(listName) ).FirstOrDefault()
                 );
                 uow.Complete();
             }
@@ -1250,6 +1253,8 @@ namespace NadekoBot.Modules.Permissions.Services
 		#endregion Unblocker
 
 		#region GetObject
+		
+		/// <summary>Assumes provided listName is converted ToLowerInvariant()</summary>
 		public bool GetGroupByName(string listName, out GWLSet group)
         {
             group = null;

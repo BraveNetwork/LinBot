@@ -75,7 +75,7 @@ namespace NadekoBot.Modules.Permissions
 							break;
 					}
 				}
-				System.Console.WriteLine("Old: {0} |New: {1}", input, literal.ToString());
+				// System.Console.WriteLine("Old: {0} |New: {1}", input, literal.ToString());
 				return literal.ToString();
 			}
 			#endregion
@@ -169,9 +169,6 @@ namespace NadekoBot.Modules.Permissions
                 	return;
 				}
 
-				// Ensure a similar name doesnt already exist
-				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group);
-
 				// Get the type
 				GWLType type; 
 				switch(field) {
@@ -189,6 +186,9 @@ namespace NadekoBot.Modules.Permissions
 						await ReplyErrorLocalized("gwl_field_invalid_gwltype", Format.Bold(field.ToString())).ConfigureAwait(false);
 						return;
 				}
+
+				// Ensure a similar name doesnt already exist
+				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group);
 
                 if (exists) {
 					await ReplyErrorLocalized("gwl_create_dupe", Format.Bold(listName), Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
@@ -230,12 +230,13 @@ namespace NadekoBot.Modules.Permissions
 
 				// Create the new list if oldName is valid
 				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
-					bool success = _service.RenameWhitelist(listNameI, newName);
+					string oldName = group.ListName;
+					bool success = _service.RenameWhitelist(oldName, newName);
 					if (success) {
-						await ReplyConfirmLocalized("gwl_rename_success", Format.Bold(group.ListName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyConfirmLocalized("gwl_rename_success", Format.Bold(oldName), Format.Bold(newName)).ConfigureAwait(false);
                 		return;
 					} else {
-						await ReplyErrorLocalized("gwl_rename_fail", Format.Bold(group.ListName), Format.Bold(newName)).ConfigureAwait(false);
+						await ReplyErrorLocalized("gwl_rename_fail", Format.Bold(oldName), Format.Bold(newName)).ConfigureAwait(false);
                     	return;
 					}
 				} else 
@@ -250,14 +251,13 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLEnable(string listName, PermissionAction doEnable)
 			{
 				listName = EscapeText(listName);
-				string listNameI = listName.ToLowerInvariant();
-				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
+				if (_service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group)) {
 					if (doEnable.Value) {
-						_service.SetEnabledStatus(listNameI, true);
+						_service.SetEnabledStatus(group.ListName, true);
 						await ReplyConfirmLocalized("gwl_status_enabled", Format.Bold(group.ListName), Format.Code(GetText("gwl_status_enabled_emoji"))).ConfigureAwait(false);
 						return;
 					} else {
-						_service.SetEnabledStatus(listNameI, false);
+						_service.SetEnabledStatus(group.ListName, false);
 						await ReplyConfirmLocalized("gwl_status_disabled", Format.Bold(group.ListName), Format.Code(GetText("gwl_status_disabled_emoji"))).ConfigureAwait(false);
 						return;
 					}
@@ -272,8 +272,7 @@ namespace NadekoBot.Modules.Permissions
 			public async Task GWLEnable(string listName="")
 			{
 				listName = EscapeText(listName);
-				string listNameI = listName.ToLowerInvariant();
-				if (_service.GetGroupByName(listNameI, out GWLSet group)) {
+				if (_service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group)) {
 					string statusTxt = (group.IsEnabled) ? GetText("gwl_status_enabled_emoji") : GetText("gwl_status_disabled_emoji");
 					await ReplyConfirmLocalized("gwl_status", Format.Bold(group.ListName), Format.Code(statusTxt), Format.Code(group.Type.ToString())).ConfigureAwait(false);
 					return;
@@ -288,13 +287,20 @@ namespace NadekoBot.Modules.Permissions
             public async Task GWLDelete(string listName="")
             {
 				listName = EscapeText(listName);
-                if (!_service.DeleteWhitelist(listName.ToLowerInvariant()))
-                {
-                    await ReplyErrorLocalized("gwl_delete_fail", Format.Bold(listName)).ConfigureAwait(false);
+				bool exists = _service.GetGroupByName(listName.ToLowerInvariant(), out GWLSet group);
+
+                if (exists) {
+					if (_service.DeleteWhitelist(group.ListName)) {
+						await ReplyConfirmLocalized("gwl_delete_success", Format.Bold(group.ListName)).ConfigureAwait(false);
+						return;
+					} else {
+						await ReplyErrorLocalized("gwl_delete_fail", Format.Bold(listName)).ConfigureAwait(false);
+						return;
+					}
+				} else {
+					await ReplyErrorLocalized("gwl_not_exists", Format.Bold(listName)).ConfigureAwait(false);
                     return;
-                }
-                await ReplyConfirmLocalized("gwl_delete_success", Format.Bold(listName)).ConfigureAwait(false);
-                return;
+				}
             }
 
 			#endregion Whitelist Utilities
