@@ -2060,7 +2060,7 @@ namespace NadekoBot.Modules.Permissions.Services
 							if (!string.IsNullOrEmpty(name)) {
 								str[i] = $"[@{name}](https://discordapp.com/users/{ids[i]}/ '{name}'){sep}{ids[i]}";
 							} else {
-								str[i] = $"{noName} {ids[i]}";
+								str[i] = $"{noName}{sep}{ids[i]}";
 							}
 						}
 					}
@@ -2076,7 +2076,7 @@ namespace NadekoBot.Modules.Permissions.Services
 								str[i] = $"[#{chnl.Name}](https://discordapp.com/channels/{ids[i]}/ '{chnl.Guild.Name}'){sep}{ids[i]}";
 							}
 						} else {
-							str[i] = $"{noName} {ids[i]}";
+							str[i] = $"{noName}{sep}{ids[i]}";
 						}
 					}
                     break;
@@ -2087,7 +2087,7 @@ namespace NadekoBot.Modules.Permissions.Services
 						if (guild != null) {
 							str[i] = $"[{guild.Name}](https://discordapp.com/channels/{ids[i]}/ '{guild.Name}'){sep}{ids[i]}";
 						} else {
-							str[i] = $"{noName} {ids[i]}";
+							str[i] = $"{noName}{sep}{ids[i]}";
 						}
 					}
 					break;
