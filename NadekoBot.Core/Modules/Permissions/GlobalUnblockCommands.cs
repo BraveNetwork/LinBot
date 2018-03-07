@@ -174,7 +174,7 @@ namespace NadekoBot.Modules.Permissions
 					.WithTitle(GetText("gwl_title"))
 					.WithDescription(GetText("gub_list_formember", 
 						Format.Code(type.ToString()),
-						_gwl.GetNameOrMentionFromId(type, id, true)))
+						_gwl.GetMemberNameMention(type, id, Context.Guild.Id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
 					.WithFooter($"Page {page+1}/{lastPage+1}");
@@ -224,7 +224,7 @@ namespace NadekoBot.Modules.Permissions
 					.WithTitle(GetText("gwl_title"))
 					.WithDescription(GetText("gub_list_formember", 
 						Format.Code(type.ToString()),
-						_gwl.GetNameOrMentionFromId(type, id, true)))
+						_gwl.GetMemberNameMention(type, id, Context.Guild.Id, true)))
 					.AddField(GetText("gwl_field_commands", cmdCount), strCmd, true)
 					.AddField(GetText("gwl_field_modules", mdlCount), strMdl, true)
 					.AddField(GetText("field_separator"), GetText("gub_role"), false)
@@ -453,7 +453,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, memID, true)
+							_gwl.GetMemberNameMention(memType, memID, Context.Guild.Id, true)
 							))
 						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
 						.AddField(GetText("gwl_field_title_all", countA), all, true)
@@ -468,7 +468,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetNameOrMentionFromId(memType, memID, true)
+						_gwl.GetMemberNameMention(memType, memID, Context.Guild.Id, true)
 						)
 					.ConfigureAwait(false);
                 	return;
@@ -501,7 +501,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, memID, true),
+							_gwl.GetMemberNameMention(memType, memID, Context.Guild.Id, true),
 							Format.Bold(mdlName)
 							))
 						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
@@ -517,7 +517,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetNameOrMentionFromId(memType, memID, true),
+						_gwl.GetMemberNameMention(memType, memID, Context.Guild.Id, true),
 						Format.Bold(mdlName)
 						)
 					.ConfigureAwait(false);
@@ -554,7 +554,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, id, true)
+							_gwl.GetMemberNameMention(memType, id, Context.Guild.Id, true)
 							))
 						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
 						.AddField(GetText("gwl_field_title_role", countR), role, true)
@@ -570,7 +570,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetNameOrMentionFromId(memType, id, true)
+						_gwl.GetMemberNameMention(memType, id, Context.Guild.Id, true)
 						)
 					.ConfigureAwait(false);
                 	return;
@@ -607,7 +607,7 @@ namespace NadekoBot.Modules.Permissions
 							Format.Code(ubType.ToString()), 
 							Format.Bold(ubName),
 							Format.Code(memType.ToString()),
-							_gwl.GetNameOrMentionFromId(memType, id, true),
+							_gwl.GetMemberNameMention(memType, id, Context.Guild.Id, true),
 							Format.Bold(mdlName)))
 						.AddField(GetText("gwl_field_title_mem", countM), mem, true)
 						.AddField(GetText("gwl_field_title_role", countR), role, true)
@@ -623,7 +623,7 @@ namespace NadekoBot.Modules.Permissions
 						Format.Code(ubType.ToString()), 
 						Format.Bold(ubName),
 						Format.Code(memType.ToString()),
-						_gwl.GetNameOrMentionFromId(memType, id, true),
+						_gwl.GetMemberNameMention(memType, id, Context.Guild.Id, true),
 						Format.Bold(mdlName)
 						)
 					.ConfigureAwait(false);
