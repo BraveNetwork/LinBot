@@ -152,7 +152,10 @@ namespace NadekoBot.Modules.Permissions
 				}
 
 				// Remove empty in truenames (faster than remaking truenames each iteration)
-				return truenames.Where(x=>!string.IsNullOrEmpty(x)).ToArray();
+				// Also remove duplicates
+				return truenames.Where(x=>!string.IsNullOrEmpty(x))
+					.GroupBy(x => x).Select(set => set.FirstOrDefault()).Where(x => x != null)
+					.ToArray();
 			}
 			#endregion Cmd or Mdl Name
 
@@ -745,6 +748,16 @@ namespace NadekoBot.Modules.Permissions
 						await ReplyErrorLocalized("gwl_incompat_type", Format.Code(type.ToString()), Format.Bold(group.ListName), Format.Code(group.Type.ToString())).ConfigureAwait(false);
                     	return;
 					}
+
+					// Remove duplicate IDs
+					ids = ids.GroupBy(i => i).Select(set => set.FirstOrDefault()).Where(i => i > 0)
+						.ToArray();
+					// Check if empty again
+					if (ids.Length < 1) {
+						await ReplyErrorLocalized("gwl_missing_params", Format.Code(type.ToString())).ConfigureAwait(false);
+						return;
+					}
+
 					// Get string list of name/mention from ids
 					string idList = string.Join("\n",_service.GetMemberNameMention(type,ids,Context.Guild.Id));
 
@@ -813,7 +826,10 @@ namespace NadekoBot.Modules.Permissions
 				}
 
 				// Skip the server ID and remove @everyone if it is in the list
-				ids = ids.Where(i => !i.Equals(sid)).ToArray();
+				// Also remove duplicates
+				ids = ids.Where(i => !i.Equals(sid))
+					.GroupBy(i => i).Select(set => set.FirstOrDefault()).Where(i => i > 0)
+					.ToArray();
 
 				// If params is too long, report error
 				if (ids.Length > MaxNumInput) {
