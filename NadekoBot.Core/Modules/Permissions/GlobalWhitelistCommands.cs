@@ -75,7 +75,7 @@ namespace NadekoBot.Modules.Permissions
 							break;
 					}
 				}
-				// System.Console.WriteLine("Old: {0} |New: {1}", input, literal.ToString());
+
 				return literal.ToString();
 			}
 			#endregion
@@ -936,24 +936,15 @@ namespace NadekoBot.Modules.Permissions
 
 					// Process Add Command/Module
 					if (action == AddRemove.Add) 
-					{   
-						// Keep track of internal changes
-						int delta = 0;
-
+					{
 						// Add to hashset in GlobalPermissionService
 						if (type == UnblockedType.Command)
 						{
-							int pre = _perm.UnblockedCommands.Count;
 							_perm.UnblockedCommands.AddRange(names);
-							delta = _perm.UnblockedCommands.Count - pre;
 						}
 						else {
-							int pre = _perm.UnblockedModules.Count;
 							_perm.UnblockedModules.AddRange(names);
-							delta = _perm.UnblockedModules.Count - pre;
 						}
-
-						// System.Console.WriteLine("Added {0} items to GlobalPermissionService Unblocked HashSet", delta);
 
 						// Add to a whitelist
 						if(_service.AddUnblockedToGroup(names,type,group, out string[] successList))

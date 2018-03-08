@@ -9,6 +9,7 @@ using NadekoBot.Common.ModuleBehaviors;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Impl;
 using NadekoBot.Core.Services.Database.Models;
+using NLog;
 
 namespace NadekoBot.Modules.Permissions.Services
 {
@@ -24,6 +25,8 @@ namespace NadekoBot.Modules.Permissions.Services
         private GlobalWhitelistService _gwl;
 		private NadekoStrings _strs;
 
+		protected readonly Logger _log;
+
         public GlobalPermissionService(IBotConfigProvider bc, GlobalWhitelistService gwl, NadekoStrings strings)
         {
             BlockedModules = new ConcurrentHashSet<string>(bc.BotConfig.BlockedModules.Select(x => x.Name));
@@ -37,6 +40,7 @@ namespace NadekoBot.Modules.Permissions.Services
 
 			_gwl = gwl;
 			_strs = strings;
+			_log = LogManager.GetCurrentClassLogger();
         }
 
         public async Task<bool> TryBlockLate(DiscordSocketClient client, IUserMessage msg, IGuild guild, IMessageChannel channel, IUser user, string moduleName, string commandName)
@@ -99,7 +103,10 @@ namespace NadekoBot.Modules.Permissions.Services
 				// Delete the blocked cmd/mdl message
 				msg.DeleteAfter(10);
 			}
-			catch (Exception ex) { System.Console.WriteLine(ex); }
+			catch (Exception ex) { 
+				_log.Warn("Exception caught while trying to auto delete a blocked command notification and the source message.");
+				_log.Warn(ex);
+			}
 		}
     }
 }

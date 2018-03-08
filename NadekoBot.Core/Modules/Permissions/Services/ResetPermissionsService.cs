@@ -2,6 +2,7 @@
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 
 namespace NadekoBot.Modules.Permissions.Services
 {
@@ -11,11 +12,14 @@ namespace NadekoBot.Modules.Permissions.Services
         private readonly GlobalPermissionService _globalPerms;
         private readonly DbService _db;
 
+		protected readonly Logger _log;
+
         public ResetPermissionsService(PermissionService perms, GlobalPermissionService globalPerms, DbService db)
         {
             _perms = perms;
             _globalPerms = globalPerms;
             _db = db;
+			_log = LogManager.GetCurrentClassLogger();
         }
 
         public async Task ResetPermissions(ulong guildId)
@@ -75,10 +79,10 @@ namespace NadekoBot.Modules.Permissions.Services
 				// Successful!
 				return true;
 
-			} catch (System.Exception e) {
+			} catch (System.Exception ex) {
 				// Failure...
-				// TODO: Use the Nadeko Logger (NLog?)
-				System.Console.WriteLine("Exception caught while trying to use ResetGlobalWhitelists:\n{0}", e);
+				_log.Warn("Exception caught while trying to use ResetGlobalWhitelists");
+				_log.Warn(ex);
 				return false;
 			}
         }
@@ -100,17 +104,11 @@ namespace NadekoBot.Modules.Permissions.Services
 					_globalPerms.UnblockedCommands.Clear();
 					_globalPerms.UnblockedModules.Clear();
 
-					//var count = await uow._context.Set<UnblockedCmdOrMdl>().CountAsync();
-					//System.Console.WriteLine("Database record count {0}", count);
-
 					// Ensure the database table is ready to be cleared
 					uow._context.SaveChanges();
 
 					// Delete all records from UnblockedCmdOrMdl table
 					uow._context.Database.ExecuteSqlCommand("DELETE from UnblockedCmdOrMdl;");
-
-					//count = await uow._context.Set<UnblockedCmdOrMdl>().CountAsync();
-					//System.Console.WriteLine("Database record count after DELETE: {0}", count);
 
 					await uow.CompleteAsync().ConfigureAwait(false);
 				}
@@ -118,10 +116,10 @@ namespace NadekoBot.Modules.Permissions.Services
 				// Successful!
 				return true;
 				
-			} catch (System.Exception e) {
+			} catch (System.Exception ex) {
 				// Failure...
-				// TODO: Use the Nadeko Logger (NLog?)
-				System.Console.WriteLine("Exception caught while trying to use ResetGlobalUnblocked:\n{0}", e);
+				_log.Warn("Exception caught while trying to use ResetGlobalUnblocked");
+				_log.Warn(ex);
 				return false;
 			}
         }

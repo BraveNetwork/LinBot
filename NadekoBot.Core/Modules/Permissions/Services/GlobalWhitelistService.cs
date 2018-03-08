@@ -132,7 +132,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"INSERT INTO GWLItem ('ItemId', 'Type') VALUES (@p0,@p1);",
 							excludedItems.ElementAt(i), 
 							(int)type);
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}
@@ -157,7 +156,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"INSERT INTO GWLItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
 							group.Id, 
 							excludedIDs.ElementAt(i));
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}				
@@ -202,7 +200,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"DELETE FROM GWLItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
 							group.Id,
 							curIDs[i]);
-						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
 					uow.Complete();					
 				}
@@ -251,7 +248,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							excludedItems.ElementAt(i), 
 							(int)type,
 							serverID);
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}
@@ -277,7 +273,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"INSERT INTO GWLItemSet ('ListPK', 'ItemPK') VALUES (@p0,@p1);", 
 							group.Id, 
 							excludedIDs.ElementAt(i));
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}				
@@ -325,7 +320,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"DELETE FROM GWLItemSet WHERE ListPK = @p0 AND ItemPK = @p1;",
 							group.Id,
 							curIDs[i]);
-						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
 					uow.Complete();					
 				}
@@ -377,7 +371,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							bc.Id,
 							excludedNames.ElementAt(i),
 							(int)type);
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}
@@ -402,7 +395,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"INSERT INTO GlobalUnblockedSet ('ListPK', 'UnblockedPK') VALUES (@p0,@p1);", 
 							group.Id,
 							excludedIDs.ElementAt(i));
-						// System.Console.WriteLine("Result {0}: {1}", i, resultInsert);
 					}
 					uow.Complete();
 				}				
@@ -447,7 +439,6 @@ namespace NadekoBot.Modules.Permissions.Services
 							"DELETE FROM GlobalUnblockedSet WHERE ListPK = @p0 AND UnblockedPK = @p1;",
 							group.Id,
 							curIDs[i]);
-						// System.Console.WriteLine("Remove Result {0}: {1}", i, resultRemove);
 					}
 					uow.Complete();
 				}
@@ -491,7 +482,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
 				uow.Complete();
 			}
-			//System.Console.WriteLine("Query Result: ",result);
 			return true;
 		}
 
@@ -517,7 +507,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				result = uow._context.Database.ExecuteSqlCommand(sql, group.Id);
 				uow.Complete();
 			}
-			//System.Console.WriteLine("Query Result: ",result);
 			return true;
 		}
 		public bool ClearUnblocked(GWLSet group, UnblockedType type)
@@ -741,7 +730,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -779,7 +767,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -828,7 +815,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -879,7 +865,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1028,7 +1013,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1079,7 +1063,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip > count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				lists = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1113,7 +1096,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				
 				uow.Complete();
 
-				// System.Console.WriteLine(result);
 				if (result > 0) return true;
 				return false;
 			}
@@ -1139,7 +1121,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				
 				uow.Complete();
 
-				// System.Console.WriteLine(result);
 				if (result > 0) return true;
 				return false;
 			}
@@ -1174,7 +1155,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				
 				uow.Complete();
 
-				// System.Console.WriteLine(result);
 				if (result > 0) return true;
 				return false;
 			}
@@ -1210,7 +1190,6 @@ namespace NadekoBot.Modules.Permissions.Services
 				
 				uow.Complete();
 
-				// System.Console.WriteLine(result);
 				if (result > 0) return true;
 				return false;
 			}
@@ -1329,7 +1308,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1368,7 +1346,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1443,7 +1420,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1483,7 +1459,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
@@ -1525,7 +1500,6 @@ namespace NadekoBot.Modules.Permissions.Services
 
 				int numSkip = page*numPerPage;
 				if (numSkip >= count) numSkip = numPerPage * ((count-1)/numPerPage);
-				// System.Console.WriteLine("Skip {0}, Count {1}, Page {2}", numSkip, count, page);
 
 				names = allnames
 					.OrderBy(g => g.ListName.ToLowerInvariant())
