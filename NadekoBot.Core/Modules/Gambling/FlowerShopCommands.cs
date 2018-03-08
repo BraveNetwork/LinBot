@@ -1,17 +1,17 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
-using NadekoBot.Extensions;
-using NadekoBot.Core.Services;
-using NadekoBot.Core.Services.Database.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using NadekoBot.Common;
 using NadekoBot.Common.Attributes;
 using NadekoBot.Common.Collections;
+using NadekoBot.Core.Services;
+using NadekoBot.Core.Services.Database.Models;
+using NadekoBot.Extensions;
 
 namespace NadekoBot.Modules.Gambling
 {
@@ -20,9 +20,8 @@ namespace NadekoBot.Modules.Gambling
         [Group]
         public class FlowerShopCommands : NadekoSubmodule
         {
-            private readonly IBotConfigProvider _bc;
             private readonly DbService _db;
-            private readonly CurrencyService _cs;
+            private readonly ICurrencyService _cs;
             private readonly DiscordSocketClient _client;
 
             public enum Role
@@ -35,10 +34,9 @@ namespace NadekoBot.Modules.Gambling
                 List
             }
 
-            public FlowerShopCommands(IBotConfigProvider bc, DbService db, CurrencyService cs, DiscordSocketClient client)
+            public FlowerShopCommands(DbService db, ICurrencyService cs, DiscordSocketClient client)
             {
                 _db = db;
-                _bc = bc;
                 _cs = cs;
                 _client = client;
             }
@@ -52,12 +50,12 @@ namespace NadekoBot.Modules.Gambling
                 List<ShopEntry> entries;
                 using (var uow = _db.UnitOfWork)
                 {
-                    entries = new IndexedCollection<ShopEntry>(uow.GuildConfigs.For(Context.Guild.Id, 
+                    entries = new IndexedCollection<ShopEntry>(uow.GuildConfigs.For(Context.Guild.Id,
                         set => set.Include(x => x.ShopEntries)
                                   .ThenInclude(x => x.Items)).ShopEntries);
                 }
 
-                await Context.Channel.SendPaginatedConfirmAsync(_client, page, (curPage) =>
+                await Context.SendPaginatedConfirmAsync(page, (curPage) =>
                 {
                     var theseEntries = entries.Skip(curPage * 9).Take(9).ToArray();
 
@@ -124,7 +122,9 @@ namespace NadekoBot.Modules.Gambling
                             await ReplyErrorLocalized("shop_role_purchase_error").ConfigureAwait(false);
                             return;
                         }
-                        await _cs.AddAsync(entry.AuthorId, $"Shop sell item - {entry.Type}", GetProfitAmount(entry.Price));
+                        var profit = GetProfitAmount(entry.Price);
+                        await _cs.AddAsync(entry.AuthorId, $"Shop sell item - {entry.Type}", profit);
+                        await _cs.AddAsync(Context.Client.CurrentUser.Id, $"Shop sell item - cut", entry.Price - profit);
                         await ReplyConfirmLocalized("shop_role_purchase", Format.Bold(role.Name)).ConfigureAwait(false);
                         return;
                     }
@@ -169,15 +169,13 @@ namespace NadekoBot.Modules.Gambling
                         }
                         catch
                         {
+                            await _cs.AddAsync(Context.User.Id,
+                                $"Shop error refund - {entry.Name}",
+                                entry.Price).ConfigureAwait(false);
                             using (var uow = _db.UnitOfWork)
                             {
                                 uow._context.Set<ShopEntryItem>().Add(item);
                                 uow.Complete();
-
-                                await _cs.AddAsync(Context.User.Id, 
-                                    $"Shop error refund - {entry.Name}", 
-                                    entry.Price, 
-                                    uow).ConfigureAwait(false);
                             }
                             await ReplyErrorLocalized("shop_buy_error").ConfigureAwait(false);
                             return;
@@ -193,7 +191,7 @@ namespace NadekoBot.Modules.Gambling
 
             }
 
-            private long GetProfitAmount(int price) => 
+            private long GetProfitAmount(int price) =>
                 (int)(Math.Ceiling(0.90 * price));
 
             [NadekoCommand, Usage, Description, Aliases]

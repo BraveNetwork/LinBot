@@ -53,7 +53,7 @@
   },
   "greetmsg": {
     "Cmd": "greetmsg",
-    "Desc": "Sets a new join announcement message which will be shown in the server's channel. Type `%user%` if you want to mention the new member. Using it with no message will show the current greet message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new join announcement message which will be shown in the server's channel. Type `%user%` if you want to mention the new member. Using it with no message will show the current greet message. You can use embed json from <https://embedbuilder.nadekobot.me/> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}greetmsg Welcome, %user%."
     ]
@@ -67,7 +67,7 @@
   },
   "byemsg": {
     "Cmd": "byemsg",
-    "Desc": "Sets a new leave announcement message. Type `%user%` if you want to show the name the user who left. Type `%id%` to show id. Using this command with no message will show the current bye message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new leave announcement message. Type `%user%` if you want to show the name the user who left. Type `%id%` to show id. Using this command with no message will show the current bye message. You can use embed json from <https://embedbuilder.nadekobot.me/> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}byemsg %user% has left."
     ]
@@ -140,7 +140,7 @@
   },
   "addplaying": {
     "Cmd": "addplaying adpl",
-    "Desc": "Adds a specified string to the list of playing strings to rotate. You have to pick either 'Playing', 'Watching' or 'ListeningTo' as the first parameter. Supported placeholders: `%servers%`, `%users%`, `%playing%`, `%queued%`, `%time%`, `%shardid%`, `%shardcount%`, `%shardguilds%`.",
+    "Desc": "Adds a specified string to the list of playing strings to rotate. You have to pick either 'Playing', 'Watching' or 'Listening' as the first parameter. Supported placeholders: `%servers%`, `%users%`, `%playing%`, `%queued%`, `%time%`, `%shardid%`, `%shardcount%`, `%shardguilds%`.",
     "Usage": [
       "{0}adpl Playing with you",
       "{0}adpl Watching you sleep"
@@ -168,18 +168,19 @@
       "{0}slowmode"
     ]
   },
-  "cleanvplust": {
-    "Cmd": "cleanvplust cv+t",
-    "Desc": "Deletes all text channels ending in `-voice` for which voicechannels are not found. Use at your own risk.",
+  "vcrolelist": {
+    "Cmd": "vcrolelist",
+    "Desc": "Shows a list of currently set voice channel roles.",
     "Usage": [
-      "{0}cleanv+t"
+      "{0}vcrolelist"
     ]
   },
-  "voiceplustext": {
-    "Cmd": "voice+text v+t",
-    "Desc": "Creates a text channel for each voice channel only users in that voice channel can see. If you are server owner, keep in mind you will see them all the time regardless.",
+  "vcrole": {
+    "Cmd": "vcrole",
+    "Desc": "Sets or resets a role which will be given to users who join the voice channel you're in when you run this command. Provide no role name to disable. You must be in a voice channel to run this command.",
     "Usage": [
-      "{0}v+t"
+      "{0}vcrole SomeRole",
+      "{0}vcrole"
     ]
   },
   "scsc": {
@@ -221,9 +222,10 @@
   },
   "lsar": {
     "Cmd": "lsar",
-    "Desc": "Lists all self-assignable roles.",
+    "Desc": "Lists self-assignable roles. Shows 20 roles per page.",
     "Usage": [
-      "{0}lsar"
+      "{0}lsar",
+      "{0}lsar 2"
     ]
   },
   "tesar": {
@@ -352,10 +354,11 @@
   },
   "rolecolor": {
     "Cmd": "rolecolor roleclr",
-    "Desc": "Set a role's color to the hex or 0-255 rgb color value provided.",
+    "Desc": "Set a role's color to the hex or 0-255 rgb color value provided. Provide no color in order to see the hex of the color of the specified role.",
     "Usage": [
-      "{0}roleclr Admin 255 200 100",
-      "{0}roleclr Admin ffba55"
+      "{0}roleclr Admin",
+      "{0}roleclr Admin ffba55",
+      "{0}roleclr Admin 255 128 0"
     ]
   },
   "ban": {
@@ -493,11 +496,11 @@
   },
   "setgame": {
     "Cmd": "setgame",
-    "Desc": "Sets the bots game status to either Playing, ListeningTo, or Watching.",
+    "Desc": "Sets the bots game status to either Playing, Listening, or Watching.",
     "Usage": [
       "{0}setgame Playing with snakes.",
       "{0}setgame Watching anime.",
-      "{0}setgame ListeningTo music."
+      "{0}setgame Listening music."
     ]
   },
   "send": {
@@ -947,7 +950,7 @@
   },
   "nunchi": {
     "Cmd": "nunchi",
-    "Desc": "Creates or joins an existing nunchi game. Users have to count up by 1 from the starting number shown by the bot. If someone makes a mistake (types an incorrent number, or repeats the same number) they are out of the game and a new round starts without them.  Minimum 3 users required.",
+    "Desc": "Creates or joins an existing nunchi game. Users have to count up by 1 from the starting number shown by the bot. If someone makes a mistake (types an incorrect number, or repeats the same number) they are out of the game and a new round starts without them.  Minimum 3 users required.",
     "Usage": [
       "{0}nunchi"
     ]
@@ -1107,8 +1110,9 @@
   },
   "rps": {
     "Cmd": "rps",
-    "Desc": "Play a game of Rocket-Paperclip-Scissors with Nadeko.",
+    "Desc": "Play a game of Rocket-Paperclip-Scissors with Nadeko. You can bet on it. Multiplier is the same as on betflip.",
     "Usage": [
+      "{0}rps r 100",
       "{0}rps scissors"
     ]
   },
@@ -1336,9 +1340,16 @@
   },
   "playlists": {
     "Cmd": "playlists pls",
-    "Desc": "Lists all playlists. Paginated, 20 per page. Default page is 0.",
+    "Desc": "Lists all playlists. Paginated, 20 per page.",
     "Usage": [
       "{0}pls 1"
+    ]
+  },
+  "playlistshow": {
+    "Cmd": "playlistshow plshow",
+    "Desc": "Lists all songs in a playlist spepcified by its id. Paginated, 20 per page.",
+    "Usage": [
+      "{0}plshow 1"
     ]
   },
   "deleteplaylist": {
@@ -1405,12 +1416,19 @@
       "{0}mixer SomeStreamer"
     ]
   },
-  "removestream": {
-    "Cmd": "removestream rms",
-    "Desc": "Removes notifications of a certain streamer from a certain platform on this channel.",
+  "streamremove": {
+    "Cmd": "streamremove strm",
+    "Desc": "Removes notifications of a specified stream on the specified platform on this channel. You can also just specify an url.",
     "Usage": [
-      "{0}rms Twitch SomeGuy",
-      "{0}rms mixer SomeOtherGuy"
+      "{0}strm Twitch SomeGuy",
+      "{0}strm twitch.tv/someguy"
+    ]
+  },
+  "streamadd": {
+    "Cmd": "streamadd stadd",
+    "Desc": "Notifies this channel when the user's stream on the specified URL goes online or offline.",
+    "Usage": [
+      "{0}stadd twitch.tv/someguy"
     ]
   },
   "liststreams": {
@@ -1660,10 +1678,11 @@
     ]
   },
   "color": {
-    "Cmd": "color",
-    "Desc": "Shows you what color corresponds to that hex.",
+    "Cmd": "color clr",
+    "Desc": "Shows you which colors correspond to the inputed hexes.",
     "Usage": [
-      "{0}color 00ff00"
+      "{0}color 00ff00",
+      "{0}color f00 0f0 00f"
     ]
   },
   "videocall": {
@@ -1775,7 +1794,7 @@
   },
   "greetdmmsg": {
     "Cmd": "greetdmmsg",
-    "Desc": "Sets a new join announcement message which will be sent to the user who joined. Type `%user%` if you want to mention the new member. Using it with no message will show the current DM greet message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new join announcement message which will be sent to the user who joined. Type `%user%` if you want to mention the new member. Using it with no message will show the current DM greet message. You can use embed json from <https://embedbuilder.nadekobot.me> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}greetdmmsg Welcome to the server, %user%"
     ]
@@ -2316,11 +2335,12 @@
       "{0}cmdcost 1 {0}8ball"
     ]
   },
-  "startevent": {
-    "Cmd": "startevent",
-    "Desc": "Starts one of the events seen on public nadeko. `reaction` and `sneakygamestatus` are the only 2 available now.",
+  "eventstart": {
+    "Cmd": "eventstart",
+    "Desc": "Starts one of the events seen on public nadeko. Events: `reaction`",
     "Usage": [
-      "{0}startevent reaction"
+      "{0}eventstart reaction",
+      "{0}eventstart reaction -d 1 -a 50 --pot-size 1500"
     ]
   },
   "slotstats": {
@@ -2529,21 +2549,6 @@
       "{0}l7 s"
     ]
   },
-  "vcrolelist": {
-    "Cmd": "vcrolelist",
-    "Desc": "Shows a list of currently set voice channel roles.",
-    "Usage": [
-      "{0}vcrolelist"
-    ]
-  },
-  "vcrole": {
-    "Cmd": "vcrole",
-    "Desc": "Sets or resets a role which will be given to users who join the voice channel you're in when you run this command. Provide no role name to disable. You must be in a voice channel to run this command.",
-    "Usage": [
-      "{0}vcrole SomeRole",
-      "{0}vcrole"
-    ]
-  },
   "crad": {
     "Cmd": "crad",
     "Desc": "Toggles whether the message triggering the custom reaction will be automatically deleted.",
@@ -2577,7 +2582,7 @@
     "Cmd": "alias cmdmap",
     "Desc": "Create a custom alias for a certain Nadeko command. Provide no alias to remove the existing one.",
     "Usage": [
-      "{0}alias allin $bf 100 h",
+      "{0}alias allin .bf all h",
       "{0}alias \"linux thingy\" >loonix Spyware Windows"
     ]
   },
@@ -2607,14 +2612,14 @@
     "Cmd": "scadd",
     "Desc": "Adds a command to the list of commands which will be executed automatically in the current channel, in the order they were added in, by the bot when it startups up.",
     "Usage": [
-      "{0}scadd .stats"
+      "{0}scadd {0}stats"
     ]
   },
   "startupcommandremove": {
     "Cmd": "scrm",
     "Desc": "Removes a startup command with the provided command text.",
     "Usage": [
-      "{0}scrm .stats"
+      "{0}scrm {0}stats"
     ]
   },
   "startupcommandsclear": {
@@ -2648,8 +2653,9 @@
   },
   "warnclear": {
     "Cmd": "warnclear warnc",
-    "Desc": "Clears all warnings from a certain user.",
+    "Desc": "Clears all warnings from a certain user. You can specify a number to clear a specific one.",
     "Usage": [
+      "{0}warnclear @PoorDude 3",
       "{0}warnclear @PoorDude"
     ]
   },
@@ -2785,7 +2791,7 @@
   },
   "prefix": {
     "Cmd": "prefix",
-    "Desc": "Sets this server's prefix for all bot commands. Provide no arguments to see the current server prefix.",
+    "Desc": "Sets this server's prefix for all bot commands. Provide no arguments to see the current server prefix. **Setting prefix requires Administrator server permission.**",
     "Usage": [
       "{0}prefix +"
     ]
@@ -3103,7 +3109,7 @@
     "cmd": "execsql",
     "desc": "Executes an sql command and returns the number of affected rows. Dangerous.",
     "usage": [
-      "{0}execsql UPDATE Currency SET Amount=Amount+1234"
+      "{0}execsql UPDATE DiscordUser SET CurrencyAmount=CurrencyAmount+1234"
     ]
   },
   "deletewaifus": {
@@ -3256,6 +3262,63 @@
     "desc": "Removed a ReactionRole message on the specified index.",
     "usage": [
       "{0}reactionrolesrm 1"
+    ]
+  },
+  "blackjack": {
+    "cmd": "blackjack bj",
+    "desc": "Start or join a blackjack game. You must specify the amount you're betting. Use `.hit`, `.stand` and `.double` commands to play. Game is played with 4 decks. Dealer hits on soft 17 and wins draws.",
+    "usage": [
+      "{0}bj 50"
+    ]
+  },
+  "hit": {
+    "cmd": "hit",
+    "desc": "In the blackjack game, ask the dealer for an extra card.",
+    "usage": [
+      "{0}hit"
+    ]
+  },
+  "stand": {
+    "cmd": "stand",
+    "desc": "Finish your turn in the blackjack game.",
+    "usage": [
+      "{0}stand"
+    ]
+  },
+  "double": {
+    "cmd": "double",
+    "desc": "In the blackjack game, double your bet in order to receive exactly one more card, and your turn ends.",
+    "usage": [
+      "{0}double"
+    ]
+  },
+  "xpreset": {
+    "cmd": "xpreset",
+    "desc": "Resets specified user's XP, or the XP of all users in the server. You can't reverse this action.",
+    "usage": [
+      "{0}xpreset @b1nzy",
+      "{0}xpreset"
+    ]
+  },
+  "bible": {
+    "cmd": "bible",
+    "desc": "Shows bible verse. You need to supply book name and chapter:verse",
+    "usage": [
+      "{0}bible genesis 3:19"
+    ]
+  },
+  "edit": {
+    "cmd": "edit",
+    "desc": "Edits bot's message, you have to specify message ID and new text. Supports embeds.",
+    "usage": [
+      ".edit 7479498384 Hi :^)"
+    ]
+  },
+  "roleid": {
+    "cmd": "roleid rid",
+    "desc": "Shows the id of the specified role.",
+    "usage": [
+      ".rid Some Role"
     ]
   },
   "gwlcreate": {

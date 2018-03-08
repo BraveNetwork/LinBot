@@ -98,7 +98,7 @@ namespace NadekoBot.Modules.Utility
                 .Select(u => u.ToString())
                 .ToArray();
 
-            await Context.Channel.SendPaginatedConfirmAsync(_client, 0, (cur) =>
+            await Context.SendPaginatedConfirmAsync(0, (cur) =>
             {
                 return new EmbedBuilder().WithOkColor()
                     .WithTitle(Format.Bold(GetText("inrole_list", Format.Bold(role.Name))) + $" - {roleUsers.Length}")
@@ -131,6 +131,14 @@ namespace NadekoBot.Modules.Utility
             var usr = target ?? Context.User;
             await ReplyConfirmLocalized("userid", "🆔", Format.Bold(usr.ToString()),
                 Format.Code(usr.Id.ToString())).ConfigureAwait(false);
+        }
+
+        [NadekoCommand, Usage, Description, Aliases]
+        [RequireContext(ContextType.Guild)]
+        public async Task RoleId([Remainder] IRole role)
+        {
+            await ReplyConfirmLocalized("roleid", "🆔", Format.Bold(role.ToString()),
+                Format.Code(role.Id.ToString())).ConfigureAwait(false);
         }
 
         [NadekoCommand, Usage, Description, Aliases]
@@ -221,7 +229,11 @@ namespace NadekoBot.Modules.Utility
 
         [NadekoCommand, Usage, Description, Aliases]
         public async Task Stats()
-        {            
+        {
+            var ownerIds = string.Join("\n", _creds.OwnerIds);
+            if (string.IsNullOrWhiteSpace(ownerIds))
+                ownerIds = "-";
+
             await Context.Channel.EmbedAsync(
                 new EmbedBuilder().WithOkColor()
                     .WithAuthor(eab => eab.WithName($"NadekoBot v{StatsService.BotVersion}")
@@ -233,7 +245,7 @@ namespace NadekoBot.Modules.Utility
                     .AddField(efb => efb.WithName(GetText("commands_ran")).WithValue(_stats.CommandsRan.ToString()).WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("messages")).WithValue($"{_stats.MessageCounter} ({_stats.MessagesPerSecond:F2}/sec)").WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("memory")).WithValue($"{_stats.Heap} MB").WithIsInline(true))
-                    .AddField(efb => efb.WithName(GetText("owner_ids")).WithValue(string.Join("\n", _creds.OwnerIds)).WithIsInline(true))
+                    .AddField(efb => efb.WithName(GetText("owner_ids")).WithValue(ownerIds).WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("uptime")).WithValue(_stats.GetUptimeString("\n")).WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("presence")).WithValue(
                         GetText("presence_txt",

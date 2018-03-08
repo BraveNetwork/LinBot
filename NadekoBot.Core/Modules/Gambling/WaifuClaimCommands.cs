@@ -55,40 +55,30 @@ namespace NadekoBot.Modules.Gambling
                 NotEnoughFunds,
                 InsufficientAmount
             }
-            private readonly IBotConfigProvider _bc;
-            private readonly CurrencyService _cs;
+
+            private readonly ICurrencyService _cs;
             private readonly DbService _db;
             private readonly IDataCache _cache;
             private readonly DiscordSocketClient _client;
 
-            public WaifuClaimCommands(IDataCache cache, IBotConfigProvider bc,
-                CurrencyService cs, DbService db, DiscordSocketClient client)
+            public WaifuClaimCommands(IDataCache cache, ICurrencyService cs, DbService db, DiscordSocketClient client)
             {
-                _bc = bc;
                 _cs = cs;
                 _db = db;
                 _cache = cache;
                 _client = client;
             }
-
+            
             [NadekoCommand, Usage, Description, Aliases]
             public async Task WaifuReset()
             {
                 var price = _service.GetResetPrice(Context.User);
-                var msg = await Context.Channel.EmbedAsync(new EmbedBuilder()
-                        .WithOkColor()
+                var embed = new EmbedBuilder()
                         .WithTitle(GetText("waifu_reset_confirm"))
-                        .WithDescription(GetText("cost", Format.Bold(price + _bc.BotConfig.CurrencySign)))
-                        .WithFooter("yes/no")).ConfigureAwait(false);
+                        .WithDescription(GetText("cost", Format.Bold(price + _bc.BotConfig.CurrencySign)));
 
-                var input = await GetUserInputAsync(Context.User.Id, Context.Channel.Id);
-                input = input?.ToLowerInvariant().ToString();
-
-                if (input != "yes" && input != "y")
-                {
+                if (!await PromptUserConfirmAsync(embed))
                     return;
-                }
-                var _ = msg.DeleteAsync();
 
                 if (await _service.TryReset(Context.User).ConfigureAwait(false))
                 {
@@ -102,9 +92,9 @@ namespace NadekoBot.Modules.Gambling
             [RequireContext(ContextType.Guild)]
             public async Task WaifuClaim(int amount, [Remainder]IUser target)
             {
-                if (amount < 50)
+                if (amount < _bc.BotConfig.MinWaifuPrice)
                 {
-                    await ReplyErrorLocalized("waifu_isnt_cheap", 50 + _bc.BotConfig.CurrencySign).ConfigureAwait(false);
+                    await ReplyErrorLocalized("waifu_isnt_cheap", _bc.BotConfig.MinWaifuPrice + _bc.BotConfig.CurrencySign).ConfigureAwait(false);
                     return;
                 }
 
@@ -125,7 +115,7 @@ namespace NadekoBot.Modules.Gambling
                     {
                         var claimer = uow.DiscordUsers.GetOrCreate(Context.User);
                         var waifu = uow.DiscordUsers.GetOrCreate(target);
-                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, uow).ConfigureAwait(false))
+                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, gamble: true))
                         {
                             result = WaifuClaimResult.NotEnoughFunds;
                         }
@@ -150,7 +140,7 @@ namespace NadekoBot.Modules.Gambling
                     }
                     else if (isAffinity && amount > w.Price * 0.88f)
                     {
-                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, uow).ConfigureAwait(false))
+                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, gamble: true))
                         {
                             result = WaifuClaimResult.NotEnoughFunds;
                         }
@@ -172,7 +162,7 @@ namespace NadekoBot.Modules.Gambling
                     }
                     else if (amount >= w.Price * 1.1f) // if no affinity
                     {
-                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, uow).ConfigureAwait(false))
+                        if (!await _cs.RemoveAsync(Context.User.Id, "Claimed Waifu", amount, gamble: true))
                         {
                             result = WaifuClaimResult.NotEnoughFunds;
                         }
@@ -277,13 +267,13 @@ namespace NadekoBot.Modules.Gambling
 
                         if (w.Affinity?.UserId == Context.User.Id)
                         {
-                            await _cs.AddAsync(w.Waifu.UserId, "Waifu Compensation", amount, uow).ConfigureAwait(false);
+                            await _cs.AddAsync(w.Waifu.UserId, "Waifu Compensation", amount, gamble: true).ConfigureAwait(false);
                             w.Price = (int)Math.Floor(w.Price * 0.75f);
                             result = DivorceResult.SucessWithPenalty;
                         }
                         else
                         {
-                            await _cs.AddAsync(Context.User.Id, "Waifu Refund", amount, uow).ConfigureAwait(false);
+                            await _cs.AddAsync(Context.User.Id, "Waifu Refund", amount, gamble: true).ConfigureAwait(false);
 
                             result = DivorceResult.Success;
                         }
@@ -487,6 +477,17 @@ namespace NadekoBot.Modules.Gambling
                 var rng = new NadekoRandom();
 
                 var nobody = GetText("nobody");
+                var i = 0;
+                var itemsStr = !w.Items.Any()
+                    ? "-"
+                    : string.Join("\n", w.Items
+                        .OrderBy(x => x.Price)
+                        .GroupBy(x => x.ItemEmoji)
+                        .Select(x => $"{x.Key} x{x.Count(),-3}")
+                        .GroupBy(x => i++ / 2)
+                        .Select(x => string.Join(" ", x)));
+
+
                 var embed = new EmbedBuilder()
                     .WithOkColor()
                     .WithTitle("Waifu " + w.Waifu + " - \"the " + claimInfo.Title + "\"")
@@ -495,7 +496,7 @@ namespace NadekoBot.Modules.Gambling
                     .AddField(efb => efb.WithName(GetText("likes")).WithValue(w.Affinity?.ToString() ?? nobody).WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("changes_of_heart")).WithValue($"{affInfo.Count} - \"the {affInfo.Title}\"").WithIsInline(true))
                     .AddField(efb => efb.WithName(GetText("divorces")).WithValue(divorces.ToString()).WithIsInline(true))
-                    .AddField(efb => efb.WithName(GetText("gifts")).WithValue(!w.Items.Any() ? "-" : string.Join("\n", w.Items.OrderBy(x => x.Price).GroupBy(x => x.ItemEmoji).Select(x => $"{x.Key} x{x.Count()}"))).WithIsInline(false))
+                    .AddField(efb => efb.WithName(GetText("gifts")).WithValue(itemsStr).WithIsInline(false))
                     .AddField(efb => efb.WithName($"Waifus ({claims.Count})").WithValue(claims.Count == 0 ? nobody : string.Join("\n", claims.OrderBy(x => rng.Next()).Take(30).Select(x => x.Waifu))).WithIsInline(false));
 
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -509,7 +510,7 @@ namespace NadekoBot.Modules.Gambling
                 if (--page < 0 || page > 2)
                     return;
 
-                await Context.Channel.SendPaginatedConfirmAsync(_client, page, (cur) =>
+                await Context.SendPaginatedConfirmAsync(page, (cur) =>
                 {
                     var embed = new EmbedBuilder()
                         .WithTitle(GetText("waifu_gift_shop"))
@@ -517,7 +518,7 @@ namespace NadekoBot.Modules.Gambling
 
                     Enum.GetValues(typeof(WaifuItem.ItemName))
                                         .Cast<WaifuItem.ItemName>()
-                                        .Select(x => WaifuItem.GetItem(x))
+                                        .Select(x => WaifuItem.GetItem(x, _bc.BotConfig.WaifuGiftMultiplier))
                                         .OrderBy(x => x.Price)
                                         .Skip(9 * cur)
                                         .Take(9)
@@ -535,7 +536,7 @@ namespace NadekoBot.Modules.Gambling
                 if (waifu.Id == Context.User.Id)
                     return;
 
-                var itemObj = WaifuItem.GetItem(item);
+                var itemObj = WaifuItem.GetItem(item, _bc.BotConfig.WaifuGiftMultiplier);
 
                 using (var uow = _db.UnitOfWork)
                 {
@@ -543,7 +544,7 @@ namespace NadekoBot.Modules.Gambling
 
                     //try to buy the item first
 
-                    if (!await _cs.RemoveAsync(Context.User.Id, "Bought waifu item", itemObj.Price, uow))
+                    if (!await _cs.RemoveAsync(Context.User.Id, "Bought waifu item", itemObj.Price, gamble: true))
                     {
                         await ReplyErrorLocalized("not_enough", _bc.BotConfig.CurrencySign).ConfigureAwait(false);
                         return;
@@ -601,23 +602,23 @@ namespace NadekoBot.Modules.Gambling
                     title = ClaimTitles.Lonely;
                 else if (count == 1)
                     title = ClaimTitles.Devoted;
-                else if (count < 4)
+                else if (count < 3)
                     title = ClaimTitles.Rookie;
                 else if (count < 6)
                     title = ClaimTitles.Schemer;
-                else if (count < 8)
-                    title = ClaimTitles.Dilettante;
                 else if (count < 10)
-                    title = ClaimTitles.Intermediate;
-                else if (count < 12)
-                    title = ClaimTitles.Seducer;
-                else if (count < 15)
-                    title = ClaimTitles.Expert;
+                    title = ClaimTitles.Dilettante;
                 else if (count < 17)
-                    title = ClaimTitles.Veteran;
+                    title = ClaimTitles.Intermediate;
                 else if (count < 25)
-                    title = ClaimTitles.Incubis;
+                    title = ClaimTitles.Seducer;
+                else if (count < 35)
+                    title = ClaimTitles.Expert;
                 else if (count < 50)
+                    title = ClaimTitles.Veteran;
+                else if (count < 75)
+                    title = ClaimTitles.Incubis;
+                else if (count < 100)
                     title = ClaimTitles.Harem_King;
                 else
                     title = ClaimTitles.Harem_God;
@@ -643,17 +644,17 @@ namespace NadekoBot.Modules.Gambling
                     title = AffinityTitles.Faithful;
                 else if (count < 4)
                     title = AffinityTitles.Defiled;
-                else if (count < 7)
-                    title = AffinityTitles.Cheater;
                 else if (count < 9)
+                    title = AffinityTitles.Cheater;
+                else if (count < 12)
                     title = AffinityTitles.Tainted;
-                else if (count < 11)
+                else if (count < 16)
                     title = AffinityTitles.Corrupted;
-                else if (count < 13)
+                else if (count < 20)
                     title = AffinityTitles.Lewd;
-                else if (count < 15)
+                else if (count < 25)
                     title = AffinityTitles.Sloot;
-                else if (count < 17)
+                else if (count < 35)
                     title = AffinityTitles.Depraved;
                 else
                     title = AffinityTitles.Harlot;

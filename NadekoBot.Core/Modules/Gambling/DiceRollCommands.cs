@@ -1,32 +1,32 @@
-using Discord;
-using Discord.Commands;
-using NadekoBot.Extensions;
-using NadekoBot.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using ImageSharp;
 using NadekoBot.Common;
 using NadekoBot.Common.Attributes;
+using NadekoBot.Core.Services;
+using NadekoBot.Extensions;
 using Image = ImageSharp.Image;
-using ImageSharp;
 
 namespace NadekoBot.Modules.Gambling
 {
     public partial class Gambling
     {
         [Group]
-        public class DriceRollCommands : NadekoSubmodule
+        public class DiceRollCommands : NadekoSubmodule
         {
-            private static readonly Regex dndRegex  = new Regex(@"^(?<n1>\d+)d(?<n2>\d+)(?:\+(?<add>\d+))?(?:\-(?<sub>\d+))?$", RegexOptions.Compiled);
-            private static readonly Regex fudgeRegex  = new Regex(@"^(?<n1>\d+)d(?:F|f)$", RegexOptions.Compiled);
+            private static readonly Regex dndRegex = new Regex(@"^(?<n1>\d+)d(?<n2>\d+)(?:\+(?<add>\d+))?(?:\-(?<sub>\d+))?$", RegexOptions.Compiled);
+            private static readonly Regex fudgeRegex = new Regex(@"^(?<n1>\d+)d(?:F|f)$", RegexOptions.Compiled);
 
             private static readonly char[] _fateRolls = { '-', ' ', '+' };
             private readonly IImageCache _images;
 
-            public DriceRollCommands(IDataCache data)
+            public DiceRollCommands(IDataCache data)
             {
                 _images = data.LocalImages;
             }
@@ -47,8 +47,8 @@ namespace NadekoBot.Modules.Gambling
                     return ms;
                 }).ConfigureAwait(false);
 
-                await Context.Channel.SendFileAsync(imageStream, 
-                    "dice.png", 
+                await Context.Channel.SendFileAsync(imageStream,
+                    "dice.png",
                     Context.User.Mention + " " + GetText("dice_rolled", Format.Code(gen.ToString()))).ConfigureAwait(false);
             }
 
@@ -130,7 +130,7 @@ namespace NadekoBot.Modules.Gambling
                 bitmap.SaveAsPng(ms);
                 ms.Position = 0;
                 await Context.Channel.SendFileAsync(ms, "dice.png",
-                    Context.User.Mention +  " " +
+                    Context.User.Mention + " " +
                     GetText("dice_rolled_num", Format.Bold(values.Count.ToString())) +
                     " " + GetText("total_average",
                         Format.Bold(values.Sum().ToString()),

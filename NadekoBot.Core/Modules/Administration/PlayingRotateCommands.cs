@@ -7,6 +7,7 @@ using NadekoBot.Common.Attributes;
 using NadekoBot.Modules.Administration.Services;
 using Microsoft.EntityFrameworkCore;
 using NadekoBot.Core.Common;
+using Discord;
 
 namespace NadekoBot.Modules.Administration
 {
@@ -43,7 +44,7 @@ namespace NadekoBot.Modules.Administration
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
-            public async Task AddPlaying(PlayingType t,[Remainder] string status)
+            public async Task AddPlaying(ActivityType t,[Remainder] string status)
             {
                 using (var uow = _db.UnitOfWork)
                 {
@@ -52,6 +53,8 @@ namespace NadekoBot.Modules.Administration
                     config.RotatingStatusMessages.Add(toAdd);
                     await uow.CompleteAsync();
                 }
+
+                _bc.Reload();
 
                 await ReplyConfirmLocalized("ropl_added").ConfigureAwait(false);
             }
@@ -89,6 +92,8 @@ namespace NadekoBot.Modules.Administration
                     config.RotatingStatusMessages.RemoveAt(index);
                     await uow.CompleteAsync();
                 }
+
+                _bc.Reload();
                 await ReplyConfirmLocalized("reprm", msg).ConfigureAwait(false);
             }
         }

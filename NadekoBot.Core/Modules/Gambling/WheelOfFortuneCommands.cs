@@ -1,62 +1,43 @@
 ﻿using Discord;
-using Discord.Commands;
 using NadekoBot.Common.Attributes;
 using NadekoBot.Extensions;
-using NadekoBot.Modules.Gambling.Common.WheelOfFortune;
 using NadekoBot.Core.Services;
 using System.Threading.Tasks;
 using Wof = NadekoBot.Modules.Gambling.Common.WheelOfFortune.WheelOfFortune;
+using NadekoBot.Modules.Gambling.Services;
+using NadekoBot.Core.Modules.Gambling.Common;
+using NadekoBot.Core.Common;
 
 namespace NadekoBot.Modules.Gambling
 {
     public partial class Gambling
     {
-        public class WheelOfFortuneCommands : NadekoSubmodule
+        public class WheelOfFortuneCommands : GamblingSubmodule<GamblingService>
         {
-            private readonly CurrencyService _cs;
-            private readonly IBotConfigProvider _bc;
+            private readonly ICurrencyService _cs;
             private readonly DbService _db;
 
-            public WheelOfFortuneCommands(CurrencyService cs, IBotConfigProvider bc,
-                DbService db)
+            public WheelOfFortuneCommands(ICurrencyService cs, DbService db)
             {
                 _cs = cs;
-                _bc = bc;
                 _db = db;
             }
 
-            public enum Allin { Allin = int.MinValue, All = int.MinValue }
-
             [NadekoCommand, Usage, Description, Aliases]
-            public Task WheelOfFortune(Allin _)
+            public async Task WheelOfFortune(ShmartNumber amount)
             {
-                long cur;
-                using (var uow = _db.UnitOfWork)
-                {
-                    cur = uow.DiscordUsers.GetUserCurrency(Context.User.Id);
-                }
-                return WheelOfFortune(cur);
-            }
-
-            [NadekoCommand, Usage, Description, Aliases]
-            public async Task WheelOfFortune(long bet)
-            {
-                const int minBet = 10;
-                if (bet < minBet)
-                {
-                    await ReplyErrorLocalized("min_bet_limit", minBet + _bc.BotConfig.CurrencySign).ConfigureAwait(false);
+                if (!await CheckBetMandatory(amount))
                     return;
-                }
 
-                if (!await _cs.RemoveAsync(Context.User.Id, "Wheel Of Fortune - bet", bet, gamble: true).ConfigureAwait(false))
+                if (!await _cs.RemoveAsync(Context.User.Id, "Wheel Of Fortune - bet", amount, gamble: true))
                 {
                     await ReplyErrorLocalized("not_enough", _bc.BotConfig.CurrencySign).ConfigureAwait(false);
                     return;
                 }
 
-                var wof = new WheelOfFortune();
+                var wof = new Wof();
 
-                var amount = (int)(bet * wof.Multiplier);
+                amount = (long)(amount * wof.Multiplier);
 
                 if (amount > 0)
                     await _cs.AddAsync(Context.User.Id, "Wheel Of Fortune - won", amount, gamble: true).ConfigureAwait(false);

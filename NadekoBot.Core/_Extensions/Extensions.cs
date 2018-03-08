@@ -19,11 +19,15 @@ using NadekoBot.Common;
 using NadekoBot.Core.Services;
 using SixLabors.Shapes;
 using System.Numerics;
+using System.Diagnostics;
+using NLog;
 
 namespace NadekoBot.Extensions
 {
     public static class Extensions
     {
+        private static Logger _log = LogManager.GetCurrentClassLogger();
+
         // https://github.com/SixLabors/ImageSharp/tree/master/samples/AvatarWithRoundedCorner
         public static void ApplyRoundedCorners(this Image<Rgba32> img, float cornerRadius)
         {
@@ -96,7 +100,15 @@ namespace NadekoBot.Extensions
             msg.Author?.Id == client.CurrentUser.Id;
 
         public static string RealSummary(this CommandInfo cmd, string prefix) => string.Format(cmd.Summary, prefix);
-        public static string RealRemarks(this CommandInfo cmd, string prefix) => string.Format(cmd.Remarks, prefix);
+        public static string RealRemarks(this CommandInfo cmd, string prefix) {
+			var usage = JsonConvert.DeserializeObject<string[]>(cmd.Remarks);
+			if (usage.Count() > 2) {
+				return "```\n" + string.Join("\n", usage.Select(x => string.Format(x, prefix))) + "\n```";
+			}
+			else {
+				return string.Join(" or ", usage.Select(x => Format.Code(string.Format(x, prefix))));
+			}
+		}
 
         public static EmbedBuilder AddPaginatedFooter(this EmbedBuilder embed, int curPage, int? lastPage)
         {
@@ -112,10 +124,10 @@ namespace NadekoBot.Extensions
         public static EmbedBuilder WithErrorColor(this EmbedBuilder eb) =>
             eb.WithColor(NadekoBot.ErrorColor);
 
-        public static ReactionEventWrapper OnReaction(this IUserMessage msg, DiscordSocketClient client, Action<SocketReaction> reactionAdded, Action<SocketReaction> reactionRemoved = null)
+        public static ReactionEventWrapper OnReaction(this IUserMessage msg, DiscordSocketClient client, Func<SocketReaction, Task> reactionAdded, Func<SocketReaction, Task> reactionRemoved = null)
         {
             if (reactionRemoved == null)
-                reactionRemoved = delegate { };
+                reactionRemoved = _ => Task.CompletedTask;
 
             var wrap = new ReactionEventWrapper(client, msg);
             wrap.OnReactionAdded += (r) => { var _ = Task.Run(() => reactionAdded(r)); };
@@ -255,6 +267,12 @@ namespace NadekoBot.Extensions
             }
 
             return canvas;
+        }
+
+        public static void LogAndReset(this Stopwatch sw, string name = "")
+        {
+            _log.Info(name + " | " + sw.Elapsed.TotalSeconds.ToString("F2"));
+            sw.Reset();
         }
     }
 }

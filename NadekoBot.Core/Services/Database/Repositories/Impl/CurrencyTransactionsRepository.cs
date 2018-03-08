@@ -15,9 +15,9 @@ namespace NadekoBot.Core.Services.Database.Repositories.Impl
         {
             return _set.Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.DateAdded)
-                .Skip(10 * page)
-                .Take(10)
+                .Skip(15 * page)
+                .Take(15)
                 .ToList();
         }
     }
-}   
+}

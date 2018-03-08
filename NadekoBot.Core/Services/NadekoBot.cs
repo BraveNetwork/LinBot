@@ -20,7 +20,6 @@ using NadekoBot.Common.ShardCom;
 using NadekoBot.Core.Services.Database;
 using StackExchange.Redis;
 using Newtonsoft.Json;
-using NadekoBot.Core.Common;
 
 namespace NadekoBot
 {
@@ -41,8 +40,8 @@ namespace NadekoBot
          * I don't want to pass botconfig every time I 
          * want to send a confirm or error message, so
          * I'll keep this for now */
-        public static Color OkColor { get; private set; }
-        public static Color ErrorColor { get; private set; }
+        public static Color OkColor { get; set; }
+        public static Color ErrorColor { get; set; }
 
         public TaskCompletionSource<bool> Ready { get; private set; } = new TaskCompletionSource<bool>();
 
@@ -56,6 +55,14 @@ namespace NadekoBot
                 .ListRange(Credentials.RedisKey() + "_shardstats")
                 .Select(x => JsonConvert.DeserializeObject<ShardComMessage>(x))
                 .Sum(x => x.Guilds);
+
+        public int[] ShardGuildCounts =>
+            Cache.Redis.GetDatabase()
+                .ListRange(Credentials.RedisKey() + "_shardstats")
+                .Select(x => JsonConvert.DeserializeObject<ShardComMessage>(x))
+                .OrderBy(x => x.ShardId)
+                .Select(x => x.Guilds)
+                .ToArray();
 
         public NadekoBot(int shardId, int parentProcessId)
         {
@@ -348,9 +355,9 @@ namespace NadekoBot
             {
                 try
                 {
-                    var obj = new { Name = default(string), PlayingType = PlayingType.Playing };
+                    var obj = new { Name = default(string), Activity = ActivityType.Playing };
                     obj = JsonConvert.DeserializeAnonymousType(game, obj);
-                    await Client.SetGameAsync(obj.Name, streamType: StreamType.NotStreaming + (int)obj.PlayingType).ConfigureAwait(false);
+                    await Client.SetGameAsync(obj.Name, type: obj.Activity).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -364,7 +371,7 @@ namespace NadekoBot
                 {
                     var obj = new { Name = "", Url = "" };
                     obj = JsonConvert.DeserializeAnonymousType(streamData, obj);
-                    await Client.SetGameAsync(obj.Name, obj.Url, StreamType.Twitch).ConfigureAwait(false);
+                    await Client.SetGameAsync(obj.Name, obj.Url, ActivityType.Streaming).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -373,9 +380,9 @@ namespace NadekoBot
             }, CommandFlags.FireAndForget);
         }
 
-        public Task SetGameAsync(string game, PlayingType type)
+        public Task SetGameAsync(string game, ActivityType type)
         {
-            var obj = new { Name = game, PlayingType = type };
+            var obj = new { Name = game, Activity = type };
             var sub = Services.GetService<IDataCache>().Redis.GetSubscriber();
             return sub.PublishAsync(Client.CurrentUser.Id + "_status.game_set", JsonConvert.SerializeObject(obj));
         }

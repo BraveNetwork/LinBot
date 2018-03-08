@@ -20,7 +20,7 @@ namespace NadekoBot.Modules.Administration
 
             public async Task InternalReactionRoles(bool exclusive, params string[] input)
             {
-                var msgs = await ((SocketTextChannel)Context.Channel).GetMessagesAsync().Flatten();
+                var msgs = await ((SocketTextChannel)Context.Channel).GetMessagesAsync().FlattenAsync();
                 var prev = (IUserMessage)msgs.FirstOrDefault(x => x is IUserMessage && x.Id != Context.Message.Id);
 
                 if (prev == null)
@@ -270,8 +270,17 @@ namespace NadekoBot.Modules.Administration
 
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
+            [Priority(1)]
+            public async Task RoleColor([Remainder] IRole role)
+            {
+                await Context.Channel.SendConfirmAsync("Role Color", role.Color.RawValue.ToString("X"));
+            }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [RequireContext(ContextType.Guild)]
             [RequireUserPermission(GuildPermission.ManageRoles)]
             [RequireBotPermission(GuildPermission.ManageRoles)]
+            [Priority(0)]
             public async Task RoleColor(params string[] args)
             {
                 if (args.Length != 2 && args.Length != 4)
@@ -309,34 +318,8 @@ namespace NadekoBot.Modules.Administration
             [RequireContext(ContextType.Guild)]
             [RequireUserPermission(GuildPermission.MentionEveryone)]
             [RequireBotPermission(GuildPermission.ManageRoles)]
-            public async Task MentionRole(IRole role)
+            public async Task MentionRole([Remainder] IRole role)
             {
-                //string send = "❕" + GetText("menrole", Context.User.Mention);
-                //foreach (var role in roles)
-                //{
-                //    try
-                //    {
-                //        await role.ModifyAsync(x => x.Mentionable = true);
-
-                //    }
-                //    catch
-                //    {
-                //        send += $"\n**{role.Name}**\n";
-                //        send += string.Join(", ", (await Context.Guild.GetUsersAsync())
-                //            .Where(u => u.GetRoles().Contains(role))
-                //            .Take(50).Select(u => u.Mention));
-                //    }
-                //}
-
-                //while (send.Length > 2000)
-                //{
-                //    var curstr = send.Substring(0, 2000);
-                //    await Context.Channel.SendMessageAsync(curstr.Substring(0,
-                //            curstr.LastIndexOf(", ", StringComparison.Ordinal) + 1)).ConfigureAwait(false);
-                //    send = curstr.Substring(curstr.LastIndexOf(", ", StringComparison.Ordinal) + 1) +
-                //           send.Substring(2000);
-                //}
-
                 if(!role.IsMentionable)
                 {
                     await role.ModifyAsync(x => x.Mentionable = true);

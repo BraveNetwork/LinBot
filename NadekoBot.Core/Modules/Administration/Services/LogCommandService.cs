@@ -1,5 +1,4 @@
-﻿
-#if !GLOBAL_NADEKO
+﻿#if !GLOBAL_NADEKO
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,25 +7,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using NadekoBot.Extensions;
-using NadekoBot.Modules.Administration.Common;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
 using NadekoBot.Core.Services.Impl;
+using NadekoBot.Extensions;
+using NadekoBot.Modules.Administration.Common;
 using NLog;
 
 namespace NadekoBot.Modules.Administration.Services
 {
     public class LogCommandService : INService
     {
-
         private readonly DiscordSocketClient _client;
         private readonly Logger _log;
 
         private string PrettyCurrentTime(IGuild g)
         {
             var time = DateTime.UtcNow;
-            if(g != null)
+            if (g != null)
                 time = TimeZoneInfo.ConvertTime(time, _tz.GetTimeZoneOrUtc(g.Id));
             return $"【{time:HH:mm:ss}】";
         }
@@ -136,7 +134,6 @@ namespace NadekoBot.Modules.Administration.Services
                         return;
 
                     var embed = new EmbedBuilder();
-
 
                     if (before.Username != after.Username)
                     {
@@ -814,11 +811,13 @@ namespace NadekoBot.Modules.Administration.Services
                     ITextChannel logChannel;
                     if ((logChannel = await TryGetLogChannel(channel.Guild, logSetting, LogType.MessageDeleted)) == null || logChannel.Id == msg.Id)
                         return;
+
+                    var resolvedMessage = msg.Resolve(userHandling: TagHandling.FullName);
                     var embed = new EmbedBuilder()
                         .WithOkColor()
                         .WithTitle("🗑 " + GetText(logChannel.Guild, "msg_del", ((ITextChannel)msg.Channel).Name))
                         .WithDescription(msg.Author.ToString())
-                        .AddField(efb => efb.WithName(GetText(logChannel.Guild, "content")).WithValue(string.IsNullOrWhiteSpace(msg.Content) ? "-" : msg.Resolve(userHandling: TagHandling.FullName)).WithIsInline(false))
+                        .AddField(efb => efb.WithName(GetText(logChannel.Guild, "content")).WithValue(string.IsNullOrWhiteSpace(resolvedMessage) ? "-" : resolvedMessage).WithIsInline(false))
                         .AddField(efb => efb.WithName("Id").WithValue(msg.Id.ToString()).WithIsInline(false))
                         .WithFooter(efb => efb.WithText(CurrentTime(channel.Guild)));
                     if (msg.Attachments.Any())
@@ -901,7 +900,7 @@ namespace NadekoBot.Modules.Administration.Services
             VoicePresence,
             VoicePresenceTTS,
             UserMuted
-        };
+        }
 
         private async Task<ITextChannel> TryGetLogChannel(IGuild guild, LogSetting logSetting, LogType logChannelType)
         {
@@ -1029,6 +1028,5 @@ namespace NadekoBot.Modules.Administration.Services
             }
         }
     }
-
 }
 #endif

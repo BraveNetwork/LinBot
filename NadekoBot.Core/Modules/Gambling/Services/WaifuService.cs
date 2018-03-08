@@ -10,10 +10,10 @@ namespace NadekoBot.Modules.Gambling.Services
     public class WaifuService : INService
     {
         private readonly DbService _db;
-        private readonly CurrencyService _cs;
+        private readonly ICurrencyService _cs;
         private readonly IBotConfigProvider _bc;
 
-        public WaifuService(DbService db, CurrencyService cs, IBotConfigProvider bc)
+        public WaifuService(DbService db, ICurrencyService cs, IBotConfigProvider bc)
         {
             _db = db;
             _cs = cs;
@@ -33,10 +33,8 @@ namespace NadekoBot.Modules.Gambling.Services
                 if (waifu == null || waifu.ClaimerId != ownerUser.Id)
                     return false;
 
-                if (!await _cs.RemoveAsync(owner.Id,
-                    "Waifu Transfer",
-                    waifu.Price / 10,
-                    uow).ConfigureAwait(false))
+                if (!await _cs.RemoveAsync(owner.Id, "Waifu Transfer",  
+                    waifu.Price / 10, gamble: true))
                 {
                     return false;
                 }
@@ -74,7 +72,7 @@ namespace NadekoBot.Modules.Gambling.Services
             using (var uow = _db.UnitOfWork)
             {
                 var price = GetResetPrice(user);
-                if (!await _cs.RemoveAsync(user.Id, "Waifu Reset", price, uow))
+                if (!await _cs.RemoveAsync(user.Id, "Waifu Reset", price, gamble: true))
                     return false;
 
                 var affs = uow._context.WaifuUpdates
@@ -103,7 +101,6 @@ namespace NadekoBot.Modules.Gambling.Services
 
                 uow.Complete();
             }
-
             return true;
         }
     }
