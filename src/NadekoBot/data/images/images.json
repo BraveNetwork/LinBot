@@ -1,34 +1,34 @@
 {
     "coins": {
         "heads": [
-            "https://i.imgur.com/rlLWef6.png"
+            "https://i.imgur.com/W73ZmDO.png"
         ],
         "tails": [
-            "https://i.imgur.com/RZbqSXA.png"
+            "https://i.imgur.com/zLNfe1L.png"
         ]
     },
     "currency": [
-        "https://i.imgur.com/ggMhmK8.jpg",
-        "https://i.imgur.com/xa4iOCh.jpg",
-        "https://i.imgur.com/jNYTMV7.jpg"
+        "https://i.imgur.com/qMuvF9g.png",
+        "https://i.imgur.com/6Bm5CSr.png",
+        "https://i.imgur.com/Y0bRkys.png"
     ],
     "dice": [
-        "https://i.imgur.com/KyOfDw1.png",
-        "https://i.imgur.com/IX8xjZ3.png",
-        "https://i.imgur.com/k9GqKp5.png",
-        "https://i.imgur.com/rmhTSnp.png",
-        "https://i.imgur.com/93PUmFr.png",
-        "https://i.imgur.com/CMBCJRC.png",
-        "https://i.imgur.com/VqhUpsV.png",
-        "https://i.imgur.com/r6rFCuT.png",
-        "https://i.imgur.com/eIxuOpg.png",
-        "https://i.imgur.com/At9YgRO.png"
+        "https://i.imgur.com/ae5V2Uj.png",
+        "https://i.imgur.com/eNOSBNf.png",
+        "https://i.imgur.com/v3nwIIq.png",
+        "https://i.imgur.com/1WkRvrb.png",
+        "https://i.imgur.com/BIySpo5.png",
+        "https://i.imgur.com/9JcN8ii.png",
+        "https://i.imgur.com/nEjQSRK.png",
+        "https://i.imgur.com/0kySM5v.png",
+        "https://i.imgur.com/dCTbLQE.png",
+        "https://i.imgur.com/k9L7Om2.png"
     ],
     "rategirl": {
         "matrix": "https://i.imgur.com/z7yySqA.png",
         "dot": "https://i.imgur.com/TpubajW.png"
     },
     "xp": {
-        "bg": "https://i.imgur.com/ozgFffJ.png"
+        "bg": "https://i.imgur.com/xUSrSVM.png"
     }
 }
