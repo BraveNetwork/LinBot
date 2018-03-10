@@ -1,66 +1,129 @@
-﻿using Discord;
-using Discord.Commands;
-using NadekoBot.Modules.Gambling.Common;
-using NadekoBot.Modules.Gambling.Common.CurrencyEvents;
-using NadekoBot.Core.Services;
+﻿using NadekoBot.Core.Services;
+using NadekoBot.Core.Modules.Gambling.Common.Events;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
+using NadekoBot.Modules.Gambling.Common;
+using Discord;
+using Discord.WebSocket;
 using System.Threading.Tasks;
+using System;
+using NLog;
+using NadekoBot.Core.Services.Database.Models;
+using System.Net.Http;
+using Newtonsoft.Json;
+using System.Linq;
+using NadekoBot.Core.Modules.Gambling.Common.CurrencyEvents;
 
 namespace NadekoBot.Modules.Gambling.Services
 {
-    public class CurrencyEventsService : INService, IUnloadableService
+    public class CurrencyEventsService : INService
     {
-        public ConcurrentDictionary<ulong, List<ReactionEvent>> ReactionEvents { get; }
+        private readonly DbService _db;
+        private readonly DiscordSocketClient _client;
+        private readonly ICurrencyService _cs;
+        private readonly IBotConfigProvider _bc;
+        private readonly IBotCredentials _creds;
+        private readonly HttpClient _http;
+        private readonly Logger _log;
+        private readonly ConcurrentDictionary<ulong, ICurrencyEvent> _events =
+            new ConcurrentDictionary<ulong, ICurrencyEvent>();
 
-        public SneakyEvent SneakyEvent { get; private set; } = null;
-        private SemaphoreSlim _sneakyLock = new SemaphoreSlim(1, 1);
-
-        public CurrencyEventsService()
+        public CurrencyEventsService(DbService db, DiscordSocketClient client,
+            IBotCredentials creds, ICurrencyService cs, IBotConfigProvider bc)
         {
-            ReactionEvents = new ConcurrentDictionary<ulong, List<ReactionEvent>>();
+            _db = db;
+            _client = client;
+            _cs = cs;
+            _bc = bc;
+            _creds = creds;
+            _http = new HttpClient();
+            _log = LogManager.GetCurrentClassLogger();
+
+#if GLOBAL_NADEKO
+            if (_client.ShardId == 0)
+            {
+                Task t = BotlistUpvoteLoop();
+            }
+#endif
         }
 
-        public async Task<bool> StartSneakyEvent(SneakyEvent ev, IUserMessage msg, ICommandContext ctx)
+        private async Task BotlistUpvoteLoop()
         {
-            await _sneakyLock.WaitAsync().ConfigureAwait(false);
-            try
+            if (string.IsNullOrWhiteSpace(_creds.BotListToken))
+                return;
+            while (true)
             {
-                if (SneakyEvent != null)
-                    return false;
-
-                SneakyEvent = ev;
-                ev.OnEnded += () => SneakyEvent = null;
-                var _ = SneakyEvent.Start(msg, ctx).ConfigureAwait(false);
-            }
-            finally
-            {
-                _sneakyLock.Release();
-            }
-            return true;
-        }
-
-        public async Task Unload()
-        {
-            foreach (var kvp in ReactionEvents)
-            {
-                foreach (var ev in kvp.Value)
+                await Task.Delay(TimeSpan.FromHours(1));
+                try
                 {
-                    try { await ev.Stop().ConfigureAwait(false); } catch { }
+                    var req = new HttpRequestMessage(HttpMethod.Get,
+                        $"https://discordbots.org/api/bots/116275390695079945/votes?onlyids=true&days=1");
+                    req.Headers.Add("Authorization", _creds.BotListToken);
+                    var res = await _http.SendAsync(req);
+                    if (!res.IsSuccessStatusCode)
+                    {
+                        _log.Warn("Botlist API not reached.");
+                        continue;
+                    }
+                    var resStr = await res.Content.ReadAsStringAsync();
+                    var ids = JsonConvert.DeserializeObject<ulong[]>(resStr);
+                    await _cs.AddBulkAsync(ids, ids.Select(x => "Voted - <https://discordbots.org/bot/nadeko/vote>"), ids.Select(x => 10L), true);
+
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex);
                 }
             }
-            ReactionEvents.Clear();
+            //await ReplyConfirmLocalized("bot_list_awarded",
+            //    Format.Bold(amount.ToString()),
+            //    Format.Bold(ids.Length.ToString())).ConfigureAwait(false);
+        }
 
-            await _sneakyLock.WaitAsync().ConfigureAwait(false);
-            try
+        public async Task<bool> TryCreateEventAsync(ulong guildId, ulong channelId, Event.Type type,
+            EventOptions opts, Func<Event.Type, EventOptions, long, EmbedBuilder> embed)
+        {
+            SocketGuild g = _client.GetGuild(guildId);
+            SocketTextChannel ch = g?.GetChannel(channelId) as SocketTextChannel;
+            if (ch == null)
+                return false;
+
+            ICurrencyEvent ce;
+
+            if (type == Event.Type.Reaction)
             {
-                await SneakyEvent.Stop().ConfigureAwait(false);
+                ce = new ReactionEvent(_client, _cs, _bc, g, ch, opts, embed);
             }
-            finally
+            //else if (type == Event.Type.NotRaid)
+            //{
+            //    ce = new NotRaidEvent(_client, _cs, _bc, g, ch, opts, embed);
+            //}
+            else
             {
-                _sneakyLock.Release();
+                return false;
             }
+
+            var added = _events.TryAdd(guildId, ce);
+            if (added)
+            {
+                try
+                {
+                    ce.OnEnded += OnEventEnded;
+                    await ce.Start();
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex);
+                    _events.TryRemove(guildId, out ce);
+                    return false;
+                }
+            }
+            return added;
+        }
+
+        private Task OnEventEnded(ulong gid)
+        {
+            _events.TryRemove(gid, out _);
+            return Task.CompletedTask;
         }
     }
 }

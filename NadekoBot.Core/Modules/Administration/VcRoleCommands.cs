@@ -29,7 +29,7 @@ namespace NadekoBot.Modules.Administration
             [RequireUserPermission(GuildPermission.ManageRoles)]
             [RequireUserPermission(GuildPermission.ManageChannels)]
             [RequireBotPermission(GuildPermission.ManageRoles)]
-            //todo 999 discord.net [RequireBotPermission(GuildPermission.ManageChannels)]
+            [RequireBotPermission(GuildPermission.ManageChannels)]
             [RequireContext(ContextType.Guild)]
             public async Task VcRole([Remainder]IRole role = null)
             {
@@ -49,13 +49,13 @@ namespace NadekoBot.Modules.Administration
                 {
                     if (guildVcRoles.TryRemove(vc.Id, out role))
                     {
-                        await ReplyConfirmLocalized("vcrole_removed", Format.Bold(vc.Name)).ConfigureAwait(false);
                         using (var uow = _db.UnitOfWork)
                         {
                             var conf = uow.GuildConfigs.For(Context.Guild.Id, set => set.Include(x => x.VcRoleInfos));
                             conf.VcRoleInfos.RemoveWhere(x => x.VoiceChannelId == vc.Id);
                             uow.Complete();
                         }
+                        await ReplyConfirmLocalized("vcrole_removed", Format.Bold(vc.Name)).ConfigureAwait(false);
                     }
                 }
                 else

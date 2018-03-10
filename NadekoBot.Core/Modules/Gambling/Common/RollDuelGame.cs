@@ -16,7 +16,7 @@ namespace NadekoBot.Core.Modules.Gambling.Common
 
         public long Amount { get; }
 
-        private readonly CurrencyService _cs;
+        private readonly ICurrencyService _cs;
 
         public enum State
         {
@@ -43,7 +43,7 @@ namespace NadekoBot.Core.Modules.Gambling.Common
         public State CurrentState { get; private set; }
         public ulong Winner { get; private set; }
 
-        public RollDuelGame(CurrencyService cs, ulong botId, ulong p1, ulong p2, long amount)
+        public RollDuelGame(ICurrencyService cs, ulong botId, ulong p1, ulong p2, long amount)
         {
             this.P1 = p1;
             this.P2 = p2;

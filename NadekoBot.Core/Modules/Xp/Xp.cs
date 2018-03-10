@@ -7,9 +7,9 @@ using NadekoBot.Modules.Xp.Common;
 using NadekoBot.Modules.Xp.Services;
 using NadekoBot.Core.Services;
 using NadekoBot.Core.Services.Database.Models;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using NadekoBot.Core.Common.Attributes;
 
 namespace NadekoBot.Modules.Xp
 {
@@ -17,19 +17,15 @@ namespace NadekoBot.Modules.Xp
     {
         private readonly DiscordSocketClient _client;
         private readonly DbService _db;
-        private readonly IBotConfigProvider _bc;
 
-        public Xp(DiscordSocketClient client,DbService db, IBotConfigProvider bc)
+        public Xp(DiscordSocketClient client,DbService db)
         {
             _client = client;
             _db = db;
-            _bc = bc;
         }
         
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
-        //todo add ratelimit attribute
-        //[Ratelimit(30)]
         public async Task Experience([Remainder]IUser user = null)
         {
             user = user ?? Context.User;
@@ -200,7 +196,7 @@ namespace NadekoBot.Modules.Xp
             if (--page < 0 || page > 100)
                 return Task.CompletedTask;
 
-            return Context.Channel.SendPaginatedConfirmAsync(_client, page, async (curPage) =>
+            return Context.SendPaginatedConfirmAsync(page, (curPage) =>
             {
                 var users = _service.GetUserXps(Context.Guild.Id, curPage);
 
@@ -215,7 +211,7 @@ namespace NadekoBot.Modules.Xp
                     for (int i = 0; i < users.Length; i++)
                     {
                         var levelStats = LevelStats.FromXp(users[i].Xp + users[i].AwardedXp);
-                        var user = await Context.Guild.GetUserAsync(users[i].UserId).ConfigureAwait(false);
+                        var user = ((SocketGuild)Context.Guild).GetUser(users[i].UserId);
 
                         var userXpData = users[i];
 
@@ -265,14 +261,21 @@ namespace NadekoBot.Modules.Xp
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task XpAdd(int amount, [Remainder] IGuildUser user)
+        public async Task XpAdd(int amount, ulong userId)
         {
             if (amount == 0)
                 return;
 
-            _service.AddXp(user.Id, Context.Guild.Id, amount);
-
-            await ReplyConfirmLocalized("modified", Format.Bold(user.ToString()), Format.Bold(amount.ToString())).ConfigureAwait(false);
+            _service.AddXp(userId, Context.Guild.Id, amount);
+            var usr = ((SocketGuild)Context.Guild).GetUser(userId)?.ToString()
+                ?? userId.ToString();
+            await ReplyConfirmLocalized("modified", Format.Bold(usr), Format.Bold(amount.ToString())).ConfigureAwait(false);
         }
+
+        [NadekoCommand, Usage, Description, Aliases]
+        [RequireContext(ContextType.Guild)]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public Task XpAdd(int amount, [Remainder] IGuildUser user) 
+            => XpAdd(amount, user.Id);
     }
 }

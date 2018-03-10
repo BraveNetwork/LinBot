@@ -11,7 +11,7 @@ using System.IO;
 namespace NadekoBot.Core.Services.Database
 {
     public class NadekoContextFactory : IDesignTimeDbContextFactory<NadekoContext>
-    {        
+    {
         public NadekoContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<NadekoContext>();
@@ -27,7 +27,6 @@ namespace NadekoBot.Core.Services.Database
     public class NadekoContext : DbContext
     {
         public DbSet<Quote> Quotes { get; set; }
-        public DbSet<Donator> Donators { get; set; }
         public DbSet<GuildConfig> GuildConfigs { get; set; }
         public DbSet<Reminder> Reminders { get; set; }
         public DbSet<SelfAssignedRole> SelfAssignableRoles { get; set; }
@@ -51,6 +50,7 @@ namespace NadekoBot.Core.Services.Database
         public DbSet<EightBallResponse> EightBallResponses { get; set; }
         public DbSet<RaceAnimal> RaceAnimals { get; set; }
         public DbSet<RewardedUser> RewardedUsers { get; set; }
+        public DbSet<Stake> Stakes { get; set; }
 
         public NadekoContext(DbContextOptions<NadekoContext> options) : base(options)
         {
@@ -110,16 +110,9 @@ namespace NadekoBot.Core.Services.Database
         {
             #region QUOTES
             
-            //var quoteEntity = modelBuilder.Entity<Quote>();
-
-            #endregion
-            
-            #region Donators
-
-            var donatorEntity = modelBuilder.Entity<Donator>();
-            donatorEntity
-                .HasIndex(d => d.UserId)
-                .IsUnique();
+            var quoteEntity = modelBuilder.Entity<Quote>();
+            quoteEntity.HasIndex(x => x.GuildId);
+            quoteEntity.HasIndex(x => x.Keyword);
 
             #endregion
 
@@ -164,13 +157,85 @@ namespace NadekoBot.Core.Services.Database
             botConfigEntity.Property(x => x.PatreonCurrencyPerCent)
                 .HasDefaultValue(1.0f);
 
+            botConfigEntity.Property(x => x.WaifuGiftMultiplier)
+                .HasDefaultValue(1);
+
+            botConfigEntity.Property(x => x.OkColor)
+                .HasDefaultValue("00e584");
+
+            botConfigEntity.Property(x => x.ErrorColor)
+                .HasDefaultValue("ee281f");
+
             //botConfigEntity
             //    .HasMany(c => c.ModulePrefixes)
             //    .WithOne(mp => mp.BotConfig)
             //    .HasForeignKey(mp => mp.BotConfigId);
-
             #endregion
-            
+
+            #region GlobalWhitelistSet Unique ListName
+            modelBuilder.Entity<GWLSet>()
+                //.HasAlternateKey( x => x.ListName ); // prevents us from changing the name
+                .HasIndex(x => x.ListName).IsUnique();
+            #endregion
+
+            #region GlobalWhitelistSet Default State Enabled and Type All
+            modelBuilder.Entity<GWLSet>()
+                .Property(g => g.IsEnabled)
+                .HasDefaultValue(true);
+             modelBuilder.Entity<GWLSet>()
+                 .Property(g=>g.Type)
+                .HasDefaultValue(GWLType.General);
+            #endregion
+
+            #region GWLItem ServerRoleId default to 0 (closest to null we can have for ulong)
+            modelBuilder.Entity<GWLItem>()
+                .Property(i=>i.RoleServerId)
+                .HasDefaultValue(0)
+                .ValueGeneratedNever();;
+            #endregion
+
+            #region GWL Default DateAdded
+            modelBuilder.Entity<GWLItem>()
+                .Property(i => i.DateAdded)
+                .HasDefaultValueSql("datetime('now')");
+            modelBuilder.Entity<GWLSet>()
+                .Property(g => g.DateAdded)
+                .HasDefaultValueSql("datetime('now')");
+            modelBuilder.Entity<UnblockedCmdOrMdl>()
+                .Property(u => u.DateAdded)
+                .HasDefaultValueSql("datetime('now')");
+            #endregion
+
+            #region Global WhiteList ItemInSet Join ManytoMany
+            modelBuilder.Entity<GWLItemSet>()
+                .HasKey(x => new { x.ListPK, x.ItemPK });
+
+            modelBuilder.Entity<GWLItemSet>()
+                .HasOne(x => x.List)
+                .WithMany(x => x.GWLItemSets)
+                .HasForeignKey(x => x.ListPK);
+
+            modelBuilder.Entity<GWLItemSet>()
+                .HasOne(x => x.Item)
+                .WithMany(x => x.GWLItemSets)
+                .HasForeignKey(x => x.ItemPK);
+            #endregion
+
+            #region Global UnblockedCmdOrMdl UnblockedInSet Join ManytoMany
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasKey(x => new { x.ListPK, x.UnblockedPK });
+
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasOne(x => x.List)
+                .WithMany(x => x.GlobalUnblockedSets)
+                .HasForeignKey(x => x.ListPK);
+
+            modelBuilder.Entity<GlobalUnblockedSet>()
+                .HasOne(x => x.CmdOrMdl)
+                .WithMany(x => x.GlobalUnblockedSets)
+                .HasForeignKey(x => x.UnblockedPK);
+            #endregion
+
             #region Self Assignable Roles
 
             var selfassignableRolesEntity = modelBuilder.Entity<SelfAssignedRole>();
@@ -184,7 +249,6 @@ namespace NadekoBot.Core.Services.Database
                 .HasDefaultValue(0);
 
             #endregion
-            
             #region Permission
             var permissionEntity = modelBuilder.Entity<Permission>();
             permissionEntity
@@ -244,6 +308,9 @@ namespace NadekoBot.Core.Services.Database
             var wi = modelBuilder.Entity<WaifuInfo>();
             wi.HasOne(x => x.Waifu)
                 .WithOne();
+
+            wi.HasIndex(x => x.Price);
+            wi.HasIndex(x => x.ClaimerId);
             //    //.HasForeignKey<WaifuInfo>(w => w.WaifuId)
             //    //.IsRequired(true);
 
@@ -254,21 +321,28 @@ namespace NadekoBot.Core.Services.Database
             #endregion
 
             #region DiscordUser
-            
+
             var du = modelBuilder.Entity<DiscordUser>();
             du.HasAlternateKey(w => w.UserId);
             du.HasOne(x => x.Club)
                .WithMany(x => x.Users)
                .IsRequired(false);
 
-            modelBuilder.Entity<DiscordUser>()
-                .Property(x => x.LastLevelUp)
+            du.Property(x => x.LastLevelUp)
                 .HasDefaultValue(new DateTime(2017, 9, 21, 20, 53, 13, 305, DateTimeKind.Local));
+
+            du.HasIndex(x => x.TotalXp);
+            du.HasIndex(x => x.CurrencyAmount);
+            du.HasIndex(x => x.UserId);
+                
 
             #endregion
 
             #region Warnings
             var warn = modelBuilder.Entity<Warning>();
+            warn.HasIndex(x => x.GuildId);
+            warn.HasIndex(x => x.UserId);
+            warn.HasIndex(x => x.DateAdded);
             #endregion
 
             #region PatreonRewards
@@ -278,13 +352,19 @@ namespace NadekoBot.Core.Services.Database
             #endregion
 
             #region XpStats
-            modelBuilder.Entity<UserXpStats>()
+            var xps = modelBuilder.Entity<UserXpStats>();
+            xps
                 .HasIndex(x => new { x.UserId, x.GuildId })
                 .IsUnique();
 
-            modelBuilder.Entity<UserXpStats>()
+            xps
                 .Property(x => x.LastLevelUp)
                 .HasDefaultValue(new DateTime(2017, 9, 21, 20, 53, 13, 307, DateTimeKind.Local));
+
+            xps.HasIndex(x => x.UserId);
+            xps.HasIndex(x => x.GuildId);
+            xps.HasIndex(x => x.Xp);
+            xps.HasIndex(x => x.AwardedXp);
             
             #endregion
 
@@ -293,7 +373,7 @@ namespace NadekoBot.Core.Services.Database
                 .HasOne(x => x.GuildConfig)
                 .WithOne(x => x.XpSettings);
             #endregion
-            
+
             #region XpRoleReward
             modelBuilder.Entity<XpRoleReward>()
                 .HasIndex(x => new { x.XpSettingsId, x.Level })
@@ -340,6 +420,16 @@ namespace NadekoBot.Core.Services.Database
             modelBuilder.Entity<Poll>()
                 .HasIndex(x => x.GuildId)
                 .IsUnique();
+            #endregion
+
+            #region CurrencyTransactions
+            modelBuilder.Entity<CurrencyTransaction>()
+                .HasIndex(x => x.DateAdded);
+            #endregion
+
+            #region Reminders
+            modelBuilder.Entity<Reminder>()
+                .HasIndex(x => x.DateAdded);
             #endregion
         }
     }

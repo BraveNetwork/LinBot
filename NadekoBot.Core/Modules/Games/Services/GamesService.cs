@@ -38,7 +38,7 @@ namespace NadekoBot.Modules.Games.Services
         private readonly IImageCache _images;
         private readonly Logger _log;
         private readonly NadekoRandom _rng;
-        private readonly CurrencyService _cs;
+        private readonly ICurrencyService _cs;
         public readonly string TypingArticlesPath = "data/typing_articles3.json";
         private readonly CommandHandler _cmdHandler;
 
@@ -58,7 +58,7 @@ namespace NadekoBot.Modules.Games.Services
 
         public GamesService(CommandHandler cmd, IBotConfigProvider bc, NadekoBot bot,
             NadekoStrings strings, IDataCache data, CommandHandler cmdHandler,
-            CurrencyService cs)
+            ICurrencyService cs)
         {
             _bc = bc;
             _cmd = cmd;
@@ -145,10 +145,10 @@ namespace NadekoBot.Modules.Games.Services
         private ConcurrentDictionary<ulong, object> _locks { get; } = new ConcurrentDictionary<ulong, object>();
         public ConcurrentHashSet<ulong> HalloweenAwardedUsers { get; } = new ConcurrentHashSet<ulong>();
 
-        public byte[] GetRandomCurrencyImage()
+        public string GetRandomCurrencyImage()
         {
             var rng = new NadekoRandom();
-            var cur = _images.Currency;
+            var cur = _images.ImageUrls.Currency;
             return cur[rng.Next(0, cur.Length)];
         }
 
@@ -197,15 +197,13 @@ namespace NadekoBot.Modules.Games.Services
                                 : GetText(channel, "curgen_pl", dropAmount, _bc.BotConfig.CurrencySign)
                                     + " " + GetText(channel, "pick_pl", prefix);
                             var file = GetRandomCurrencyImage();
-                            using (var fileStream = file.ToStream())
-                            {
-                                var sent = await channel.SendFileAsync(
-                                    fileStream,
-                                    "drop.gif",
-                                    toSend).ConfigureAwait(false);
 
-                                msgs[0] = sent;
-                            }
+                            var sent = await channel.EmbedAsync(new EmbedBuilder()
+                                .WithOkColor()
+                                .WithDescription(toSend)
+                                .WithImageUrl(file));
+
+                            msgs[0] = sent;
 
                             PlantedFlowers.AddOrUpdate(channel.Id, msgs.ToList(), (id, old) => { old.AddRange(msgs); return old; });
                         }

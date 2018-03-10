@@ -13,6 +13,7 @@ using NadekoBot.Modules.Help.Services;
 using NadekoBot.Modules.Permissions.Services;
 using NadekoBot.Common;
 using NadekoBot.Common.Replacements;
+using Newtonsoft.Json;
 
 namespace NadekoBot.Modules.Help
 {
@@ -21,7 +22,6 @@ namespace NadekoBot.Modules.Help
         public const string PatreonUrl = "https://patreon.com/nadekobot";
         public const string PaypalUrl = "https://paypal.me/Kwoth";
         private readonly IBotCredentials _creds;
-        private readonly IBotConfigProvider _config;
         private readonly CommandService _cmds;
         private readonly GlobalPermissionService _perms;
 
@@ -34,19 +34,18 @@ namespace NadekoBot.Modules.Help
                 .Build();
 
 
-            if (!CREmbed.TryParse(_config.BotConfig.HelpString, out var embed))
+            if (!CREmbed.TryParse(_bc.BotConfig.HelpString, out var embed))
                 return new EmbedBuilder().WithOkColor()
-                    .WithDescription(String.Format(_config.BotConfig.HelpString, _creds.ClientId, Prefix));
+                    .WithDescription(String.Format(_bc.BotConfig.HelpString, _creds.ClientId, Prefix));
 
             r.Replace(embed);
 
             return embed.ToEmbed();
         }
 
-        public Help(IBotCredentials creds, GlobalPermissionService perms, IBotConfigProvider config, CommandService cmds)
+        public Help(IBotCredentials creds, GlobalPermissionService perms, CommandService cmds)
         {
             _creds = creds;
-            _config = config;
             _cmds = cmds;
             _perms = perms;
         }
@@ -121,6 +120,13 @@ namespace NadekoBot.Modules.Help
         [Priority(0)]
         public async Task H([Remainder] string fail)
         {
+            var prefixless = _cmds.Commands.FirstOrDefault(x => x.Name.ToLowerInvariant() == fail);
+            if(prefixless!= null)
+            {
+                await H(prefixless);
+                return;
+            }
+
             await ReplyErrorLocalized("command_not_found").ConfigureAwait(false);
         }
 
@@ -148,38 +154,35 @@ namespace NadekoBot.Modules.Help
         [OwnerOnly]
         public async Task Hgit()
         {
-            var helpstr = new StringBuilder();
-            helpstr.AppendLine(GetText("cmdlist_donate", PatreonUrl, PaypalUrl) + "\n");
-            helpstr.AppendLine("##"+ GetText("table_of_contents"));
-            helpstr.AppendLine(string.Join("\n", _cmds.Modules.Where(m => m.GetTopLevelModule().Name.ToLowerInvariant() != "help")
-                .Select(m => m.GetTopLevelModule().Name)
-                .Distinct()
-                .OrderBy(m => m)
-                .Prepend("Help")
-                .Select(m => string.Format("- [{0}](#{1})", m, m.ToLowerInvariant()))));
-            helpstr.AppendLine();
-            string lastModule = null;
+            Dictionary<string, List<object>> cmdData = new Dictionary<string, List<object>>();
             foreach (var com in _cmds.Commands.OrderBy(com => com.Module.GetTopLevelModule().Name).GroupBy(c => c.Aliases.First()).Select(g => g.First()))
             {
                 var module = com.Module.GetTopLevelModule();
-                if (module.Name != lastModule)
+                string optHelpStr = null;
+                var opt = ((NadekoOptions)com.Attributes.FirstOrDefault(x => x is NadekoOptions))?.OptionType;
+                if (opt != null)
                 {
-                    if (lastModule != null)
-                    {
-                        helpstr.AppendLine();
-                        helpstr.AppendLine($"###### [{GetText("back_to_toc")}](#{GetText("table_of_contents").ToLowerInvariant().Replace(' ', '-')})");
-                    }
-                    helpstr.AppendLine();
-                    helpstr.AppendLine("### " + module.Name + "  ");
-                    helpstr.AppendLine($"{GetText("cmd_and_alias")} | {GetText("desc")} | {GetText("usage")}");
-                    helpstr.AppendLine("----------------|--------------|-------");
-                    lastModule = module.Name;
+                    optHelpStr = _service.GetCommandOptionHelp(opt);
                 }
-                helpstr.AppendLine($"{string.Join(" ", com.Aliases.Select(a => "`" + Prefix + a + "`"))} |" +
-                                   $" {string.Format(com.Summary, Prefix)} {_service.GetCommandRequirements(com, Context.Guild)} |" +
-                                   $" {string.Format(com.Remarks, Prefix)}");
+                var obj = new
+                {
+                    Aliases = com.Aliases.Select(x => Prefix + x).ToArray(),
+                    Description = string.Format(com.Summary, Prefix),
+                    Usage = JsonConvert.DeserializeObject<string[]>(com.Remarks).Select(x => string.Format(x, Prefix)).ToArray(),
+                    Submodule = com.Module.Name,
+                    Module = com.Module.GetTopLevelModule().Name,
+                    Options = optHelpStr,
+                    Requirements = _service.GetCommandRequirements(com),
+                };
+                if (cmdData.TryGetValue(module.Name, out var cmds))
+                    cmds.Add(obj);
+                else
+                    cmdData.Add(module.Name, new List<object>
+                    {
+                        obj
+                    });
             }
-            File.WriteAllText("../../docs/Commands List.md", helpstr.ToString());
+            File.WriteAllText("../../docs/cmds_new.json", JsonConvert.SerializeObject(cmdData, Formatting.Indented));
             await ReplyConfirmLocalized("commandlist_regen").ConfigureAwait(false);
         }
 
@@ -187,7 +190,7 @@ namespace NadekoBot.Modules.Help
         public async Task Guide()
         {
             await ConfirmLocalized("guide", 
-                "http://nadekobot.readthedocs.io/en/latest/Commands%20List/",
+                "https://nadekobot.me/commands",
                 "http://nadekobot.readthedocs.io/en/latest/").ConfigureAwait(false);
         }
         
@@ -195,6 +198,11 @@ namespace NadekoBot.Modules.Help
         public async Task Donate()
         {
             await ReplyConfirmLocalized("donate", PatreonUrl, PaypalUrl).ConfigureAwait(false);
+        }
+
+        private string GetRemarks(string[] arr)
+        {
+            return string.Join(" or ", arr.Select(x => Format.Code(x)));
         }
     }
 
@@ -204,5 +212,12 @@ namespace NadekoBot.Modules.Help
 
         public int GetHashCode(CommandInfo obj) => obj.Aliases.First().GetHashCode();
 
+    }
+    
+    public class JsonCommandData
+    {
+        public string[] Aliases { get; set; }
+        public string Description { get; set; }
+        public string Usage { get; set; }
     }
 }

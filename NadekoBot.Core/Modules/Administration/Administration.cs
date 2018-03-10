@@ -1,22 +1,21 @@
-using Discord;
-using Discord.Commands;
-using NadekoBot.Extensions;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NadekoBot.Common.Attributes;
-using NadekoBot.Core.Services;
-using NadekoBot.Modules.Administration.Services;
-using NadekoBot.Core.Services.Database.Models;
-using Microsoft.EntityFrameworkCore;
+using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using NadekoBot.Common;
+using NadekoBot.Common.Attributes;
+using NadekoBot.Common.Replacements;
+using NadekoBot.Core.Services;
+using NadekoBot.Core.Services.Database.Models;
+using NadekoBot.Extensions;
+using NadekoBot.Modules.Administration.Services;
 
 namespace NadekoBot.Modules.Administration
 {
     public partial class Administration : NadekoTopLevelModule<AdministrationService>
     {
-        private IGuild _nadekoSupportServer;
         private readonly DbService _db;
 
         public Administration(DbService db)
@@ -117,7 +116,7 @@ namespace NadekoBot.Modules.Administration
             chId = chId ?? Context.Channel.Id;
             using (var uow = _db.UnitOfWork)
             {
-                var conf = uow.GuildConfigs.For(Context.Guild.Id, 
+                var conf = uow.GuildConfigs.For(Context.Guild.Id,
                     set => set.Include(x => x.DelMsgOnCmdChannels));
 
                 var obj = new DelMsgOnCmdChannel()
@@ -258,38 +257,41 @@ namespace NadekoBot.Modules.Administration
         }
 
         [NadekoCommand, Usage, Description, Aliases]
-        public async Task Donators()
+        [RequireContext(ContextType.Guild)]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task Edit(ulong messageId, [Remainder] string text)
         {
-            IEnumerable<Donator> donatorsOrdered;
-
-            using (var uow = _db.UnitOfWork)
-            {
-                donatorsOrdered = uow.Donators.GetDonatorsOrdered();
-            }
-            await Context.Channel.SendConfirmAsync(GetText("donators"), string.Join("⭐", donatorsOrdered.Select(d => d.Name))).ConfigureAwait(false);
-
-            _nadekoSupportServer = _nadekoSupportServer ?? (await Context.Client.GetGuildAsync(117523346618318850));
-
-            var patreonRole = _nadekoSupportServer?.GetRole(236667642088259585);
-            if (patreonRole == null)
+            if (string.IsNullOrWhiteSpace(text))
                 return;
 
-            var usrs = (await _nadekoSupportServer.GetUsersAsync()).Where(u => u.RoleIds.Contains(236667642088259585u));
-            await Context.Channel.SendConfirmAsync("Patreon supporters", string.Join("⭐", usrs.Select(d => d.Username))).ConfigureAwait(false);
-        }
+            var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync()
+                .ConfigureAwait(false);
 
+            IUserMessage msg = (IUserMessage)msgs.FirstOrDefault(x => x.Id == messageId
+                && x.Author.Id == Context.Client.CurrentUser.Id
+                && x is IUserMessage);
 
-        [NadekoCommand, Usage, Description, Aliases]
-        [OwnerOnly]
-        public async Task Donadd(IUser donator, int amount)
-        {
-            Donator don;
-            using (var uow = _db.UnitOfWork)
+            if (msg == null)
+                return;
+
+            var rep = new ReplacementBuilder()
+                    .WithDefault(Context)
+                    .Build();
+
+            if (CREmbed.TryParse(text, out var crembed))
             {
-                don = uow.Donators.AddOrUpdateDonator(donator.Id, donator.Username, amount);
-                await uow.CompleteAsync();
+                rep.Replace(crembed);
+                await msg.ModifyAsync(x =>
+                {
+                    x.Embed = crembed.ToEmbed().Build();
+                    x.Content = crembed.PlainText?.SanitizeMentions() ?? "";
+                }).ConfigureAwait(false);
             }
-            await ReplyConfirmLocalized("donadd", don.Amount).ConfigureAwait(false);
+            else
+            {
+                await msg.ModifyAsync(x => x.Content = text.SanitizeMentions())
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

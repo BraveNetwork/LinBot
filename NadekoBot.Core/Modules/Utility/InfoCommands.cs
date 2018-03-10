@@ -63,7 +63,12 @@ namespace NadekoBot.Modules.Utility
                     embed.WithImageUrl(guild.IconUrl);
                 if (guild.Emotes.Any())
                 {
-                    embed.AddField(fb => fb.WithName(GetText("custom_emojis") + $"({guild.Emotes.Count})").WithValue(string.Join(" ", guild.Emotes.Shuffle().Take(20).Select(e => $"{e.Name} <:{e.Name}:{e.Id}>"))));
+                    embed.AddField(fb => 
+                        fb.WithName(GetText("custom_emojis") + $"({guild.Emotes.Count})")
+                        .WithValue(string.Join(" ", guild.Emotes
+                            .Shuffle()
+                            .Take(20)
+                            .Select(e => $"{e.Name} {e.ToString()}"))));
                 }
                 await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
             }
@@ -76,7 +81,7 @@ namespace NadekoBot.Modules.Utility
                 if (ch == null)
                     return;
                 var createdAt = new DateTime(2015, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ch.Id >> 22);
-                var usercount = (await ch.GetUsersAsync().Flatten()).Count();
+                var usercount = (await ch.GetUsersAsync().FlattenAsync()).Count();
                 var embed = new EmbedBuilder()
                     .WithTitle(ch.Name)
                     .WithDescription(ch.Topic?.SanitizeMentions())

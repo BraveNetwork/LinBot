@@ -5,9 +5,14 @@ using NadekoBot.Core.Services;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using NadekoBot.Common.Attributes;
-using NadekoBot.Modules.Gambling.Common;
 using NadekoBot.Modules.Gambling.Services;
-using NadekoBot.Modules.Gambling.Common.CurrencyEvents;
+using System.Net.Http;
+using Newtonsoft.Json;
+using System.Linq;
+using NadekoBot.Core.Common;
+using NadekoBot.Core.Services.Database.Models;
+using NadekoBot.Core.Modules.Gambling.Common.Events;
+using System;
 
 namespace NadekoBot.Modules.Gambling
 {
@@ -16,76 +21,107 @@ namespace NadekoBot.Modules.Gambling
         [Group]
         public class CurrencyEventsCommands : NadekoSubmodule<CurrencyEventsService>
         {
-            public enum CurrencyEvent
+            public enum OtherEvent
             {
-                Reaction,
-                SneakyGameStatus
+                BotListUpvoters
             }
 
             private readonly DiscordSocketClient _client;
-            private readonly IBotConfigProvider _bc;
-            private readonly CurrencyService _cs;
+            private readonly IBotCredentials _creds;
+            private readonly ICurrencyService _cs;
 
-            public CurrencyEventsCommands(DiscordSocketClient client, IBotConfigProvider bc, CurrencyService cs)
+            public CurrencyEventsCommands(DiscordSocketClient client, ICurrencyService cs, IBotCredentials creds)
             {
                 _client = client;
-                _bc = bc;
+                _creds = creds;
                 _cs = cs;
             }
 
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
+            [NadekoOptions(typeof(EventOptions))]
             [OwnerOnly]
-            public async Task StartEvent(CurrencyEvent e, int arg = -1)
+            public async Task EventStart(Event.Type ev, params string[] options)
             {
-                switch (e)
+                var (opts, _) = OptionsParser.Default.ParseFrom(new EventOptions(), options);
+                if (!await _service.TryCreateEventAsync(Context.Guild.Id,
+                    Context.Channel.Id,
+                    ev,
+                    opts,
+                    GetEmbed
+                    ))
                 {
-                    case CurrencyEvent.Reaction:
-                        await ReactionEvent(Context, arg).ConfigureAwait(false);
-                        break;
-                    case CurrencyEvent.SneakyGameStatus:
-                        await SneakyGameStatusEvent(Context, arg).ConfigureAwait(false);
-                        break;
-                }
-            }
-
-            private async Task SneakyGameStatusEvent(ICommandContext context, int num)
-            {
-                if (num < 10 || num > 600)
-                    num = 60;
-
-                var ev = new SneakyEvent(_cs, _client, _bc, num);
-                if (!await _service.StartSneakyEvent(ev, context.Message, context))
+                    await ReplyErrorLocalized("start_event_fail").ConfigureAwait(false);
                     return;
-                try
-                {
-                    var title = GetText("sneakygamestatus_title");
-                    var desc = GetText("sneakygamestatus_desc", 
-                        Format.Bold(100.ToString()) + _bc.BotConfig.CurrencySign,
-                        Format.Bold(num.ToString()));
-                    await context.Channel.SendConfirmAsync(title, desc)
-                        .ConfigureAwait(false);
-                }
-                catch
-                {
-                    // ignored
                 }
             }
 
-            public async Task ReactionEvent(ICommandContext context, int amount)
+            private EmbedBuilder GetEmbed(Event.Type type, EventOptions opts, long currentPot)
             {
-                if (amount <= 0)
-                    amount = 20;
-
-                var title = GetText("reaction_title");
-                var desc = GetText("reaction_desc", _bc.BotConfig.CurrencySign, Format.Bold(amount.ToString()) + _bc.BotConfig.CurrencySign);
-                var footer = GetText("reaction_footer", 24);
-                var re = new ReactionEvent(_bc.BotConfig, _client, _cs, amount);
-                var msg = await context.Channel.SendConfirmAsync(title,
-                        desc, footer: footer)
-                    .ConfigureAwait(false);
-                await re.Start(msg, context);
+                switch (type)
+                {
+                    case Event.Type.Reaction:
+                        return new EmbedBuilder()
+                            .WithOkColor()
+                            .WithTitle(GetText("reaction_title"))
+                            .WithDescription(GetReactionDescription(opts.Amount, currentPot))
+                            .WithFooter(GetText("new_reaction_footer", opts.Hours));
+                    //case Event.Type.NotRaid:
+                    //    return new EmbedBuilder()
+                    //        .WithOkColor()
+                    //        .WithTitle(GetText("notraid_title"))
+                    //        .WithDescription(GetNotRaidDescription(opts.Amount, currentPot))
+                    //        .WithFooter(GetText("notraid_footer", opts.Hours));
+                    default:
+                        break;
+                }
+                throw new ArgumentOutOfRangeException(nameof(type));
             }
+
+            private string GetReactionDescription(long amount, long potSize)
+            {
+                string potSizeStr = Format.Bold(potSize == 0
+                    ? "∞" + _bc.BotConfig.CurrencySign
+                    : potSize.ToString() + _bc.BotConfig.CurrencySign);
+                return GetText("new_reaction_event",
+                                   _bc.BotConfig.CurrencySign,
+                                   Format.Bold(amount + _bc.BotConfig.CurrencySign),
+                                   potSizeStr);
+            }
+
+            private string GetNotRaidDescription(long amount, long potSize)
+            {
+                string potSizeStr = Format.Bold(potSize == 0
+                    ? "∞" + _bc.BotConfig.CurrencySign
+                    : potSize.ToString() + _bc.BotConfig.CurrencySign);
+                return GetText("new_reaction_event",
+                                   _bc.BotConfig.CurrencySign,
+                                   Format.Bold(amount + _bc.BotConfig.CurrencySign),
+                                   potSizeStr);
+            }
+
+            //    private async Task SneakyGameStatusEvent(ICommandContext context, long num)
+            //    {
+            //        if (num < 10 || num > 600)
+            //            num = 60;
+
+            //        var ev = new SneakyEvent(_cs, _client, _bc, num);
+            //        if (!await _service.StartSneakyEvent(ev, context.Message, context))
+            //            return;
+            //        try
+            //        {
+            //            var title = GetText("sneakygamestatus_title");
+            //            var desc = GetText("sneakygamestatus_desc",
+            //                Format.Bold(100.ToString()) + _bc.BotConfig.CurrencySign,
+            //                Format.Bold(num.ToString()));
+            //            await context.Channel.SendConfirmAsync(title, desc)
+            //                .ConfigureAwait(false);
+            //        }
+            //        catch
+            //        {
+            //            // ignored
+            //        }
+            //    }
         }
     }
 }

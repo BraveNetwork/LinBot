@@ -53,7 +53,7 @@
   },
   "greetmsg": {
     "Cmd": "greetmsg",
-    "Desc": "Sets a new join announcement message which will be shown in the server's channel. Type `%user%` if you want to mention the new member. Using it with no message will show the current greet message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new join announcement message which will be shown in the server's channel. Type `%user%` if you want to mention the new member. Using it with no message will show the current greet message. You can use embed json from <https://embedbuilder.nadekobot.me/> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}greetmsg Welcome, %user%."
     ]
@@ -67,7 +67,7 @@
   },
   "byemsg": {
     "Cmd": "byemsg",
-    "Desc": "Sets a new leave announcement message. Type `%user%` if you want to show the name the user who left. Type `%id%` to show id. Using this command with no message will show the current bye message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new leave announcement message. Type `%user%` if you want to show the name the user who left. Type `%id%` to show id. Using this command with no message will show the current bye message. You can use embed json from <https://embedbuilder.nadekobot.me/> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}byemsg %user% has left."
     ]
@@ -140,7 +140,7 @@
   },
   "addplaying": {
     "Cmd": "addplaying adpl",
-    "Desc": "Adds a specified string to the list of playing strings to rotate. You have to pick either 'Playing', 'Watching' or 'ListeningTo' as the first parameter. Supported placeholders: `%servers%`, `%users%`, `%playing%`, `%queued%`, `%time%`, `%shardid%`, `%shardcount%`, `%shardguilds%`.",
+    "Desc": "Adds a specified string to the list of playing strings to rotate. You have to pick either 'Playing', 'Watching' or 'Listening' as the first parameter. Supported placeholders: `%servers%`, `%users%`, `%playing%`, `%queued%`, `%time%`, `%shardid%`, `%shardcount%`, `%shardguilds%`.",
     "Usage": [
       "{0}adpl Playing with you",
       "{0}adpl Watching you sleep"
@@ -168,18 +168,19 @@
       "{0}slowmode"
     ]
   },
-  "cleanvplust": {
-    "Cmd": "cleanvplust cv+t",
-    "Desc": "Deletes all text channels ending in `-voice` for which voicechannels are not found. Use at your own risk.",
+  "vcrolelist": {
+    "Cmd": "vcrolelist",
+    "Desc": "Shows a list of currently set voice channel roles.",
     "Usage": [
-      "{0}cleanv+t"
+      "{0}vcrolelist"
     ]
   },
-  "voiceplustext": {
-    "Cmd": "voice+text v+t",
-    "Desc": "Creates a text channel for each voice channel only users in that voice channel can see. If you are server owner, keep in mind you will see them all the time regardless.",
+  "vcrole": {
+    "Cmd": "vcrole",
+    "Desc": "Sets or resets a role which will be given to users who join the voice channel you're in when you run this command. Provide no role name to disable. You must be in a voice channel to run this command.",
     "Usage": [
-      "{0}v+t"
+      "{0}vcrole SomeRole",
+      "{0}vcrole"
     ]
   },
   "scsc": {
@@ -221,9 +222,10 @@
   },
   "lsar": {
     "Cmd": "lsar",
-    "Desc": "Lists all self-assignable roles.",
+    "Desc": "Lists self-assignable roles. Shows 20 roles per page.",
     "Usage": [
-      "{0}lsar"
+      "{0}lsar",
+      "{0}lsar 2"
     ]
   },
   "tesar": {
@@ -352,10 +354,11 @@
   },
   "rolecolor": {
     "Cmd": "rolecolor roleclr",
-    "Desc": "Set a role's color to the hex or 0-255 rgb color value provided.",
+    "Desc": "Set a role's color to the hex or 0-255 rgb color value provided. Provide no color in order to see the hex of the color of the specified role.",
     "Usage": [
-      "{0}roleclr Admin 255 200 100",
-      "{0}roleclr Admin ffba55"
+      "{0}roleclr Admin",
+      "{0}roleclr Admin ffba55",
+      "{0}roleclr Admin 255 128 0"
     ]
   },
   "ban": {
@@ -493,11 +496,11 @@
   },
   "setgame": {
     "Cmd": "setgame",
-    "Desc": "Sets the bots game status to either Playing, ListeningTo, or Watching.",
+    "Desc": "Sets the bots game status to either Playing, Listening, or Watching.",
     "Usage": [
       "{0}setgame Playing with snakes.",
       "{0}setgame Watching anime.",
-      "{0}setgame ListeningTo music."
+      "{0}setgame Listening music."
     ]
   },
   "send": {
@@ -947,7 +950,7 @@
   },
   "nunchi": {
     "Cmd": "nunchi",
-    "Desc": "Creates or joins an existing nunchi game. Users have to count up by 1 from the starting number shown by the bot. If someone makes a mistake (types an incorrent number, or repeats the same number) they are out of the game and a new round starts without them.  Minimum 3 users required.",
+    "Desc": "Creates or joins an existing nunchi game. Users have to count up by 1 from the starting number shown by the bot. If someone makes a mistake (types an incorrect number, or repeats the same number) they are out of the game and a new round starts without them.  Minimum 3 users required.",
     "Usage": [
       "{0}nunchi"
     ]
@@ -1107,8 +1110,9 @@
   },
   "rps": {
     "Cmd": "rps",
-    "Desc": "Play a game of Rocket-Paperclip-Scissors with Nadeko.",
+    "Desc": "Play a game of Rocket-Paperclip-Scissors with Nadeko. You can bet on it. Multiplier is the same as on betflip.",
     "Usage": [
+      "{0}rps r 100",
       "{0}rps scissors"
     ]
   },
@@ -1336,9 +1340,16 @@
   },
   "playlists": {
     "Cmd": "playlists pls",
-    "Desc": "Lists all playlists. Paginated, 20 per page. Default page is 0.",
+    "Desc": "Lists all playlists. Paginated, 20 per page.",
     "Usage": [
       "{0}pls 1"
+    ]
+  },
+  "playlistshow": {
+    "Cmd": "playlistshow plshow",
+    "Desc": "Lists all songs in a playlist spepcified by its id. Paginated, 20 per page.",
+    "Usage": [
+      "{0}plshow 1"
     ]
   },
   "deleteplaylist": {
@@ -1405,12 +1416,19 @@
       "{0}mixer SomeStreamer"
     ]
   },
-  "removestream": {
-    "Cmd": "removestream rms",
-    "Desc": "Removes notifications of a certain streamer from a certain platform on this channel.",
+  "streamremove": {
+    "Cmd": "streamremove strm",
+    "Desc": "Removes notifications of a specified stream on the specified platform on this channel. You can also just specify an url.",
     "Usage": [
-      "{0}rms Twitch SomeGuy",
-      "{0}rms mixer SomeOtherGuy"
+      "{0}strm Twitch SomeGuy",
+      "{0}strm twitch.tv/someguy"
+    ]
+  },
+  "streamadd": {
+    "Cmd": "streamadd stadd",
+    "Desc": "Notifies this channel when the user's stream on the specified URL goes online or offline.",
+    "Usage": [
+      "{0}stadd twitch.tv/someguy"
     ]
   },
   "liststreams": {
@@ -1660,10 +1678,11 @@
     ]
   },
   "color": {
-    "Cmd": "color",
-    "Desc": "Shows you what color corresponds to that hex.",
+    "Cmd": "color clr",
+    "Desc": "Shows you which colors correspond to the inputed hexes.",
     "Usage": [
-      "{0}color 00ff00"
+      "{0}color 00ff00",
+      "{0}color f00 0f0 00f"
     ]
   },
   "videocall": {
@@ -1775,7 +1794,7 @@
   },
   "greetdmmsg": {
     "Cmd": "greetdmmsg",
-    "Desc": "Sets a new join announcement message which will be sent to the user who joined. Type `%user%` if you want to mention the new member. Using it with no message will show the current DM greet message. You can use embed json from <http://nadekobot.me/embedbuilder/> instead of a regular text, if you want the message to be embedded.",
+    "Desc": "Sets a new join announcement message which will be sent to the user who joined. Type `%user%` if you want to mention the new member. Using it with no message will show the current DM greet message. You can use embed json from <https://embedbuilder.nadekobot.me> instead of a regular text, if you want the message to be embedded.",
     "Usage": [
       "{0}greetdmmsg Welcome to the server, %user%"
     ]
@@ -2316,11 +2335,12 @@
       "{0}cmdcost 1 {0}8ball"
     ]
   },
-  "startevent": {
-    "Cmd": "startevent",
-    "Desc": "Starts one of the events seen on public nadeko. `reaction` and `sneakygamestatus` are the only 2 available now.",
+  "eventstart": {
+    "Cmd": "eventstart",
+    "Desc": "Starts one of the events seen on public nadeko. Events: `reaction`",
     "Usage": [
-      "{0}startevent reaction"
+      "{0}eventstart reaction",
+      "{0}eventstart reaction -d 1 -a 50 --pot-size 1500"
     ]
   },
   "slotstats": {
@@ -2529,21 +2549,6 @@
       "{0}l7 s"
     ]
   },
-  "vcrolelist": {
-    "Cmd": "vcrolelist",
-    "Desc": "Shows a list of currently set voice channel roles.",
-    "Usage": [
-      "{0}vcrolelist"
-    ]
-  },
-  "vcrole": {
-    "Cmd": "vcrole",
-    "Desc": "Sets or resets a role which will be given to users who join the voice channel you're in when you run this command. Provide no role name to disable. You must be in a voice channel to run this command.",
-    "Usage": [
-      "{0}vcrole SomeRole",
-      "{0}vcrole"
-    ]
-  },
   "crad": {
     "Cmd": "crad",
     "Desc": "Toggles whether the message triggering the custom reaction will be automatically deleted.",
@@ -2577,7 +2582,7 @@
     "Cmd": "alias cmdmap",
     "Desc": "Create a custom alias for a certain Nadeko command. Provide no alias to remove the existing one.",
     "Usage": [
-      "{0}alias allin $bf 100 h",
+      "{0}alias allin .bf all h",
       "{0}alias \"linux thingy\" >loonix Spyware Windows"
     ]
   },
@@ -2607,14 +2612,14 @@
     "Cmd": "scadd",
     "Desc": "Adds a command to the list of commands which will be executed automatically in the current channel, in the order they were added in, by the bot when it startups up.",
     "Usage": [
-      "{0}scadd .stats"
+      "{0}scadd {0}stats"
     ]
   },
   "startupcommandremove": {
     "Cmd": "scrm",
     "Desc": "Removes a startup command with the provided command text.",
     "Usage": [
-      "{0}scrm .stats"
+      "{0}scrm {0}stats"
     ]
   },
   "startupcommandsclear": {
@@ -2648,8 +2653,9 @@
   },
   "warnclear": {
     "Cmd": "warnclear warnc",
-    "Desc": "Clears all warnings from a certain user.",
+    "Desc": "Clears all warnings from a certain user. You can specify a number to clear a specific one.",
     "Usage": [
+      "{0}warnclear @PoorDude 3",
       "{0}warnclear @PoorDude"
     ]
   },
@@ -2785,7 +2791,7 @@
   },
   "prefix": {
     "Cmd": "prefix",
-    "Desc": "Sets this server's prefix for all bot commands. Provide no arguments to see the current server prefix.",
+    "Desc": "Sets this server's prefix for all bot commands. Provide no arguments to see the current server prefix. **Setting prefix requires Administrator server permission.**",
     "Usage": [
       "{0}prefix +"
     ]
@@ -3103,7 +3109,7 @@
     "cmd": "execsql",
     "desc": "Executes an sql command and returns the number of affected rows. Dangerous.",
     "usage": [
-      "{0}execsql UPDATE Currency SET Amount=Amount+1234"
+      "{0}execsql UPDATE DiscordUser SET CurrencyAmount=CurrencyAmount+1234"
     ]
   },
   "deletewaifus": {
@@ -3256,6 +3262,356 @@
     "desc": "Removed a ReactionRole message on the specified index.",
     "usage": [
       "{0}reactionrolesrm 1"
+    ]
+  },
+  "blackjack": {
+    "cmd": "blackjack bj",
+    "desc": "Start or join a blackjack game. You must specify the amount you're betting. Use `.hit`, `.stand` and `.double` commands to play. Game is played with 4 decks. Dealer hits on soft 17 and wins draws.",
+    "usage": [
+      "{0}bj 50"
+    ]
+  },
+  "hit": {
+    "cmd": "hit",
+    "desc": "In the blackjack game, ask the dealer for an extra card.",
+    "usage": [
+      "{0}hit"
+    ]
+  },
+  "stand": {
+    "cmd": "stand",
+    "desc": "Finish your turn in the blackjack game.",
+    "usage": [
+      "{0}stand"
+    ]
+  },
+  "double": {
+    "cmd": "double",
+    "desc": "In the blackjack game, double your bet in order to receive exactly one more card, and your turn ends.",
+    "usage": [
+      "{0}double"
+    ]
+  },
+  "xpreset": {
+    "cmd": "xpreset",
+    "desc": "Resets specified user's XP, or the XP of all users in the server. You can't reverse this action.",
+    "usage": [
+      "{0}xpreset @b1nzy",
+      "{0}xpreset"
+    ]
+  },
+  "bible": {
+    "cmd": "bible",
+    "desc": "Shows bible verse. You need to supply book name and chapter:verse",
+    "usage": [
+      "{0}bible genesis 3:19"
+    ]
+  },
+  "edit": {
+    "cmd": "edit",
+    "desc": "Edits bot's message, you have to specify message ID and new text. Supports embeds.",
+    "usage": [
+      ".edit 7479498384 Hi :^)"
+    ]
+  },
+  "roleid": {
+    "cmd": "roleid rid",
+    "desc": "Shows the id of the specified role.",
+    "usage": [
+      ".rid Some Role"
+    ]
+  },
+  "gwlcreate": {
+    "cmd": "gwl gwlcreate",
+    "desc": "Create a new whitelist named MyListName (max of 20 char). If using a backslash `\\` in your name, you must remember to escape it with a second backslash `\\\\` in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes. \n\nYou may also specify the type of whitelist: General (default, g), Member (m), or Role (r). GENERAL unblocks for all users. MEMBER unblocks for specific users, channels, and servers. ROLE unblocks for specific Server-Role pairs.",
+    "usage": [
+      "{0}gwl MyListName",
+      "{0}gwl \"My List Name\"",
+      "{0}gwl GeneralList GENERAL",
+      "{0}gwl MemberList MEMBER",
+      "{0}gwl RoleList ROLE"
+    ]
+  },
+  "gwlrename": {
+    "cmd": "gwlrename",
+    "desc": "Rename an existing whitelist named OldName to MyNewName (max of 20 char). If using a backslash `\\` or quote `\"` in your name, you must remember to escape it with a second backslash `\\\\` (or `\\\"`) in order for Discord to correctly write the name in your message. If using whitespace in your name, such as multiple spaces, lines, or tabs, you must surround the name in quotes.",
+    "usage": [
+      "{0}gwlrename OldName MyNewName",
+      "{0}gwlrename \"Old Name\" \"My New Name\""
+    ]
+  },
+  "gwlenable": {
+    "cmd": "gwlenable gwlstatus",
+    "desc": "Check or set the IsEnabled status of the whitelist named MyListName. Checking the status also tells you what type the whitelist is (General, Member, or Role), however, you cannot change the type.",
+    "usage": [
+      "{0}gwlenable MyListName true",
+      "{0}gwlenable MyListName false",
+      "{0}gwlstatus MyListName"
+    ]
+  },
+  "gwldelete": {
+    "cmd": "gwldelete gwldel",
+    "desc": "Delete a global whitelist.",
+    "usage": [
+      "{0}gwldel MyListName"
+    ]
+  },
+  "gwladd": {
+    "cmd": "gwladd",
+    "desc": "Add up to 30 .Command/Module(s) at a time to the global whitelist named MyListName. \n\nWhitelists of type MEMBER can also have @User/#Channel/Server members added. \n\nWhitelists of type ROLE can have Server-Role pairs added. If adding multiple Roles to a ROLE whitelist, you can either mention the roles (and assume the current ServerID) or run `.gwladd MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to add.",
+    "usage": [
+      "{0}gwladd MyListName .commandA .commandB .commandC",
+      "{0}gwladd MyListName ModuleA ModuleB ModuleC",
+      "{0}gwladd MyListName ServerA ServerB ServerC",
+      "{0}gwladd MyListName #ChannelA #ChannelB #ChannelC",
+      "{0}gwladd MyListName @UserA @UserB @UserC",
+      "{0}gwladd MyListName @RoleA @RoleB @RoleC",
+      "{0}gwladd MyListName ServerWithRoles 123123123 456456456",
+      "{0}gwladd MyListName CMD commandA commandB commandC",
+      "{0}gwladd MyListName MDL ModuleA ModuleB ModuleC",
+      "{0}gwladd MyListName SRVR 123123123 456456456 789789789",
+      "{0}gwladd MyListName CHNL 123123123 456456456 789789789",
+      "{0}gwladd MyListName USR 123123123 456456456 789789789",
+      "{0}gwladd MyListName ROLE ServerWithRoles 123123123 456456456 789789789"
+    ]
+  },
+  "gwlremove": {
+    "cmd": "gwlremove gwlrem gwlrm",
+    "desc": "Remove up to 30 .Command/Module(s) at a time from the global whitelist named MyListName. \n\nWhitelists of type MEMBER can also have @User/#Channel/Server members removed. \n\nWhitelists of type ROLE can have Server-Role pairs removed. If removing multiple Roles from a ROLE whitelist, you can either mention the roles (and assume the current ServerID) or run `.gwlrm MyListName Role serverID roleID roleID roleID ` for each server whose roleIDs you wish to remove.",
+    "usage": [
+      "{0}gwlrm MyListName .commandA .commandB .commandC",
+      "{0}gwlrm MyListName ModuleA ModuleB ModuleC",
+      "{0}gwlrm MyListName ServerA ServerB ServerC",
+      "{0}gwlrm MyListName #ChannelA #ChannelB #ChannelC",
+      "{0}gwlrm MyListName @UserA @UserB @UserC",
+      "{0}gwlrm MyListName @RoleA @RoleB @RoleC",
+      "{0}gwlrm MyListName ServerWithRoles 123123123 456456456",
+      "{0}gwlrm MyListName CMD commandA commandB commandC",
+      "{0}gwlrm MyListName MDL ModuleA ModuleB ModuleC",
+      "{0}gwlrm MyListName SRVR 123123123 456456456 789789789",
+      "{0}gwlrm MyListName CHNL 123123123 456456456 789789789",
+      "{0}gwlrm MyListName USR 123123123 456456456 789789789",
+      "{0}gwlrm MyListName ROLE ServerWithRoles 123123123 456456456 789789789"
+    ]
+  },
+  "gwlclear": {
+    "cmd": "gwlclear",
+    "desc": "Remove all members AND all unblocked .Commands/Modules from the global whitelist named MyListName. If you don't want MyListName to be completely empty, specify the particular data type to remove: Unblocked (ub), Command (cmd), Module (mdl), Member (mem), User (u), Channel (c), Server (s), Roles (r).",
+    "usage": [
+      "{0}gwlclear MyListName",
+      "{0}gwlclear MyListName MEM",
+      "{0}gwlclear MyListName SRVR",
+      "{0}gwlclear MyListName CHNL",
+      "{0}gwlclear MyListName USR",
+      "{0}gwlclear MyListName ROLE",
+      "{0}gwlclear MyListName UNBLOCKED",
+      "{0}gwlclear MyListName CMD",
+      "{0}gwlclear MyListName MDL"
+    ]
+  },
+  "gwlpurge": {
+    "cmd": "gwlpurge",
+    "desc": "Remove the given .Command/Module/@User/#Channel/Server/@Role from ALL global whitelists. If removing a role from another server, you must specify ServerID AND RoleID (in that order).",
+    "usage": [
+      "{0}gwlpurge .Command",
+      "{0}gwlpurge CMD Command",
+      "{0}gwlpurge Module",
+      "{0}gwlpurge MDL Module",
+      "{0}gwlpurge ServerName",
+      "{0}gwlpurge SRVR 123123123",
+      "{0}gwlpurge #Channel",
+      "{0}gwlpurge CHNL 123123123",
+      "{0}gwlpurge @User",
+      "{0}gwlpurge USR 123123123",
+      "{0}gwlpurge @Role",
+      "{0}gwlpurge ROLE ServerWithRole 123123123"
+    ]
+  },
+  "listgwl": {
+    "cmd": "listgwl lgwl",
+    "desc": "List all existing global whitelist names, grouped by type. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}lgwl",
+      "{0}lgwl 2"
+    ]
+  },
+  "gwlinfo": {
+    "cmd": "gwlinfo",
+    "desc": "Get the IsEnabled status, whitelist type, and a list of all unblocked commands and modules, as well as a list of all users, channels, and servers, or roles related to the whitelist named MyListName. \n\nAlternatively, specify which type of list data you want (Command|Module|User|Channel|Server|Role). \n\nInclude an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gwlinfo MyListName",
+      "{0}gwlinfo MyListName 2",
+      "{0}gwlinfo MyListName CMD",
+      "{0}gwlinfo MyListName CMD 2",
+      "{0}gwlinfo MyListName MDL",
+      "{0}gwlinfo MyListName SRVR",
+      "{0}gwlinfo MyListName CHNL",
+      "{0}gwlinfo MyListName USR",
+      "{0}gwlinfo MyListName ROLE"
+    ]
+  },
+  "gwlhasmember": {
+    "cmd": "gwlhas",
+    "desc": "Check whether or not the whitelist named MyListName has a @User/#Channel/Server/@Role member with the provided ID, or an unblocked .Command/Module with the provided name. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order), and use the ROLE FieldType.",
+    "usage": [
+      "{0}gwlhas MyListName .Command",
+      "{0}gwlhas MyListName CMD Command",
+      "{0}gwlhas MyListName Module",
+      "{0}gwlhas MyListName MDL Module",
+      "{0}gwlhas MyListName ServerName",
+      "{0}gwlhas MyListName SRVR 123123123",
+      "{0}gwlhas MyListName #Channel",
+      "{0}gwlhas MyListName CHNL 123123123",
+      "{0}gwlhas MyListName @User",
+      "{0}gwlhas MyListName USR 123123123",
+      "{0}gwlhas MyListName @Role",
+      "{0}gwlhas MyListName ROLE ServerWithRole 123123123"
+    ]
+  },
+  "gwlformember": {
+    "cmd": "gwlfor",
+    "desc": "List the names of all global whitelists for which the @User/#Channel/Server/@Role is a member, or for which the .Command/Module is unblocked. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gwlfor .Command",
+      "{0}gwlfor CMD Command",
+      "{0}gwlfor Module",
+      "{0}gwlfor MDL Module",
+      "{0}gwlfor ServerName",
+      "{0}gwlfor ServerName 2",
+      "{0}gwlfor SRVR 123123123",
+      "{0}gwlfor #Channel",
+      "{0}gwlfor CHNL 123123123",
+      "{0}gwlfor @User",
+      "{0}gwlfor USR 123123123",
+      "{0}gwlfor @Role",
+      "{0}gwlfor ROLE ServerWithRole 123123123"
+    ]
+  },
+  "listmygwl": {
+    "cmd": "listmygwl mygwl",
+    "desc": "**GuildChannelOnly** Get a list of all global whitelists to which you belong. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}mygwl",
+      "{0}mygwl 2"
+    ]
+  },
+  "listcontextgwl": {
+    "cmd": "listcontextgwl gwlhere",
+    "desc": "**GuildChannelOnly** Get a list of all global whitelists to which the current channel and server belong. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gwlhere",
+      "{0}gwlhere 2"
+    ]
+  },
+  "ismygwl": {
+    "cmd": "ismygwl",
+    "desc": "**GuildChannelOnly** Find out whether or not you belong to the global whitelist named MyListName.",
+    "usage": [
+      "{0}ismygwl MyListName"
+    ]
+  },
+  "iscontextgwl": {
+    "cmd": "iscontextgwl isgwlhere",
+    "desc": "**GuildChannelOnly** Find out whether or not the current Channel/Server belong to the global whitelist named MyListName.",
+    "usage": [
+      "{0}isgwlhere MyListName"
+    ]
+  },
+  "listgub": {
+    "cmd": "listgub lgub",
+    "desc": "List all unblocked commands/modules along with how many lists for which each is unblocked. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}lgub",
+      "{0}lgub 2"
+    ]
+  },
+  "gubformember": {
+    "cmd": "gubfor",
+    "desc": "List the names of all commands/modules unblocked for the @User/#Channel/Server/@Role. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gubfor ServerName 2",
+      "{0}gubfor ServerName",
+      "{0}gubfor SRVR 123123123",
+      "{0}gubfor #Channel",
+      "{0}gubfor CHNL 123123123",
+      "{0}gubfor @User",
+      "{0}gubfor USR 123123123",
+      "{0}gubfor @Role",
+      "{0}gubfor ROLE ServerWithRole 123123123"
+    ]
+  },
+  "gubcheck": {
+    "cmd": "gubcheck gubhas",
+    "desc": "Check whether or not the .Command/Module is unblocked for @User/#Channel/Server/@Role member. If it is unblocked, you'll get a list of all global whitelists through which it is unblocked, grouped by type. \n\nIf using a role from another server, you must specify both ServerID and RoleID (in that order). \n\nInclude an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gubcheck .Command ServerName 2",
+      "{0}gubcheck .Command ServerName",
+      "{0}gubcheck .Command SRVR 123123123",
+      "{0}gubcheck .Command #Channel",
+      "{0}gubcheck .Command CHNL 123123123",
+      "{0}gubcheck .Command @User",
+      "{0}gubcheck .Command USR 123123123",
+      "{0}gubcheck .Command @Role",
+      "{0}gubcheck .Command ROLE ServerWithRole 123123123",
+      "{0}gubcheck Module ServerName",
+      "{0}gubcheck Module SRVR 123123123",
+      "{0}gubcheck Module #Channel",
+      "{0}gubcheck Module CHNL 123123123",
+      "{0}gubcheck Module @User",
+      "{0}gubcheck Module USR 123123123",
+      "{0}gubcheck Module @Role",
+      "{0}gubcheck Module ROLE ServerWithRole 123123123"
+    ]
+  },
+  "listmygub": {
+    "cmd": "listmygub mygub",
+    "desc": "**GuildChannelOnly** Get a list of all commands and modules that are globally unblocked for you. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}mygub",
+      "{0}mygub 2"
+    ]
+  },
+  "listcontextgub": {
+    "cmd": "listcontextgub gubhere",
+    "desc": "**GuildChannelOnly** Get a list of all commands and modules that are globally unblocked for the current channel and server context. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}gubhere",
+      "{0}gubhere 2"
+    ]
+  },
+  "ismygub": {
+    "cmd": "ismygub",
+    "desc": "**GuildChannelOnly** Find out whether or not the .Command/Module is unblocked for you, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}ismygub .Command 2",
+      "{0}ismygub .Command",
+      "{0}ismygub Module 2",
+      "{0}ismygub Module"
+    ]
+  },
+  "iscontextgub": {
+    "cmd": "iscontextgub isgubhere",
+    "desc": "**GuildChannelOnly** Find out whether or not the .Command/Module is unblocked for the current Channel/Server, and if so, get a list of all whitelists through which this is true. Include an optional page number to jump to a specific subset of the data.",
+    "usage": [
+      "{0}isgubhere .Command 2",
+      "{0}isgubhere .Command",
+      "{0}isgubhere Module 2",
+      "{0}isgubhere Module"
+    ]
+  },
+  "resetglobalwhitelists": {
+    "cmd": "resetglobalwhitelists gwlreset",
+    "desc": "Delete all global whitelist data: records storing whitelist names, linked relations to users/channels/servers, and linked relations to unblocked commands/modules. Use the `--purge` flag to clear out both linked and unlinked global whitelist data.",
+    "usage": [
+      "{0}gwlreset",
+      "{0}gwlreset --purge"
+    ]
+  },
+  "resetglobalunblocked": {
+    "cmd": "resetglobalunblocked gubreset",
+    "desc": "Delete all global unblocked data: records storing unblocked commands/modules and records linking unblocked commands/modules to a whitelist. DOES NOT CLEAR WHITELIST MEMBER DATA. Use `.gwlreset` to clear all whitelist data.",
+    "usage": [
+      "{0}gubreset"
     ]
   }
 }
