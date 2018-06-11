@@ -267,7 +267,7 @@
   "help_commands_instr": "Type `{0}h CommandName` to see the help for that specified command. e.g. `{0}h {0}8ball`",
   "help_command_not_found": "I can't find that command. Please verify that the command exists before trying again.",
   "help_desc": "Description",
-  "help_donate": "You can support the NadekoBot project on \nPatreon <{0}> or\nPaypal <{1}>\nDon't forget to leave your discord name or id in the message.\n\n**Thank you** ♥️",
+  "help_donate": "You can support the Brave Network on \nPatreon <{0}> or\nPaypal <{1}>\nDon't forget to leave your discord name or id in the message.\n\n**Thank you** ♥️",
   "help_guide": "**List of commands**: <{0}>\n**Hosting guides and docs can be found here**: <{1}>",
   "help_list_of_commands": "List of commands",
   "help_list_of_modules": "List of modules",

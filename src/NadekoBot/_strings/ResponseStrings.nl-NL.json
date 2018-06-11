@@ -259,7 +259,7 @@
   "help_commands_instr": "Typ `{0}h CommandoNaam` om de uitleg te zien voor dat specifieke commando. b.v `{0}h {0}8bal`",
   "help_command_not_found": "Ik kan het commando niet vinden. Verifieer of dit commando echt bestaat voordat je het opnieuw probeert.",
   "help_desc": "Beschrijving",
-  "help_donate": "Je kan het NadekoBot project steunen op\nPatreon <{0}> of\nPayPal <{1}>\nVergeet niet je discord naam en id in het bericht te zetten.\n\n**Hartelijk bedankt** ♥️",
+  "help_donate": "Je kan het Brave Network steunen op\nPatreon <{0}> of\nPayPal <{1}>\nVergeet niet je discord naam en id in het bericht te zetten.\n\n**Hartelijk bedankt** ♥️",
   "help_guide": "**Lijst met commando's**: <{0}>\n**Hosting tutorials en documenten kunnen hier gevonden worden**: <{1}>",
   "help_list_of_commands": "Lijst met commando's",
   "help_list_of_modules": "Lijst met modules",
