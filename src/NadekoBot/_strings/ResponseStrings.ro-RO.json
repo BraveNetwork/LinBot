@@ -259,7 +259,7 @@
   "help_commands_instr": "Tastează `{0}h NumeleComenzii` pentru a vedea informații legate de acea comandă. ex. `{0}h {0}8ball`",
   "help_command_not_found": "Nu gasesc acea comanda. Te rog asigura-te ca exista comanda inainte de a incerca din nou.",
   "help_desc": "Descriere",
-  "help_donate": "Poți susține proiectul NadekoBot pe\nPatreon <{0}> sau\nPaypal <{1}>\nNu uita să iți lași numele de Discord sau ID-ul în mesaj.\n\n**Mulțumesc** ♥️",
+  "help_donate": "Poți susține proiectul Brave Network pe\nPatreon <{0}> sau\nPaypal <{1}>\nNu uita să iți lași numele de Discord sau ID-ul în mesaj.\n\n**Mulțumesc** ♥️",
   "help_guide": "** Listă de comenzi **: <{0}>\n** Ghiduri și documente de găzduire pot fi găsite aici **: <{1}>",
   "help_list_of_commands": "Lista comenzilor",
   "help_list_of_modules": "Lista modulelor",

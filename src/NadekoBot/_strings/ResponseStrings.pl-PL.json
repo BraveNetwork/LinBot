@@ -259,7 +259,7 @@
   "help_commands_instr": "Wpisz `{0}h NazwaKomendy` aby otrzymać pomoc dla danej komendy, np. `{0}h >8ball` ",
   "help_command_not_found": "Nie mogę znaleźć komendy. Proszę sprawdź czy komenda istnieje, zanim jej użyjesz.",
   "help_desc": "Opis",
-  "help_donate": "Możesz wspierać projekt NadekoBot na\nPatreonie <{0}> albo\nPaypalu <{1}>\nNie zapomnij zostawić swojej discordowej nazwy użytkownika albo ID w wiadomości.\n\n**Dziękujemy** ♥️ ",
+  "help_donate": "Możesz wspierać projekt Brave Network na\nPatreonie <{0}> albo\nPaypalu <{1}>\nNie zapomnij zostawić swojej discordowej nazwy użytkownika albo ID w wiadomości.\n\n**Dziękujemy** ♥️ ",
   "help_guide": "**Lista komend**:<{0}>\n**Poradniki hostowania i dokumenty znajdziesz tutaj**:<{1}>",
   "help_list_of_commands": "Lista komend",
   "help_list_of_modules": "Lista modułów",

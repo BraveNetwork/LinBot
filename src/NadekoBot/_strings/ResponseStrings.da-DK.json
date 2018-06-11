@@ -259,7 +259,7 @@
   "help_commands_instr": "Tast `{0}h KommandoNavn` for at se hvordan man bruger den specificerede kommando, f.eks. `{0}h >8ball`",
   "help_command_not_found": "Jeg kan ikke finde den kommando. Tjek at kommandoen eksisterer før du prøver igen.",
   "help_desc": "Beskrivelse",
-  "help_donate": "Du kan støtte NadekoBot projektet på\nPatreon <{0}> eller\nPaypal <{1}>\nHusk at tilføje dit Discord navn eller ID i beskeden\n\n**Tak** ♥️ ",
+  "help_donate": "Du kan støtte Brave Network projektet på\nPatreon <{0}> eller\nPaypal <{1}>\nHusk at tilføje dit Discord navn eller ID i beskeden\n\n**Tak** ♥️ ",
   "help_guide": "**Kommando liste**: <{0}>\n**Hosting guides og dokumenter kan findes her:** <{1}>",
   "help_list_of_commands": "Kommandoliste",
   "help_list_of_modules": "Modulliste",

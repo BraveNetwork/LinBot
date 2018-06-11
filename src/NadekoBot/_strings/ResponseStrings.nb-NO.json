@@ -259,7 +259,7 @@
   "help_commands_instr": "Skriv `{0}h Kommandonavn` å se hjelpen for den oppgitte kommandoen. f.eks `{0}h {0}8ball`",
   "help_command_not_found": "Jeg kan ikke finne den kommandoen. Kontroller at kommandoen finnes før du prøver igjen.",
   "help_desc": "Beskrivelse",
-  "help_donate": "Du kan støtte NadekoBot prosjektet på\nPatreon <{0}> eller\nPaypal <{1}>\nIkke glem å skrive Discord navnet eller ID i meldingen.\n\n** Takk ** ♥ ️",
+  "help_donate": "Du kan støtte Brave Network prosjektet på\nPatreon <{0}> eller\nPaypal <{1}>\nIkke glem å skrive Discord navnet eller ID i meldingen.\n\n** Takk ** ♥ ️",
   "help_guide": "** Liste over kommandoer **: <{0}>\n** Hosting guider og dokumenter finner du her **: <{1}>",
   "help_list_of_commands": "Liste av kommandoer",
   "help_list_of_modules": "Liste av moduler",

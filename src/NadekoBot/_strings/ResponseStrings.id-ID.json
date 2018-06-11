@@ -259,7 +259,7 @@
   "help_commands_instr": "Ketik '{0}h CommandName' untuk melihat bantuan untuk perintah tersebut. Contoh '{0}h >8ball'",
   "help_command_not_found": "Saya tidak dapat menemukan perintah itu. Tolong verifikasi perintah itu ada sebelum mencoba lagi.",
   "help_desc": "Deskripsi",
-  "help_donate": "Anda dapat mendukung projek NadekoBot di\nPatreon <{0}> atau\nPaypal <{1}>\nJangan lupa untuk meninggalkan nama atau ID Discord anda di dalam pesan.\n\n**Terima kasih**♥️ ",
+  "help_donate": "Anda dapat mendukung projek Brave Network di\nPatreon <{0}> atau\nPaypal <{1}>\nJangan lupa untuk meninggalkan nama atau ID Discord anda di dalam pesan.\n\n**Terima kasih**♥️ ",
   "help_guide": "**Daftar perintah**: <{0}>\n**Panduan dan dokumentasi hosting dapat ditemukan disini**: <{1}>",
   "help_list_of_commands": "Daftar perintah",
   "help_list_of_modules": "Daftar modul",

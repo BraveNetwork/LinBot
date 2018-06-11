@@ -263,7 +263,7 @@
   "help_commands_instr": "`{0}h parancsnév` részletes leírást ad az adott parancsról. Pl.: `{0}h {0}8ball`",
   "help_command_not_found": "Nem találtam ilyen parancsot. Kérlek, ellenőrizd, hogy biztos jót adtál meg.",
   "help_desc": "Leírás",
-  "help_donate": "A NadekoBot projektet támogathatod:\nPatreonon <{0}> vagy\nPaypallal <{1}>\nNe felejtsd el megadni a discord neved vagy az azonosítód az üzenetben.\n\n**Köszi** ♥️",
+  "help_donate": "A Brave Network projektet támogathatod:\nPatreonon <{0}> vagy\nPaypallal <{1}>\nNe felejtsd el megadni a discord neved vagy az azonosítód az üzenetben.\n\n**Köszi** ♥️",
   "help_guide": "**Parancsok listája**: <{0}>\n**Saját bot működtetéséhez segítséget itt találsz**: <{1}>",
   "help_list_of_commands": "Parancsok listája",
   "help_list_of_modules": "Modulok listája",

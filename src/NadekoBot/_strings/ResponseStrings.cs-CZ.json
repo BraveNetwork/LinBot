@@ -259,7 +259,7 @@
   "help_commands_instr": "Napiš  `{0}h Jméno příkazu`, abys viděl pomoc pro daný příkaz. např. `{0}h >8ball`",
   "help_command_not_found": "Nemohu najít tento příkaz. Ujisti se prosím, zda tento příkaz opravdu existuje, a poté ho zkus znovu.",
   "help_desc": "Popis",
-  "help_donate": "Můžeš podpořit projekt NadekoBot na\nPatreonu <{0}> nebo\nPaypalu <{1}>\nNezapomeň ve zprávě zanechat své discord jméno nebo ID.\n\n**Děkuji ** ♥️",
+  "help_donate": "Můžeš podpořit projekt Brave Network na\nPatreonu <{0}> nebo\nPaypalu <{1}>\nNezapomeň ve zprávě zanechat své discord jméno nebo ID.\n\n**Děkuji ** ♥️",
   "help_guide": "**Seznam příkazů**: <{0}>\n**Návody a dokumentaci můžeš nalézt zde**: <{1}>",
   "help_list_of_commands": "Seznam příkazů",
   "help_list_of_modules": "Seznam modulů",

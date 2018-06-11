@@ -259,7 +259,7 @@
   "help_commands_instr": "Digite `{0}h NomeDoComando` para ver a ajuda para o comando especificado. Ex: `{0}h {0}8ball`",
   "help_command_not_found": "Não consigo encontrar esse comando. Por favor, verifique se esse comando existe antes de tentar de novo.",
   "help_desc": "Descrição",
-  "help_donate": "Você pode dar suporte ao projeto da NadekoBot por\nPatreon <{0}> ou\nPaypal <{1}>\nNão esqueça de deixar seu nome ou id do discord na mensagem.\n**Obrigado**♥️",
+  "help_donate": "Você pode dar suporte ao projeto da Brave Network por\nPatreon <{0}> ou\nPaypal <{1}>\nNão esqueça de deixar seu nome ou id do discord na mensagem.\n**Obrigado**♥️",
   "help_guide": "**Lista de Comandos**. <{0}>\n**Guias de hosteamento e documentos podem ser encontrados aqui**. <{1}>",
   "help_list_of_commands": "Lista de Comandos",
   "help_list_of_modules": "Lista de Módulos",
